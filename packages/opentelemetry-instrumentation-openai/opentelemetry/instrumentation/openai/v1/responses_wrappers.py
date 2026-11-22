@@ -1,9 +1,9 @@
-import json
 import pydantic
 import re
 import threading
 import time
 from typing import Any, Optional, Union
+from collections import OrderedDict
 
 from openai import AsyncStream, Stream
 from openai._legacy_response import LegacyAPIResponse
@@ -23,16 +23,20 @@ from wrapt import ObjectProxy
 from opentelemetry.instrumentation.openai.shared import (
     _build_tool_def_dict,
     _extract_model_name_from_provider_format,
+    _get_openai_base_url,
     _parse_arguments,
     _set_request_attributes,
     _set_span_attribute,
     _set_tool_definitions_json,
+    metric_shared_attributes,
     model_as_dict,
 )
 
 from opentelemetry.instrumentation.openai.utils import (
+    _with_responses_telemetry_wrapper,
     _with_tracer_wrapper,
     dont_throw,
+    json_dumps,
     should_send_prompts,
 )
 
@@ -197,6 +201,59 @@ class TracedData(pydantic.BaseModel):
 
 
 responses: dict[str, TracedData] = {}
+
+# Statuses after which a response never changes again, so its entry can be freed and its span emitted.
+_TERMINAL_STATUSES = frozenset({"completed", "incomplete", "failed", "cancelled"})
+
+# IDs whose finished span was already emitted, so a later retrieve() doesn't emit a degraded duplicate.
+_MAX_TRACKED_COMPLETED_RESPONSES = 2048
+_completed_response_ids: "OrderedDict[str, None]" = OrderedDict()
+_completed_response_ids_lock = threading.Lock()
+
+
+def _mark_response_completed(response_id: str) -> None:
+    """Record response_id as finished, evicting the oldest IDs past the cap.
+
+    Caller must hold _completed_response_ids_lock.
+    """
+    _completed_response_ids[response_id] = None
+    while len(_completed_response_ids) > _MAX_TRACKED_COMPLETED_RESPONSES:
+        _completed_response_ids.popitem(last=False)
+
+
+def _record_traced_data(response_id: str, traced_data: TracedData, finished: bool) -> bool:
+    """Store an unfinished response, or mark it finished and drop its entry, in one locked step.
+
+    Returns True only for the first caller finishing response_id, which then emits its span.
+    Doing the write under the same lock stops a slower poll restoring stale data after completion.
+    """
+    with _completed_response_ids_lock:
+        if response_id in _completed_response_ids:
+            _completed_response_ids.move_to_end(response_id)
+            responses.pop(response_id, None)
+            return False
+        if not finished:
+            responses[response_id] = traced_data
+            return False
+        _mark_response_completed(response_id)
+        responses.pop(response_id, None)
+        return True
+
+
+def _claim_cancelled_response(response_id: str) -> Optional[TracedData]:
+    """Pop the entry for a cancelled response and mark it finished, so a later retrieve() can't restore it."""
+    with _completed_response_ids_lock:
+        if response_id in _completed_response_ids:
+            _completed_response_ids.move_to_end(response_id)
+        else:
+            _mark_response_completed(response_id)
+        return responses.pop(response_id, None)
+
+
+def _was_response_already_completed(response_id: str) -> bool:
+    """Return True if response_id's finished span was already emitted."""
+    with _completed_response_ids_lock:
+        return response_id in _completed_response_ids
 
 
 def _derive_finish_reason(traced_data: TracedData) -> str:
@@ -377,7 +434,7 @@ def _set_responses_json_messages(traced_response: TracedData, span: Span):
                     }],
                 })
 
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(input_messages))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json_dumps(input_messages))
 
     # Build output messages
     output_messages = []
@@ -399,7 +456,7 @@ def _set_responses_json_messages(traced_response: TracedData, span: Span):
                 summary = block_dict.get("summary")
                 if summary is not None and summary != []:
                     if isinstance(summary, (dict, list)):
-                        parts.append({"type": "reasoning", "content": json.dumps(summary)})
+                        parts.append({"type": "reasoning", "content": json_dumps(summary)})
                     else:
                         parts.append({"type": "reasoning", "content": summary})
         if parts:
@@ -409,7 +466,7 @@ def _set_responses_json_messages(traced_response: TracedData, span: Span):
                 "finish_reason": _derive_finish_reason(traced_response),
             })
 
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json.dumps(output_messages))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_OUTPUT_MESSAGES, json_dumps(output_messages))
 
     # Tool definitions as JSON
     if traced_response.tools:
@@ -480,8 +537,39 @@ def set_data_attributes(traced_response: TracedData, span: Span):
         _set_responses_json_messages(traced_response, span)
 
 
-@_with_tracer_wrapper
-def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
+@dont_throw
+def _record_metrics(
+    token_histogram,
+    duration_histogram,
+    instance,
+    start_time: int,
+    response_model: Optional[str],
+    usage=None,
+    is_streaming: bool = False,
+    error_type: Optional[str] = None,
+):
+    """Record one operation's duration (with error.type on failure) and its input/output token usage."""
+    attributes = metric_shared_attributes(
+        response_model=response_model,
+        operation="chat",
+        server_address=_get_openai_base_url(instance),
+        is_streaming=is_streaming,
+    )
+    if error_type:
+        attributes[ERROR_TYPE] = error_type
+    if duration_histogram:
+        duration_histogram.record((time.time_ns() - start_time) / 1e9, attributes=attributes)
+    if usage and token_histogram:
+        for token_type, count in (("input", usage.input_tokens), ("output", usage.output_tokens)):
+            token_histogram.record(
+                count, attributes={**attributes, GenAIAttributes.GEN_AI_TOKEN_TYPE: token_type}
+            )
+
+
+@_with_responses_telemetry_wrapper
+def responses_get_or_create_wrapper(
+    tracer: Tracer, token_histogram, duration_histogram, wrapped, instance, args, kwargs
+):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
     start_time = time.time_ns()
@@ -572,6 +660,15 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
         if traced_data:
             set_data_attributes(traced_data, span)
         span.end()
+        _record_metrics(
+            token_histogram,
+            duration_histogram,
+            instance,
+            start_time,
+            non_sentinel_kwargs.get("model"),
+            is_streaming=bool(non_sentinel_kwargs.get("stream")),
+            error_type=e.__class__.__name__,
+        )
         raise
     parsed_response = parse_response(response)
     if isinstance(parsed_response, Stream):
@@ -584,6 +681,8 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
         return response
 
     existing_data = responses.get(parsed_response.id)
+    if existing_data is None and _was_response_already_completed(parsed_response.id):
+        return response
     if existing_data is None:
         existing_data = {}
     else:
@@ -636,11 +735,10 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
             # Capture trace context to maintain continuity across async operations
             trace_context=existing_data.get("trace_context", context_api.get_current()),
         )
-        responses[parsed_response.id] = traced_data
     except Exception:
         return response
 
-    if parsed_response.status == "completed":
+    if _record_traced_data(parsed_response.id, traced_data, parsed_response.status in _TERMINAL_STATUSES):
         # Restore the original trace context to maintain trace continuity
         ctx = traced_data.trace_context if traced_data.trace_context else context_api.get_current()
         span = tracer.start_span(
@@ -652,13 +750,21 @@ def responses_get_or_create_wrapper(tracer: Tracer, wrapped, instance, args, kwa
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         set_data_attributes(traced_data, span)
         span.end()
+        _record_metrics(
+            token_histogram,
+            duration_histogram,
+            instance,
+            int(traced_data.start_time),
+            traced_data.response_model,
+            traced_data.usage,
+        )
 
     return response
 
 
-@_with_tracer_wrapper
+@_with_responses_telemetry_wrapper
 async def async_responses_get_or_create_wrapper(
-    tracer: Tracer, wrapped, instance, args, kwargs
+    tracer: Tracer, token_histogram, duration_histogram, wrapped, instance, args, kwargs
 ):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return await wrapped(*args, **kwargs)
@@ -746,6 +852,15 @@ async def async_responses_get_or_create_wrapper(
         if traced_data:
             set_data_attributes(traced_data, span)
         span.end()
+        _record_metrics(
+            token_histogram,
+            duration_histogram,
+            instance,
+            start_time,
+            non_sentinel_kwargs.get("model"),
+            is_streaming=bool(non_sentinel_kwargs.get("stream")),
+            error_type=e.__class__.__name__,
+        )
         raise
     parsed_response = await async_parse_response(response)
     if isinstance(parsed_response, (Stream, AsyncStream)):
@@ -759,6 +874,8 @@ async def async_responses_get_or_create_wrapper(
         return response
 
     existing_data = responses.get(parsed_response.id)
+    if existing_data is None and _was_response_already_completed(parsed_response.id):
+        return response
     if existing_data is None:
         existing_data = {}
     else:
@@ -812,11 +929,10 @@ async def async_responses_get_or_create_wrapper(
             # Capture trace context to maintain continuity across async operations
             trace_context=existing_data.get("trace_context", context_api.get_current()),
         )
-        responses[parsed_response.id] = traced_data
     except Exception:
         return response
 
-    if parsed_response.status == "completed":
+    if _record_traced_data(parsed_response.id, traced_data, parsed_response.status in _TERMINAL_STATUSES):
         # Restore the original trace context to maintain trace continuity
         ctx = traced_data.trace_context if traced_data.trace_context else context_api.get_current()
         span = tracer.start_span(
@@ -828,6 +944,14 @@ async def async_responses_get_or_create_wrapper(
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         set_data_attributes(traced_data, span)
         span.end()
+        _record_metrics(
+            token_histogram,
+            duration_histogram,
+            instance,
+            int(traced_data.start_time),
+            traced_data.response_model,
+            traced_data.usage,
+        )
 
     return response
 
@@ -843,7 +967,7 @@ def responses_cancel_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
     if isinstance(response, Stream):
         return response
     parsed_response = parse_response(response)
-    existing_data = responses.pop(parsed_response.id, None)
+    existing_data = _claim_cancelled_response(parsed_response.id)
     if existing_data is not None:
         # Restore the original trace context to maintain trace continuity
         ctx = existing_data.trace_context if existing_data.trace_context else context_api.get_current()
@@ -874,7 +998,7 @@ async def async_responses_cancel_wrapper(
     if isinstance(response, (Stream, AsyncStream)):
         return response
     parsed_response = await async_parse_response(response)
-    existing_data = responses.pop(parsed_response.id, None)
+    existing_data = _claim_cancelled_response(parsed_response.id)
     if existing_data is not None:
         # Restore the original trace context to maintain trace continuity
         ctx = existing_data.trace_context if existing_data.trace_context else context_api.get_current()
@@ -1077,7 +1201,13 @@ class ResponseStream(ObjectProxy):
                             block.id: block for block in parsed_response.output
                         }
 
-                    responses[parsed_response.id] = self._traced_data
+                    # Only an unfinished background stream keeps its entry, so a later retrieve() can merge
+                    # the original request; nothing can resume any other stream.
+                    finished = (
+                        parsed_response.status in _TERMINAL_STATUSES
+                        or not self._request_kwargs.get("background")
+                    )
+                    _record_traced_data(parsed_response.id, self._traced_data, finished)
 
                 set_data_attributes(self._traced_data, self._span)
                 self._span.set_status(StatusCode.OK)

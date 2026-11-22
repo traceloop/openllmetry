@@ -224,6 +224,7 @@ def _instrumented_model_invoke(fn, tracer, metric_params, event_logger):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
+        _buffer_request_body(kwargs)
         (provider, _model_vendor, _model) = _get_vendor_model(kwargs.get("modelId"))
         operation_name = _derive_operation_name(kwargs)
         span_attributes = {
@@ -256,6 +257,7 @@ def _instrumented_model_invoke_with_response_stream(
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return fn(*args, **kwargs)
 
+        _buffer_request_body(kwargs)
         (provider, _model_vendor, _model) = _get_vendor_model(kwargs.get("modelId"))
         operation_name = _derive_operation_name(kwargs)
         span_attributes = {
@@ -358,6 +360,7 @@ def _instrumented_async_model_invoke(fn, tracer, metric_params, event_logger):
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return await fn(*args, **kwargs)
 
+        _buffer_request_body(kwargs)
         (provider, _model_vendor, _model) = _get_vendor_model(kwargs.get("modelId"))
         operation_name = _derive_operation_name(kwargs)
         span_attributes = {
@@ -383,6 +386,7 @@ def _instrumented_async_model_invoke_with_response_stream(
         if context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY):
             return await fn(*args, **kwargs)
 
+        _buffer_request_body(kwargs)
         (provider, _model_vendor, _model) = _get_vendor_model(kwargs.get("modelId"))
         operation_name = _derive_operation_name(kwargs)
         span_attributes = {
@@ -1016,6 +1020,31 @@ def _cross_region_check(value):
     else:
         (model_vendor, model) = value.split(".", 1)
     return model_vendor, model
+
+
+def _buffer_request_body(kwargs):
+    """boto3 also accepts a file-like `body`. Read it once so botocore and the
+    readers that run after the call (when the stream is already consumed) see
+    the same bytes, as ReusableStreamingBody does for the response."""
+    body = kwargs.get("body")
+    if not hasattr(body, "read"):
+        return
+    try:
+        start = body.tell()
+    except Exception:
+        start = None
+    try:
+        kwargs["body"] = body.read()
+    except Exception:
+        # A failed read may have moved the cursor: rewind so the caller's
+        # object is left as it was, then surface the error (botocore would
+        # hit the same one) instead of tracing or sending a partial body.
+        if start is not None:
+            try:
+                body.seek(start)
+            except Exception:
+                pass
+        raise
 
 
 def _derive_operation_name(kwargs):

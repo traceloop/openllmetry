@@ -1,9 +1,11 @@
 import json
+import os
 import warnings
 import pytest
 from unittest.mock import patch
 from openai import OpenAI
 from traceloop.sdk import Traceloop
+from traceloop.sdk.config import is_content_tracing_enabled
 from traceloop.sdk.decorators import workflow
 from traceloop.sdk.tracing.tracing import TracerWrapper
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor, BatchSpanProcessor
@@ -12,12 +14,19 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanE
 
 @pytest.fixture
 def isolated_tracer_wrapper():
-    """Save/restore the TracerWrapper singleton so a test can call Traceloop.init()
-    with custom params without leaking state into other tests."""
+    """Save/restore TracerWrapper's singleton and the static class state
+    set_static_params()/set_disabled() write, so Traceloop.init() calls here
+    don't leak global state into tests that run later in the session."""
     _instance = None
     if hasattr(TracerWrapper, "instance"):
         _instance = TracerWrapper.instance
         del TracerWrapper.instance
+
+    saved_enable_content_tracing = TracerWrapper.enable_content_tracing
+    saved_resource_attributes = TracerWrapper.resource_attributes
+    saved_endpoint = TracerWrapper.endpoint
+    saved_headers = TracerWrapper.headers
+    saved_disabled = getattr(TracerWrapper, "_TracerWrapper__disabled", False)
 
     yield
 
@@ -25,6 +34,12 @@ def isolated_tracer_wrapper():
         del TracerWrapper.instance
     if _instance is not None:
         TracerWrapper.instance = _instance
+
+    TracerWrapper.enable_content_tracing = saved_enable_content_tracing
+    TracerWrapper.resource_attributes = saved_resource_attributes
+    TracerWrapper.endpoint = saved_endpoint
+    TracerWrapper.headers = saved_headers
+    TracerWrapper.set_disabled(saved_disabled)
 
 
 @pytest.fixture
@@ -358,3 +373,101 @@ def test_both_exporter_and_processor_warns():
             del TracerWrapper.instance
         if saved_instance is not None:
             TracerWrapper.instance = saved_instance
+
+
+def test_trace_content_false_overrides_env_true(isolated_tracer_wrapper, monkeypatch):
+    monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", "true")
+
+    Traceloop.init(
+        exporter=InMemorySpanExporter(), disable_batch=True, trace_content=False
+    )
+
+    assert is_content_tracing_enabled() is False
+    assert os.environ["TRACELOOP_TRACE_CONTENT"] == "false"
+    assert TracerWrapper.enable_content_tracing is False
+
+
+def test_trace_content_true_overrides_env_false(isolated_tracer_wrapper, monkeypatch):
+    monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", "false")
+
+    Traceloop.init(
+        exporter=InMemorySpanExporter(), disable_batch=True, trace_content=True
+    )
+
+    assert is_content_tracing_enabled() is True
+    assert os.environ["TRACELOOP_TRACE_CONTENT"] == "true"
+    assert TracerWrapper.enable_content_tracing is True
+
+
+def test_trace_content_none_leaves_env_untouched(isolated_tracer_wrapper, monkeypatch):
+    monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", "false")
+
+    Traceloop.init(exporter=InMemorySpanExporter(), disable_batch=True)
+
+    assert os.environ["TRACELOOP_TRACE_CONTENT"] == "false"
+    assert is_content_tracing_enabled() is False
+
+
+def test_trace_content_not_applied_when_enabled_false(
+    isolated_tracer_wrapper, monkeypatch
+):
+    monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", "true")
+
+    Traceloop.init(
+        exporter=InMemorySpanExporter(),
+        disable_batch=True,
+        enabled=False,
+        trace_content=False,
+    )
+
+    # enabled=False returns before the override is applied — env must be untouched.
+    assert os.environ["TRACELOOP_TRACE_CONTENT"] == "true"
+
+
+def test_trace_content_not_applied_when_tracing_disabled(
+    isolated_tracer_wrapper, monkeypatch
+):
+    monkeypatch.setenv("TRACELOOP_TRACING_ENABLED", "false")
+    monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", "true")
+
+    Traceloop.init(
+        exporter=InMemorySpanExporter(), disable_batch=True, trace_content=False
+    )
+
+    # TRACELOOP_TRACING_ENABLED=false returns before the override is applied.
+    assert os.environ["TRACELOOP_TRACE_CONTENT"] == "true"
+
+
+def test_trace_content_last_explicit_call_wins(isolated_tracer_wrapper, monkeypatch):
+    """A later init() call with trace_content=None doesn't reset the env var —
+    it leaves whatever the last explicit trace_content call set."""
+    Traceloop.init(
+        exporter=InMemorySpanExporter(), disable_batch=True, trace_content=True
+    )
+    Traceloop.init(exporter=InMemorySpanExporter(), disable_batch=True)
+
+    assert os.environ["TRACELOOP_TRACE_CONTENT"] == "true"
+    assert is_content_tracing_enabled() is True
+    assert TracerWrapper.enable_content_tracing is True
+
+
+def test_trace_content_propagates_across_instrumentation_packages(
+    isolated_tracer_wrapper, monkeypatch
+):
+    """Guards against a fix that only patches one package's should_send_prompts()
+    instead of every instrumentation's own copy."""
+    from opentelemetry.instrumentation.openai.utils import (
+        should_send_prompts as openai_should_send_prompts,
+    )
+    from opentelemetry.instrumentation.anthropic.utils import (
+        should_send_prompts as anthropic_should_send_prompts,
+    )
+
+    monkeypatch.setenv("TRACELOOP_TRACE_CONTENT", "true")
+
+    Traceloop.init(
+        exporter=InMemorySpanExporter(), disable_batch=True, trace_content=False
+    )
+
+    assert not openai_should_send_prompts()
+    assert not anthropic_should_send_prompts()
