@@ -305,7 +305,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         self._try_wrap(
             "openai.resources.responses",
             "Responses.create",
-            responses_get_or_create_wrapper(tracer),
+            responses_get_or_create_wrapper(tracer, tokens_histogram, duration_histogram),
         )
         self._try_wrap(
             "openai.resources.responses",
@@ -315,7 +315,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         self._try_wrap(
             "openai.resources.responses",
             "Responses.parse",
-            responses_get_or_create_wrapper(tracer),
+            responses_get_or_create_wrapper(tracer, tokens_histogram, duration_histogram),
         )
         self._try_wrap(
             "openai.resources.responses",
@@ -325,7 +325,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         self._try_wrap(
             "openai.resources.responses",
             "AsyncResponses.create",
-            async_responses_get_or_create_wrapper(tracer),
+            async_responses_get_or_create_wrapper(tracer, tokens_histogram, duration_histogram),
         )
         self._try_wrap(
             "openai.resources.responses",
@@ -335,7 +335,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         self._try_wrap(
             "openai.resources.responses",
             "AsyncResponses.parse",
-            async_responses_get_or_create_wrapper(tracer),
+            async_responses_get_or_create_wrapper(tracer, tokens_histogram, duration_histogram),
         )
         self._try_wrap(
             "openai.resources.responses",
