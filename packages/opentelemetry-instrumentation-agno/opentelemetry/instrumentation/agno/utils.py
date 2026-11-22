@@ -2,6 +2,7 @@ import logging
 from typing import Any
 from functools import wraps
 import asyncio
+from opentelemetry.semconv_ai.utils import should_send_prompts as should_send_prompts
 from opentelemetry.trace import Span
 
 logger = logging.getLogger(__name__)
@@ -38,9 +39,3 @@ def set_span_attribute(span: Span, name: str, value: Any) -> None:
                 set_span_attribute(span, f"{name}.{index}", item)
         else:
             span.set_attribute(name, value)
-
-
-def should_send_prompts() -> bool:
-    """Check if prompts should be sent based on environment variables."""
-    import os
-    return os.getenv("TRACELOOP_TRACE_CONTENT", "true").lower() == "true"

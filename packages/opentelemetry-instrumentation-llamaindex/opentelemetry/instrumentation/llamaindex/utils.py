@@ -2,11 +2,10 @@ import dataclasses
 import inspect
 import json
 import logging
-import os
 import traceback
 from contextlib import asynccontextmanager
 
-from opentelemetry import context as context_api
+from opentelemetry.semconv_ai.utils import should_send_prompts as should_send_prompts
 from opentelemetry._logs import Logger
 from opentelemetry.instrumentation.llamaindex.config import Config
 from opentelemetry.semconv_ai import SpanAttributes
@@ -28,12 +27,6 @@ def _with_tracer_wrapper(func):
 async def start_as_current_span_async(tracer, *args, **kwargs):
     with tracer.start_as_current_span(*args, **kwargs) as span:
         yield span
-
-
-def should_send_prompts():
-    return (
-        os.getenv(TRACELOOP_TRACE_CONTENT) or "true"
-    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
 def dont_throw(func):

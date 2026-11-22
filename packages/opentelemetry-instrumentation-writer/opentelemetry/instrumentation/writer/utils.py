@@ -1,9 +1,9 @@
 import logging
-import os
 import traceback
 from importlib.metadata import version
 from typing import Any
 
+from opentelemetry.semconv_ai.utils import should_send_prompts as should_send_prompts
 from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
 from opentelemetry.trace import Span
 from writerai.types import ChatCompletion, Completion
@@ -11,7 +11,6 @@ from writerai.types.chat_completion import ChatCompletionChoice
 from writerai.types.chat_completion_message import ChatCompletionMessage
 from writerai.types.shared.tool_call import Function, ToolCall
 
-from opentelemetry import context as context_api
 from opentelemetry.instrumentation.writer import Config
 
 GEN_AI_SYSTEM = "gen_ai.system"
@@ -28,12 +27,6 @@ TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 def set_span_attribute(span: Span, name: str, value: Any | None) -> None:
     if value is not None and value != "":
         span.set_attribute(name, value)
-
-
-def should_send_prompts() -> bool:
-    return (
-        os.getenv(TRACELOOP_TRACE_CONTENT) or "true"
-    ).lower() == "true" or context_api.get_value("override_enable_content_tracing")
 
 
 def dont_throw(func):
