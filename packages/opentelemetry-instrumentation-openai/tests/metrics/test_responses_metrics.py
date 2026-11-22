@@ -35,6 +35,24 @@ def _fail(request: httpx.Request) -> httpx.Response:
     raise httpx.ConnectError("connection refused", request=request)
 
 
+def _background(*statuses):
+    """Serve one background response that reports each status in turn, failing on a None status."""
+    response_id = f"resp_{uuid.uuid4().hex}"
+    replies = iter(statuses)
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        status = next(replies)
+        if status is None:
+            return _fail(request)
+        body = _respond(request).json() | {"id": response_id, "status": status}
+        if status != "completed":
+            # A queued, in-progress or cancelled background response has no output or usage yet.
+            body |= {"output": [], "usage": None}
+        return httpx.Response(200, json=body)
+
+    return response_id, respond
+
+
 @pytest.fixture
 def metric_points(reader):
     reader.get_metrics_data()  # drop points left by earlier tests
@@ -69,7 +87,7 @@ def _assert_starts_with_span(duration, span, finished_ns):
     assert (span.end_time - span.start_time) / 1e9 <= duration.sum <= (finished_ns - span.start_time) / 1e9
 
 
-def _assert_success_metrics(points, span_exporter, finished_ns):
+def _assert_success_metrics(points, span_exporter, finished_ns, usage=True):
     [span] = span_exporter.get_finished_spans()
     [duration] = points[Meters.LLM_OPERATION_DURATION]
     assert duration.count == 1
@@ -81,9 +99,9 @@ def _assert_success_metrics(points, span_exporter, finished_ns):
     assert duration.attributes["stream"] is False
 
     tokens = {
-        p.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE]: p.sum for p in points[Meters.LLM_TOKEN_USAGE]
+        p.attributes[GenAIAttributes.GEN_AI_TOKEN_TYPE]: p.sum for p in points.get(Meters.LLM_TOKEN_USAGE, [])
     }
-    assert tokens == {"input": 7, "output": 3}
+    assert tokens == ({"input": 7, "output": 3} if usage else {})
 
 
 def _assert_error_metrics(points, span_exporter, stream, finished_ns):
@@ -146,3 +164,113 @@ async def test_async_responses_create_error_records_duration_with_error_type(
         await _async_client(_fail).responses.create(model="gpt-4.1-nano", input="hello", stream=stream)
 
     _assert_error_metrics(metric_points(), span_exporter, stream, time.time_ns())
+
+
+_retrieve_calls = pytest.mark.parametrize(
+    "retrieve",
+    [
+        lambda responses, response_id: responses.retrieve(response_id),
+        lambda responses, response_id: responses.retrieve(response_id=response_id),
+    ],
+    ids=["positional", "keyword"],
+)
+
+
+def test_background_poll_records_one_duration_and_final_usage(instrument_legacy, span_exporter, metric_points):
+    response_id, respond = _background("queued", "in_progress", "completed", "completed")
+    client = _client(respond)
+    client.responses.create(model="gpt-4.1-nano", input="hello", background=True)
+    client.responses.retrieve(response_id)
+    client.responses.retrieve(response_id)
+
+    _assert_success_metrics(metric_points(), span_exporter, time.time_ns())
+    client.responses.retrieve(response_id)
+    assert not metric_points().get(Meters.LLM_OPERATION_DURATION)
+
+
+@pytest.mark.asyncio
+async def test_async_background_poll_records_one_duration_and_final_usage(
+    instrument_legacy, span_exporter, metric_points
+):
+    response_id, respond = _background("queued", "in_progress", "completed", "completed")
+    client = _async_client(respond)
+    await client.responses.create(model="gpt-4.1-nano", input="hello", background=True)
+    await client.responses.retrieve(response_id)
+    await client.responses.retrieve(response_id)
+
+    _assert_success_metrics(metric_points(), span_exporter, time.time_ns())
+    await client.responses.retrieve(response_id)
+    assert not metric_points().get(Meters.LLM_OPERATION_DURATION)
+
+
+def _assert_failed_poll_span_only(points, span_exporter):
+    [span] = span_exporter.get_finished_spans()
+    assert span.status.status_code == StatusCode.ERROR
+    assert span.attributes[ERROR_TYPE] == "APIConnectionError"
+    assert not points.get(Meters.LLM_OPERATION_DURATION)
+    span_exporter.clear()
+
+
+@_retrieve_calls
+def test_failed_poll_records_no_duration(instrument_legacy, span_exporter, metric_points, retrieve):
+    response_id, respond = _background("queued", None, "completed")
+    client = _client(respond)
+    client.responses.create(model="gpt-4.1-nano", input="hello", background=True)
+    with pytest.raises(openai.APIConnectionError):
+        retrieve(client.responses, response_id)
+
+    _assert_failed_poll_span_only(metric_points(), span_exporter)
+    retrieve(client.responses, response_id)
+    _assert_success_metrics(metric_points(), span_exporter, time.time_ns())
+
+
+@pytest.mark.asyncio
+@_retrieve_calls
+async def test_async_failed_poll_records_no_duration(instrument_legacy, span_exporter, metric_points, retrieve):
+    response_id, respond = _background("queued", None, "completed")
+    client = _async_client(respond)
+    await client.responses.create(model="gpt-4.1-nano", input="hello", background=True)
+    with pytest.raises(openai.APIConnectionError):
+        await retrieve(client.responses, response_id)
+
+    _assert_failed_poll_span_only(metric_points(), span_exporter)
+    await retrieve(client.responses, response_id)
+    _assert_success_metrics(metric_points(), span_exporter, time.time_ns())
+
+
+def _assert_cancel_metrics(points, span_exporter, finished_ns):
+    _assert_success_metrics(points, span_exporter, finished_ns, usage=False)
+    [span] = span_exporter.get_finished_spans()
+    assert span.status.status_code != StatusCode.ERROR
+
+
+def test_cancel_records_one_duration_for_tracked_response(instrument_legacy, span_exporter, metric_points):
+    response_id, respond = _background("queued", "cancelled", "cancelled", "cancelled")
+    client = _client(respond)
+    client.responses.create(model="gpt-4.1-nano", input="hello", background=True)
+    client.responses.cancel(response_id)
+
+    _assert_cancel_metrics(metric_points(), span_exporter, time.time_ns())
+    # Neither the already-finished id nor an untracked one adds a point.
+    client.responses.retrieve(response_id)
+    client.responses.cancel(response_id)
+    untracked_id, untracked = _background("cancelled")
+    _client(untracked).responses.cancel(untracked_id)
+    assert not metric_points().get(Meters.LLM_OPERATION_DURATION)
+
+
+@pytest.mark.asyncio
+async def test_async_cancel_records_one_duration_for_tracked_response(
+    instrument_legacy, span_exporter, metric_points
+):
+    response_id, respond = _background("queued", "cancelled", "cancelled", "cancelled")
+    client = _async_client(respond)
+    await client.responses.create(model="gpt-4.1-nano", input="hello", background=True)
+    await client.responses.cancel(response_id)
+
+    _assert_cancel_metrics(metric_points(), span_exporter, time.time_ns())
+    await client.responses.retrieve(response_id)
+    await client.responses.cancel(response_id)
+    untracked_id, untracked = _background("cancelled")
+    await _async_client(untracked).responses.cancel(untracked_id)
+    assert not metric_points().get(Meters.LLM_OPERATION_DURATION)
