@@ -32,7 +32,6 @@ dev = [
   "ruff>=0.4.0",
 ]
 test = [
-  "ibm-watson-machine-learning==1.0.368",
   "opentelemetry-sdk>=1.38.0,<2",
   "pytest-asyncio>=1.3.0,<2",
   "pytest-recording>=0.13.1,<0.14.0",
