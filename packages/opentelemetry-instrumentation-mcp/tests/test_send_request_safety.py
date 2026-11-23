@@ -12,6 +12,7 @@ only way to make the instrumentation fail on demand without a real transport.
 """
 
 import asyncio
+import json
 import logging
 from types import SimpleNamespace
 
@@ -386,3 +387,72 @@ async def test_writer_tolerates_non_text_error_content(span_exporter, tracer_pro
     assert _instrumentation_records(caplog) == [], (
         f"instrumentation logged on a valid MCP response: {caplog.text}"
     )
+
+
+def _task_call(result):
+    """fastmcp 3's call_tool(task=True): the request goes in as the `request`
+    keyword and the result comes back wrapped in a RootModel union
+    (fastmcp.client.mixins.tools.ToolTaskResponseUnion). Built here so the test
+    doesn't depend on the installed fastmcp major."""
+    from mcp.types import CallToolRequest, CallToolRequestParams
+    from pydantic import RootModel
+
+    ToolTaskResponseUnion = RootModel[CallToolResult]
+    request = CallToolRequest(params=CallToolRequestParams(name="mytool", arguments={"a": 1}))
+    wrapper = ToolTaskResponseUnion(result)
+    return wrapper, {"request": request, "result_type": ToolTaskResponseUnion}
+
+
+async def test_wrapped_task_error_result_marks_the_span_as_error(tracer_provider, span_exporter):
+    """The isError check must look through the RootModel's .root."""
+    wrapper, kwargs = _task_call(
+        CallToolResult(content=[TextContent(type="text", text="boom")], isError=True)
+    )
+    instrumentor = McpInstrumentor()
+    returned = await instrumentor.patch_mcp_client(tracer_provider.get_tracer(__name__))(
+        _returning(wrapper), None, (), kwargs
+    )
+    assert returned is wrapper
+    span = span_exporter.get_finished_spans()[0]
+    assert span.name == "mytool.tool"
+    assert span.status.status_code is StatusCode.ERROR
+    assert span.attributes[ERROR_TYPE] == "tool_error"
+    assert "boom" in span.status.description
+
+
+async def test_wrapped_task_result_records_the_tool_output(tracer_provider, span_exporter):
+    wrapper, kwargs = _task_call(_ok_result())
+    instrumentor = McpInstrumentor()
+    returned = await instrumentor.patch_mcp_client(tracer_provider.get_tracer(__name__))(
+        _returning(wrapper), None, (), kwargs
+    )
+    assert returned is wrapper
+    span = span_exporter.get_finished_spans()[0]
+    assert span.status.status_code is StatusCode.OK
+    assert "ok" in span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT]
+
+
+async def test_task_accepted_result_leaves_the_tool_span_unset(tracer_provider, span_exporter):
+    """call_tool_as_task returns once the task is accepted (CreateTaskResult);
+    the tool's outcome comes later via tasks/result. The span must not claim a
+    successful tool run, and records the task so the result can be matched."""
+    from mcp.types import CallToolRequest, CallToolRequestParams, CreateTaskResult, Task
+    from pydantic import RootModel
+
+    ToolTaskResponseUnion = RootModel[CallToolResult | CreateTaskResult]
+    task = Task(
+        taskId="task-1", status="working", createdAt="2026-01-01T00:00:00Z",
+        lastUpdatedAt="2026-01-01T00:00:00Z", ttl=None,
+    )
+    wrapper = ToolTaskResponseUnion(CreateTaskResult(task=task))
+    request = CallToolRequest(params=CallToolRequestParams(name="mytool", arguments={"a": 1}))
+
+    returned = await McpInstrumentor().patch_mcp_client(tracer_provider.get_tracer(__name__))(
+        _returning(wrapper), None, (), {"request": request, "result_type": ToolTaskResponseUnion}
+    )
+    assert returned is wrapper
+    span = span_exporter.get_finished_spans()[0]
+    assert span.name == "mytool.tool"
+    assert span.status.status_code is StatusCode.UNSET
+    output = json.loads(span.attributes[SpanAttributes.TRACELOOP_ENTITY_OUTPUT])
+    assert output == {"task": {"id": "task-1", "status": "working"}}

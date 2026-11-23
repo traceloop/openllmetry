@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-transformers"
-version = "0.63.0"
+version = "0.63.1"
 description = "OpenTelemetry transformers instrumentation"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },
@@ -33,7 +33,7 @@ dev = [
   "pytest-sugar==1.0.0",
   "pytest>=8.2.2,<9",
   "ruff>=0.4.0",
-  "transformers>=4.51.3,<5",
+  "transformers>=5.10.0,<6",
 ]
 
 [build-system]
@@ -66,4 +66,4 @@ exclude = [
 select = ["E", "F", "W"]
 
 [tool.uv]
-constraint-dependencies = ["urllib3>=2.6.3", "pip>=25.3"]
+constraint-dependencies = ["urllib3>=2.8.0", "pip>=25.3"]

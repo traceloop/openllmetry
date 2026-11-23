@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-writer"
-version = "0.63.0"
+version = "0.63.1"
 description = "OpenTelemetry Writer instrumentation"
 authors = [
   { name = "Yan Tolstoy", email = "yan.talstoi@writer.com" },
@@ -20,7 +20,7 @@ dependencies = [
 Repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-writer"
 
 [project.optional-dependencies]
-instruments = ["writer"]
+instruments = ["writer-sdk>=2.2.1,<3"]
 
 [project.entry-points."opentelemetry_instrumentor"]
 writer = "opentelemetry.instrumentation.writer:WriterInstrumentor"
@@ -73,4 +73,4 @@ exclude = [
 select = ["E", "F", "W"]
 
 [tool.uv]
-constraint-dependencies = ["urllib3>=2.6.3", "pyarrow>=18.1.0", "pip>=25.3"]
+constraint-dependencies = ["urllib3>=2.8.0", "pyarrow>=18.1.0", "pip>=25.3"]
