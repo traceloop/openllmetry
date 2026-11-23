@@ -63,7 +63,7 @@ def emit_response_events(event_logger, llm_request_type: str, response):
                 _parse_response_event(index, llm_request_type, generation),
                 event_logger,
             )
-    else:
+    elif llm_request_type in (LLMRequestTypeValues.CHAT, LLMRequestTypeValues.RERANK):
         emit_event(_parse_response_event(0, llm_request_type, response), event_logger)
 
 
@@ -159,8 +159,9 @@ def _parse_response_event(index: int, llm_request_type: str, response) -> Choice
             ],
             "role": "assistant",
         }
-    elif (
-        llm_request_type == LLMRequestTypeValues.CHAT or LLMRequestTypeValues.COMPLETION
+    elif llm_request_type in (
+        LLMRequestTypeValues.CHAT,
+        LLMRequestTypeValues.COMPLETION,
     ):
         event_params["message"] = {"content": response.text, "role": "assistant"}
         event_params["finish_reason"] = response.finish_reason
