@@ -4,7 +4,7 @@ import numpy as np
 from redis import Redis
 from redis.exceptions import ResponseError
 from redis.commands.search.field import TagField, VectorField, TextField
-from redis.commands.search.indexDefinition import IndexDefinition, IndexType
+from redis.commands.search.index_definition import IndexDefinition, IndexType
 from redis.commands.search.query import Query
 from openai import OpenAI
 from traceloop.sdk import Traceloop

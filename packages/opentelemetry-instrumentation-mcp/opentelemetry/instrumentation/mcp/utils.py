@@ -57,6 +57,28 @@ def error_status(description: str) -> Status:
     return Status(StatusCode.ERROR)
 
 
+def is_create_task_result(result) -> bool:
+    """Whether `result` is a task-augmented call's reply (CreateTaskResult).
+
+    It carries the accepted task, not the tool's result: the tool runs later
+    and its outcome is fetched separately with tasks/result.
+    """
+    return getattr(result, "task", None) is not None and not hasattr(result, "content")
+
+
+def record_tool_error(span, content) -> None:
+    """Mark `span` failed for a tool that returned an error result.
+
+    Not an exception: the tool ran and reported failure in its result
+    (``isError`` / ``is_error``), with the error text in its content.
+    """
+    span.set_attribute(ERROR_TYPE, "tool_error")
+    detail = error_detail(content)
+    span.set_status(
+        error_status(detail) if detail is not None else Status(StatusCode.ERROR)
+    )
+
+
 def error_detail(content) -> Optional[str]:
     """The error text of an MCP result's first content block, or a marker for one
     that has none.
