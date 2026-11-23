@@ -29,7 +29,6 @@ mistralai = "opentelemetry.instrumentation.mistralai:MistralAiInstrumentor"
 dev = [
   "autopep8>=2.2.0,<3",
   "pytest>=9.0.3,<10",
-  "pytest>=9.0.3,<10",
   "ruff>=0.4.0",
 ]
 test = [
