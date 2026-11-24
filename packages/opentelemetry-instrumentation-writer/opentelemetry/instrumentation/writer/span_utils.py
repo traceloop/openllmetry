@@ -90,6 +90,19 @@ def set_model_response_attributes(
     set_span_attribute(
         span, SpanAttributes.LLM_RESPONSE_MODEL, response_dict.get("model")
     )
+    set_span_attribute(
+        span, GenAIAttributes.GEN_AI_RESPONSE_ID, response_dict.get("id")
+    )
+
+    finish_reasons = [
+        choice.get("finish_reason")
+        for choice in (response_dict.get("choices") or [])
+        if choice and choice.get("finish_reason")
+    ]
+    if finish_reasons:
+        set_span_attribute(
+            span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, finish_reasons
+        )
 
     usage = response_dict.get("usage") or {}
     prompt_tokens = usage.get("prompt_tokens")

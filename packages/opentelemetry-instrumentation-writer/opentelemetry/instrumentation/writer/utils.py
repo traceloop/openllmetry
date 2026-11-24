@@ -128,9 +128,9 @@ def initialize_accumulated_response(stream):
 
 
 def initialize_choice():
-    return ChatCompletionChoice(
+    return ChatCompletionChoice.model_construct(
         index=0,
-        finish_reason="stop",
+        finish_reason=None,
         message=ChatCompletionMessage(
             content="",
             role="assistant",

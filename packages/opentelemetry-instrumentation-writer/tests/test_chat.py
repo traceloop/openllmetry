@@ -75,6 +75,9 @@ def test_writer_chat_legacy(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
 
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_ID) == "57e4f58f-f7b1-41d8-be17-a6279c073aad"
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -127,6 +130,9 @@ def test_writer_chat_with_events_with_content(
     ) + writer_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_ID) == "57e4f58f-f7b1-41d8-be17-a6279c073aad"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -191,6 +197,9 @@ def test_writer_chat_with_events_with_no_content(
     ) + writer_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_ID) == "57e4f58f-f7b1-41d8-be17-a6279c073aad"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -607,6 +616,9 @@ def test_writer_streaming_chat_legacy(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
 
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_ID) == "1533878c-5636-44cf-a696-6a7b02304607"
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -666,6 +678,9 @@ def test_writer_streaming_chat_with_events_with_content(
     ) + writer_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_ID) == "1533878c-5636-44cf-a696-6a7b02304607"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -736,6 +751,9 @@ def test_writer_streaming_chat_with_events_with_no_content(
     ) + writer_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_ID) == "1533878c-5636-44cf-a696-6a7b02304607"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -1200,6 +1218,8 @@ def test_writer_chat_tool_call_request_legacy(
         == response.choices[0].message.role
     )
 
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("tool_calls",)
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -1269,6 +1289,8 @@ def test_writer_chat_tool_call_request_with_events_with_content(
     ) + writer_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("tool_calls",)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -1365,6 +1387,8 @@ def test_writer_chat_tool_call_request_with_events_with_no_content(
     ) + writer_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("tool_calls",)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -1485,6 +1509,8 @@ def test_writer_streaming_chat_tool_call_request_legacy(
         == "assistant"
     )
 
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("tool_calls",)
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -1558,6 +1584,8 @@ def test_writer_streaming_chat_tool_call_request_with_events_with_content(
     ) + writer_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("tool_calls",)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -1657,6 +1685,8 @@ def test_writer_streaming_chat_tool_call_request_with_events_with_no_content(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
 
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("tool_calls",)
+
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
 
@@ -1743,6 +1773,8 @@ def test_writer_chat_multiple_choices_legacy(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
 
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop", "stop")
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -1797,6 +1829,8 @@ def test_writer_chat_multiple_choices_with_events_with_content(
     ) + writer_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop", "stop")
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -1870,6 +1904,8 @@ def test_writer_chat_multiple_choices_with_events_with_no_content(
     ) + writer_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop", "stop")
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -1959,6 +1995,8 @@ def test_writer_streaming_chat_multiple_choices_legacy(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
 
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop", "stop")
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -2021,6 +2059,8 @@ def test_writer_streaming_chat_multiple_choices_with_events_with_content(
     ) + writer_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop", "stop")
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -2101,6 +2141,8 @@ def test_writer_streaming_chat_multiple_choices_with_events_with_no_content(
     ) + writer_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop", "stop")
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -2814,6 +2856,9 @@ async def test_writer_async_chat_legacy(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
 
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_ID) == "57e4f58f-f7b1-41d8-be17-a6279c073aad"
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -2867,6 +2912,9 @@ async def test_writer_async_chat_with_events_with_content(
     ) + writer_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_ID) == "57e4f58f-f7b1-41d8-be17-a6279c073aad"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -2931,6 +2979,9 @@ async def test_writer_async_chat_with_events_with_no_content(
     ) + writer_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_ID) == "57e4f58f-f7b1-41d8-be17-a6279c073aad"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -3351,6 +3402,9 @@ async def test_writer_async_streaming_chat_legacy(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
 
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_ID) == "1533878c-5636-44cf-a696-6a7b02304607"
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -3411,6 +3465,9 @@ async def test_writer_async_streaming_chat_with_events_with_content(
     ) + writer_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_ID) == "1533878c-5636-44cf-a696-6a7b02304607"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -3482,6 +3539,9 @@ async def test_writer_async_streaming_chat_with_events_with_no_content(
     ) + writer_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_ID) == "1533878c-5636-44cf-a696-6a7b02304607"
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -3950,6 +4010,8 @@ async def test_writer_async_chat_tool_call_request_legacy(
         == response.choices[0].message.role
     )
 
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("tool_calls",)
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -4020,6 +4082,8 @@ async def test_writer_async_chat_tool_call_request_with_events_with_content(
     ) + writer_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("tool_calls",)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -4117,6 +4181,8 @@ async def test_writer_async_chat_tool_call_request_with_events_with_no_content(
     ) + writer_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("tool_calls",)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -4238,6 +4304,8 @@ async def test_writer_async_streaming_chat_tool_call_request_legacy(
         == "assistant"
     )
 
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("tool_calls",)
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -4312,6 +4380,8 @@ async def test_writer_async_streaming_chat_tool_call_request_with_events_with_co
     ) + writer_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("tool_calls",)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -4412,6 +4482,8 @@ async def test_writer_async_streaming_chat_tool_call_request_with_events_with_no
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
 
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("tool_calls",)
+
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
 
@@ -4499,6 +4571,8 @@ async def test_writer_async_chat_multiple_choices_legacy(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
 
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop", "stop")
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -4554,6 +4628,8 @@ async def test_writer_async_chat_multiple_choices_with_events_with_content(
     ) + writer_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop", "stop")
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -4628,6 +4704,8 @@ async def test_writer_async_chat_multiple_choices_with_events_with_no_content(
     ) + writer_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop", "stop")
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -4718,6 +4796,8 @@ async def test_writer_async_streaming_chat_multiple_choices_legacy(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
 
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop", "stop")
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -4781,6 +4861,8 @@ async def test_writer_async_streaming_chat_multiple_choices_with_events_with_con
     ) + writer_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop", "stop")
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
@@ -4862,6 +4944,8 @@ async def test_writer_async_streaming_chat_multiple_choices_with_events_with_no_
     ) + writer_span.attributes.get(
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS
     )
+
+    assert writer_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop", "stop")
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 3
