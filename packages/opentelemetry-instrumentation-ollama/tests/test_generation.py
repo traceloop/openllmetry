@@ -11,7 +11,9 @@ def test_ollama_generation_legacy(
     instrument_legacy, ollama_client, span_exporter, log_exporter
 ):
     response = ollama_client.generate(
-        model="llama3", prompt="Tell me a joke about OpenTelemetry"
+        model="llama3",
+        prompt="Tell me a joke about OpenTelemetry",
+        options={"temperature": 0.5, "top_p": 0.9, "num_predict": 100, "stop": "END"},
     )
 
     spans = span_exporter.get_finished_spans()
@@ -23,6 +25,10 @@ def test_ollama_generation_legacy(
     )
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
+    assert ollama_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE) == 0.5
+    assert ollama_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_TOP_P) == 0.9
+    assert ollama_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS) == 100
+    assert ollama_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES) == ("END",)
     assert (
         ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
         == "Tell me a joke about OpenTelemetry"

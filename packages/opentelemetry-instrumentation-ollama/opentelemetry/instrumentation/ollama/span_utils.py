@@ -1,4 +1,5 @@
 import json
+from collections.abc import Mapping
 
 from opentelemetry.instrumentation.ollama.utils import dont_throw, should_send_prompts
 from opentelemetry.semconv._incubating.attributes import (
@@ -47,12 +48,42 @@ def set_input_attributes(span, llm_request_type, kwargs):
             )
 
 
+_REQUEST_OPTION_ATTRIBUTES = {
+    "temperature": GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE,
+    "top_p": GenAIAttributes.GEN_AI_REQUEST_TOP_P,
+    "top_k": GenAIAttributes.GEN_AI_REQUEST_TOP_K,
+    "num_predict": GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS,
+    "seed": GenAIAttributes.GEN_AI_REQUEST_SEED,
+    "frequency_penalty": GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY,
+    "presence_penalty": GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY,
+}
+
+
+def _set_request_options(span, options):
+    if not isinstance(options, Mapping):
+        return
+    for option, attribute in _REQUEST_OPTION_ATTRIBUTES.items():
+        value = options.get(option)
+        if option == "num_predict" and isinstance(value, (int, float)) and value < 0:
+            continue
+        _set_span_attribute(span, attribute, value)
+
+    stop = options.get("stop")
+    if isinstance(stop, str):
+        stop = (stop,)
+    if isinstance(stop, (list, tuple)):
+        stop = tuple(s for s in stop if isinstance(s, str) and s)
+        if stop:
+            span.set_attribute(GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES, stop)
+
+
 @dont_throw
 def set_model_input_attributes(span, kwargs):
     if not span.is_recording():
         return
     json_data = kwargs.get("json", {})
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, json_data.get("model"))
+    _set_request_options(span, json_data.get("options"))
     _set_span_attribute(
         span, SpanAttributes.LLM_IS_STREAMING, kwargs.get("stream") or False
     )
