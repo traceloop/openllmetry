@@ -37,7 +37,7 @@ from opentelemetry.instrumentation.writer.version import __version__
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("writer-sdk >= 2.2.1, < 3",)
+_instruments = ("writer-sdk >= 2.2.1, < 4",)
 
 WRAPPED_METHODS = [
     {
