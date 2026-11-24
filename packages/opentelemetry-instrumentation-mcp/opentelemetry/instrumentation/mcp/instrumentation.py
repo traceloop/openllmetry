@@ -21,6 +21,7 @@ from opentelemetry.instrumentation.mcp.utils import (
     dont_throw,
     error_detail,
     error_status,
+    field,
     guard_trace,
     guarded_span,
     is_create_task_result,
@@ -782,14 +783,14 @@ class InstrumentedStreamWriter(ObjectProxy):  # type: ignore
                             SpanAttributes.MCP_RESPONSE_VALUE,
                             f"{serialize(request.result)}",
                         )
-                    if "isError" in request.result:
-                        if request.result["isError"] is True:
-                            detail = error_detail(request.result.get("content"))
-                            span.set_status(
-                                error_status(detail)
-                                if detail is not None
-                                else Status(StatusCode.ERROR)
-                            )
+                    # A raw JSON dict from the server, or a model object.
+                    if field(request.result, "isError") is True:
+                        detail = error_detail(field(request.result, "content"))
+                        span.set_status(
+                            error_status(detail)
+                            if detail is not None
+                            else Status(StatusCode.ERROR)
+                        )
                 if hasattr(request, "id"):
                     span.set_attribute(SpanAttributes.MCP_REQUEST_ID, f"{request.id}")
 
