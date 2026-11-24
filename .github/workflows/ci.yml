@@ -10,6 +10,10 @@ on:
 
 env:
   PIP_NO_CACHE_DIR: 1
+  # nltk>=3.10 refuses to read hardlinked data files (CWE-59 guard), and uv
+  # hardlinks packages from its cache, which breaks llama-index's bundled nltk
+  # stopwords. Copy instead, for every package that pulls nltk.
+  UV_LINK_MODE: copy
 
 jobs:
   lint-pr:
@@ -20,7 +24,7 @@ jobs:
       pull-requests: read
     steps:
       - name: Validate PR title
-        uses: amannn/action-semantic-pull-request@v5
+        uses: amannn/action-semantic-pull-request@2252a14e810aa9b85c2d560bd7070c802206ecf6 # v6.1.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -44,26 +48,28 @@ jobs:
           sudo rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* || true
           # Show available space
           df -h
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0
           ref: ${{  github.event.pull_request.head.sha }}
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: 3.11
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: "latest"
+          enable-cache: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 18
+          node-version: 22
 
-      - uses: nrwl/nx-set-shas@v4
+      - uses: nrwl/nx-set-shas@e602fada7ad5987b0f7b1905e7a99ea1c661514c # v5.1.0
       - run: npm ci --cache ~/.npm --prefer-offline
       - name: Clean npm cache
         run: npm cache clean --force || true
@@ -94,25 +100,27 @@ jobs:
           sudo rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* || true
           # Show available space
           df -h
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: "latest"
+          enable-cache: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 18
+          node-version: 22
 
-      - uses: nrwl/nx-set-shas@v4
+      - uses: nrwl/nx-set-shas@e602fada7ad5987b0f7b1905e7a99ea1c661514c # v5.1.0
 
       - run: npm ci --cache ~/.npm --prefer-offline
       - name: Clean npm cache
@@ -135,7 +143,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: "read"
-      id-token: "write"
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
@@ -156,26 +163,28 @@ jobs:
           sudo rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* || true
           # Show available space
           df -h
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0
           ref: ${{  github.event.pull_request.head.sha }}
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: "latest"
+          enable-cache: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 18
+          node-version: 22
 
-      - uses: nrwl/nx-set-shas@v4
+      - uses: nrwl/nx-set-shas@e602fada7ad5987b0f7b1905e7a99ea1c661514c # v5.1.0
 
       - run: npm ci --cache ~/.npm --prefer-offline
       - name: Clean npm cache

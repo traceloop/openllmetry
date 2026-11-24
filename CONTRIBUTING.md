@@ -15,6 +15,10 @@ npm ci
 
 Make sure `uv` is installed for python packages managed by `uv`.
 
+On Linux, set `export UV_LINK_MODE=copy` before installing. uv hardlinks packages
+from its cache there, and nltk>=3.10 (pulled in by llama-index, e.g. in the
+llamaindex instrumentation and the sample app) refuses to read hardlinked data files.
+
 Generally, for setting up and testing an individual package, run the following from repo root.
 
 ```shell

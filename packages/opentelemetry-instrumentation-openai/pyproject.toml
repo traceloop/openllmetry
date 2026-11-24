@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-openai"
-version = "0.62.3"
+version = "0.63.1"
 description = "OpenTelemetry OpenAI instrumentation"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },
@@ -72,4 +72,4 @@ exclude = [
 select = ["E", "F", "W"]
 
 [tool.uv]
-constraint-dependencies = ["urllib3>=2.6.3", "pip>=25.3"]
+constraint-dependencies = ["urllib3>=2.8.0", "pip>=25.3"]

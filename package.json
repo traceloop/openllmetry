@@ -5,8 +5,17 @@
   "scripts": {},
   "private": true,
   "devDependencies": {
-    "@nxlv/python": "^22.0.5",
-    "nx": "^20.8.1"
+    "@nx/devkit": "^22.7.12",
+    "@nxlv/python": "^22.2.2",
+    "nx": "^22.7.12"
+  },
+  "overrides": {
+    "axios": "^1.21.1",
+    "follow-redirects": "^1.16.3",
+    "smol-toml": "^1.9.1",
+    "nx": {
+      "brace-expansion": "^5.0.13"
+    }
   },
   "workspaces": [
     "packages/*"
