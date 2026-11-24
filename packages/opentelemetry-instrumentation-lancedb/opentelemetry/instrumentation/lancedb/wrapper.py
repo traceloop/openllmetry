@@ -1,4 +1,4 @@
-from opentelemetry.instrumentation.lancedb.utils import dont_throw
+from opentelemetry.instrumentation.lancedb.utils import dont_throw, get_call_arguments
 from opentelemetry.semconv.trace import SpanAttributes
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.trace.status import Status, StatusCode
@@ -42,12 +42,13 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
         span.set_attribute(SpanAttributes.DB_SYSTEM, "lancedb")
         span.set_attribute(SpanAttributes.DB_OPERATION, to_wrap.get("method"))
 
+        call_args = get_call_arguments(wrapped, args, kwargs)
         if to_wrap.get("method") == "add":
-            _set_add_attributes(span, kwargs)
+            _set_add_attributes(span, call_args)
         elif to_wrap.get("method") == "search":
-            _set_search_attributes(span, kwargs)
+            _set_search_attributes(span, call_args)
         elif to_wrap.get("method") == "delete":
-            _set_delete_attributes(span, kwargs)
+            _set_delete_attributes(span, call_args)
 
         try:
             return_value = wrapped(*args, **kwargs)
