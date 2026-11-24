@@ -74,3 +74,29 @@ def test_streaming_with_api_usage_and_events(
     # Check event logs
     logs = log_exporter.get_finished_logs()
     assert len(logs) >= 2  # At least user message and assistant choice
+
+
+@pytest.mark.vcr
+def test_streaming_reasoning_tokens(
+    instrument_legacy, span_exporter, api_usage_provider_client
+):
+    """Streaming usage carries the same completion token breakdown as a non-streaming
+    response, so its reasoning part has to reach the span too (#4660)."""
+    response = api_usage_provider_client.chat.completions.create(
+        model="deepseek-chat",
+        messages=[{"role": "user", "content": "Count r's in strawberry"}],
+        stream=True,
+    )
+
+    for chunk in response:
+        pass  # Just consume the stream
+
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+
+    span = spans[0]
+
+    assert span.attributes.get(SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS) == 64
+    # The rest of the streamed usage is still recorded.
+    assert span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 12
+    assert span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) == 89
