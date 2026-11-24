@@ -663,11 +663,22 @@ class RealtimeConnectionManagerWrapper:
                 GenAiOperationNameValues.CHAT.value,
             )
 
-        # Enter the underlying connection manager
-        connection = await self._connection_manager.__aenter__()
+        try:
+            # Enter the underlying connection manager
+            connection = await self._connection_manager.__aenter__()
 
-        # Wrap the connection
-        self._connection = RealtimeConnectionWrapper(connection, self._state)
+            # Wrap the connection
+            self._connection = RealtimeConnectionWrapper(connection, self._state)
+        except Exception as ex:  # pylint: disable=broad-except
+            # __aexit__ is never invoked when __aenter__ raises, so the session
+            # span has to be ended here or it stays unended forever.
+            if self._state.session_span.is_recording():
+                self._state.session_span.record_exception(ex)
+                self._state.session_span.set_status(
+                    Status(StatusCode.ERROR, str(ex))
+                )
+            self._state.session_span.end()
+            raise
         return self._connection
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
