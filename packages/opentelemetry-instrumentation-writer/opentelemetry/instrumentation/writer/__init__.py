@@ -77,6 +77,8 @@ def _update_accumulated_response(accumulated_response, chunk):
     if isinstance(accumulated_response, ChatCompletion) and isinstance(
         chunk, ChatCompletionChunk
     ):
+        if chunk.id:
+            accumulated_response.id = chunk.id
         if chunk.service_tier:
             accumulated_response.service_tier = chunk.service_tier
         if chunk.system_fingerprint:

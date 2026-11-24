@@ -69,7 +69,7 @@ def emit_choice_events(response, event_logger) -> None:
                         role=message.get("role", "assistant"),
                         tool_calls=message.get("tool_calls") or [],
                     ),
-                    finish_reason=choice.get("finish_reason"),
+                    finish_reason=choice.get("finish_reason") or "unknown",
                 ),
                 event_logger=event_logger,
             )
