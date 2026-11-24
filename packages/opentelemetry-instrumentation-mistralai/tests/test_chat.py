@@ -1,10 +1,20 @@
 import pytest
-from mistralai.models import UserMessage
+from mistralai.models import (
+    AssistantMessage,
+    ChatCompletionChoice,
+    ChatCompletionResponse,
+    UsageInfo,
+    UserMessage,
+)
 from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.instrumentation.mistralai import (
+    _set_model_input_attributes,
+    _set_model_response_attributes,
+)
+from opentelemetry.semconv_ai import LLMRequestTypeValues, SpanAttributes
 
 
 @pytest.mark.vcr
@@ -47,6 +57,8 @@ def test_mistralai_chat_legacy(
         == "e9459fcd56c742e0875167c9926c6aae"
     )
 
+    assert mistral_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -84,6 +96,8 @@ def test_mistralai_chat_with_events_with_content(
         mistral_span.attributes.get("gen_ai.response.id")
         == "864dc78a89b648cba3962647b8df4d3e"
     )
+
+    assert mistral_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -140,6 +154,8 @@ def test_mistralai_chat_with_events_with_no_content(
         mistral_span.attributes.get("gen_ai.response.id")
         == "b8b26a4542e14918b00f2886dc7913a6"
     )
+
+    assert mistral_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -202,6 +218,8 @@ def test_mistralai_streaming_chat_legacy(
         == "6dc321029f5d4aa5899c1b38c9657a61"
     )
 
+    assert mistral_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -243,6 +261,8 @@ def test_mistralai_streaming_chat_with_events_with_content(
         mistral_span.attributes.get("gen_ai.response.id")
         == "d3a0f557943648c49fb019bc65a64334"
     )
+
+    assert mistral_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -303,6 +323,8 @@ def test_mistralai_streaming_chat_with_events_with_no_content(
         == "d663cffc326049acb5df51b0a1d60fb6"
     )
 
+    assert mistral_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
+
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
 
@@ -362,6 +384,8 @@ async def test_mistralai_async_chat_legacy(
         == "bda521177c084183bba5eaf32ad99027"
     )
 
+    assert mistral_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -401,6 +425,8 @@ async def test_mistralai_async_chat_with_events_with_content(
         mistral_span.attributes.get("gen_ai.response.id")
         == "cdd110acbcaf4cfc8a031783168d6389"
     )
+
+    assert mistral_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -464,6 +490,8 @@ async def test_mistralai_async_chat_with_events_with_no_content(
         == "d9f0293174c549028d43ab5f90607618"
     )
 
+    assert mistral_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
+
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
 
@@ -523,6 +551,8 @@ async def test_mistralai_async_streaming_chat_legacy(
         == "6dc321029f5d4aa5899c1b38c9657a61"
     )
 
+    assert mistral_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -562,6 +592,8 @@ async def test_mistralai_async_streaming_chat_with_events_with_content(
         mistral_span.attributes.get("gen_ai.response.id")
         == "9c4b9456d7c642149a28f46bb36c3247"
     )
+
+    assert mistral_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -622,6 +654,8 @@ async def test_mistralai_async_streaming_chat_with_events_with_no_content(
         == "f5edd68bc31641f7a74d8d419da04b62"
     )
 
+    assert mistral_span.attributes.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS) == ("stop",)
+
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
 
@@ -658,6 +692,142 @@ def test_mistralai_chat_with_cache_tokens(
         mistral_span.attributes.get(SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS)
         == 10
     )
+
+
+def _record_span(tracer_provider, span_exporter, fn):
+    span = tracer_provider.get_tracer(__name__).start_span("test")
+    fn(span)
+    span.end()
+    return span_exporter.get_finished_spans()[0]
+
+
+def test_request_parameters_are_recorded(tracer_provider, span_exporter):
+    kwargs = {
+        "model": "mistral-tiny",
+        "temperature": 0.3,
+        "top_p": 0.8,
+        "max_tokens": 64,
+        "random_seed": 7,
+        "stop": ["END", "STOP"],
+        "presence_penalty": 0.5,
+        "frequency_penalty": 0.25,
+    }
+    span = _record_span(
+        tracer_provider,
+        span_exporter,
+        lambda s: _set_model_input_attributes(s, {"streaming": False}, kwargs),
+    )
+    attrs = span.attributes
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.3
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.8
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 64
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_SEED] == 7
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES] == ("END", "STOP")
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY] == 0.5
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY] == 0.25
+
+
+def test_request_parameters_single_stop_string(tracer_provider, span_exporter):
+    span = _record_span(
+        tracer_provider,
+        span_exporter,
+        lambda s: _set_model_input_attributes(
+            s, {"streaming": True}, {"model": "mistral-tiny", "stop": "END"}
+        ),
+    )
+    assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES] == ("END",)
+
+
+def test_unset_request_parameters_are_not_recorded(tracer_provider, span_exporter):
+    span = _record_span(
+        tracer_provider,
+        span_exporter,
+        lambda s: _set_model_input_attributes(
+            s, {"streaming": False}, {"model": "mistral-tiny", "temperature": None}
+        ),
+    )
+    for name in (
+        GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE,
+        GenAIAttributes.GEN_AI_REQUEST_TOP_P,
+        GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS,
+        GenAIAttributes.GEN_AI_REQUEST_SEED,
+        GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES,
+        GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY,
+        GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY,
+    ):
+        assert name not in span.attributes
+
+
+def test_finish_reasons_for_multiple_choices(tracer_provider, span_exporter):
+    response = ChatCompletionResponse(
+        id="id",
+        object="chat.completion",
+        created=0,
+        model="mistral-tiny",
+        choices=[
+            ChatCompletionChoice(
+                index=0,
+                message=AssistantMessage(content="a"),
+                finish_reason="stop",
+            ),
+            ChatCompletionChoice(
+                index=1,
+                message=AssistantMessage(content="b"),
+                finish_reason="length",
+            ),
+        ],
+        usage=UsageInfo(prompt_tokens=1, completion_tokens=1, total_tokens=2),
+    )
+    span = _record_span(
+        tracer_provider,
+        span_exporter,
+        lambda s: _set_model_response_attributes(s, LLMRequestTypeValues.CHAT, response),
+    )
+    assert span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop", "length")
+
+
+def test_finish_reasons_are_recorded_without_usage(tracer_provider, span_exporter):
+    response = ChatCompletionResponse.model_construct(
+        id="id",
+        object="chat.completion",
+        created=0,
+        model="mistral-tiny",
+        choices=[
+            ChatCompletionChoice(
+                index=0,
+                message=AssistantMessage(content="a"),
+                finish_reason="stop",
+            ),
+        ],
+        usage=None,
+    )
+    span = _record_span(
+        tracer_provider,
+        span_exporter,
+        lambda s: _set_model_response_attributes(s, LLMRequestTypeValues.CHAT, response),
+    )
+    assert span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)
+
+
+def test_missing_finish_reason_is_skipped(tracer_provider, span_exporter):
+    response = ChatCompletionResponse(
+        id="id",
+        object="chat.completion",
+        created=0,
+        model="mistral-tiny",
+        choices=[
+            ChatCompletionChoice(
+                index=0, message=AssistantMessage(content="a"), finish_reason=None
+            )
+        ],
+        usage=UsageInfo(prompt_tokens=1, completion_tokens=1, total_tokens=2),
+    )
+    span = _record_span(
+        tracer_provider,
+        span_exporter,
+        lambda s: _set_model_response_attributes(s, LLMRequestTypeValues.CHAT, response),
+    )
+    assert GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS not in span.attributes
 
 
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
