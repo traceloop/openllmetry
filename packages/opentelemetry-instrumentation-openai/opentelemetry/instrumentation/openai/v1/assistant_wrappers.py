@@ -110,6 +110,26 @@ def runs_retrieve_wrapper(tracer, wrapped, instance, args, kwargs):
         raise
 
 
+def _extract_thread_message_text(content):
+    """Return the text value of the first text content block in a thread message.
+
+    Thread message content is a list of typed blocks (text, image_file,
+    image_url, ...); only text blocks carry a ``text.value``. Returns None
+    when the message has no readable text block.
+    """
+    if not isinstance(content, list):
+        return None
+    for block in content:
+        if not isinstance(block, dict):
+            continue
+        text = block.get("text")
+        if isinstance(text, dict):
+            value = text.get("value")
+            if isinstance(value, str):
+                return value
+    return None
+
+
 @_with_tracer_wrapper
 def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
@@ -187,7 +207,9 @@ def messages_list_wrapper(tracer, wrapped, instance, args, kwargs):
 
         for msg in messages:
             content = msg.get("content")
-            message_content = content[0].get("text").get("value")
+            message_content = _extract_thread_message_text(content)
+            if message_content is None:
+                continue
             message_role = msg.get("role")
             if message_role in ["user", "system"]:
                 if should_emit_events():
