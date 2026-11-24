@@ -91,6 +91,12 @@ def set_model_response_attributes(span, token_histogram, llm_request_type, respo
 
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response.get("model"))
 
+    done_reason = response.get("done_reason")
+    if done_reason and isinstance(done_reason, str):
+        _set_span_attribute(
+            span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, (done_reason,)
+        )
+
     input_tokens = response.get("prompt_eval_count") or 0
     output_tokens = response.get("eval_count") or 0
 

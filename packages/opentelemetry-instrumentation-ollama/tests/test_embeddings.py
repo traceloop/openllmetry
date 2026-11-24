@@ -28,6 +28,8 @@ def test_ollama_embeddings_legacy(
         == "Tell me a joke about OpenTelemetry"
     )
 
+    assert GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS not in ollama_span.attributes
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0

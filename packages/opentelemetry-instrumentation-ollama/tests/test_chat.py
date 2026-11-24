@@ -47,6 +47,10 @@ def test_ollama_chat_legacy(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
+    assert ollama_span.attributes.get(
+        GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS
+    ) == ("stop",)
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -80,6 +84,10 @@ def test_ollama_chat_with_events_with_content(
     ) == ollama_span.attributes.get(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
+
+    assert ollama_span.attributes.get(
+        GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS
+    ) == ("stop",)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -388,6 +396,10 @@ def test_ollama_streaming_chat_legacy(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
+    assert ollama_span.attributes.get(
+        GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS
+    ) == ("stop",)
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -534,6 +546,10 @@ async def test_ollama_async_chat_legacy(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
+    assert ollama_span.attributes.get(
+        GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS
+    ) == ("stop",)
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -678,6 +694,10 @@ async def test_ollama_async_streaming_chat_legacy(
         GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS
     ) + ollama_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS)
 
+    assert ollama_span.attributes.get(
+        GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS
+    ) == ("stop",)
+
     logs = log_exporter.get_finished_logs()
     assert (
         len(logs) == 0
@@ -815,6 +835,27 @@ def test_token_histogram_recording():
             GenAIAttributes.GEN_AI_RESPONSE_MODEL: "llama3",
         },
     )
+
+
+def _recorded_finish_reasons(response, llm_request_type=LLMRequestTypeValues.CHAT):
+    span = MagicMock()
+    set_model_response_attributes(span, None, llm_request_type, response)
+    return {
+        call.args[0]: call.args[1] for call in span.set_attribute.call_args_list
+    }.get(GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS)
+
+
+@pytest.mark.parametrize("done_reason", [None, ""])
+def test_finish_reasons_not_recorded_without_done_reason(done_reason):
+    response = {"model": "llama3", "prompt_eval_count": 7, "eval_count": 10}
+    if done_reason is not None:
+        response["done_reason"] = done_reason
+    assert _recorded_finish_reasons(response) is None
+
+
+def test_finish_reasons_recorded_from_done_reason():
+    response = {"model": "llama3", "done_reason": "length"}
+    assert _recorded_finish_reasons(response) == ("length",)
 
 
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
