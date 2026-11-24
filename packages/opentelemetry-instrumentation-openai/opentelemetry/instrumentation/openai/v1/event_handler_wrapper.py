@@ -41,8 +41,15 @@ class EventHandleWrapper(AssistantEventHandler):
                 GenAIAttributes.GEN_AI_OUTPUT_MESSAGES,
                 json_dumps(self._output_messages),
             )
-        self._original_handler.on_end()
-        self._span.end()
+        try:
+            self._original_handler.on_end()
+        except Exception as exception:
+            self._span.set_attribute(ERROR_TYPE, exception.__class__.__name__)
+            self._span.record_exception(exception)
+            self._span.set_status(Status(StatusCode.ERROR, str(exception)))
+            raise
+        finally:
+            self._span.end()
 
     @override
     def on_event(self, event):
