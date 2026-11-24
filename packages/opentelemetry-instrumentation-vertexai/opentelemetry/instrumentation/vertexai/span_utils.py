@@ -290,10 +290,14 @@ def set_response_attributes(span, llm_model, generation_text):
 
 
 @dont_throw
-def set_model_response_attributes(span, llm_model, token_usage):
+def set_model_response_attributes(span, llm_model, token_usage, finish_reasons=None):
     if not span.is_recording():
         return
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, llm_model)
+    if finish_reasons:
+        _set_span_attribute(
+            span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, finish_reasons
+        )
 
     if token_usage:
         # candidates_token_count excludes thinking tokens, which are billed as
