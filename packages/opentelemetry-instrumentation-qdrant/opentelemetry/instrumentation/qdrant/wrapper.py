@@ -62,6 +62,7 @@ def _wrap(tracer, to_wrap, wrapped, instance, args, kwargs):
             "search_groups",
             "query",
             "query_points",
+            "query_points_groups",
             "discover",
             "recommend",
             "recommend_groups",
@@ -81,6 +82,8 @@ def _set_collection_name_attribute(span, method, args, kwargs):
     attribute_method = method
     if method == "query_points":
         attribute_method = "search"
+    elif method == "query_points_groups":
+        attribute_method = "search_groups"
     elif method == "query_batch_points":
         attribute_method = "search_batch"
 
