@@ -11,7 +11,9 @@ def test_ollama_embeddings_legacy(
     instrument_legacy, ollama_client, span_exporter, log_exporter
 ):
     ollama_client.embeddings(
-        model="llama3", prompt="Tell me a joke about OpenTelemetry"
+        model="llama3",
+        prompt="Tell me a joke about OpenTelemetry",
+        options={"temperature": 0.5},
     )
 
     spans = span_exporter.get_finished_spans()
@@ -23,6 +25,7 @@ def test_ollama_embeddings_legacy(
     )
     assert not ollama_span.attributes.get(f"{SpanAttributes.LLM_IS_STREAMING}")
     assert ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_REQUEST_MODEL}") == "llama3"
+    assert ollama_span.attributes.get(GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE) == 0.5
     assert (
         ollama_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
         == "Tell me a joke about OpenTelemetry"
