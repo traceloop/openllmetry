@@ -45,7 +45,13 @@ def emit_message_events(llm_request_type, args, kwargs, event_logger):
             content = message.get("content", {})
             images = message.get("images")
             if images is not None:
-                content["images"] = images
+                # Ollama message content is a plain string, so it cannot hold the
+                # images itself; keep both under the content key so they stay gated
+                # by the content-capture setting.
+                if isinstance(content, dict):
+                    content = {**content, "images": images}
+                else:
+                    content = {"content": content, "images": images}
             tool_calls = message.get("tool_calls", None)
             if tool_calls is not None:
                 tool_calls = [
