@@ -126,6 +126,34 @@ WRAPPED_METHODS = [
 ]
 
 
+FINISH_REASON_MAP = {
+    "STOP": "stop",
+    "MAX_TOKENS": "length",
+    "SAFETY": "content_filter",
+    "RECITATION": "content_filter",
+    "BLOCKLIST": "content_filter",
+    "PROHIBITED_CONTENT": "content_filter",
+    "SPII": "content_filter",
+    "MODEL_ARMOR": "content_filter",
+    "OTHER": "error",
+    "MALFORMED_FUNCTION_CALL": "error",
+}
+
+
+@dont_throw
+def get_finish_reasons(response):
+    reasons = []
+    for candidate in getattr(response, "candidates", None) or []:
+        finish_reason = getattr(candidate, "finish_reason", None)
+        if finish_reason is None:
+            continue
+        name = getattr(finish_reason, "name", None) or str(finish_reason)
+        mapped = FINISH_REASON_MAP.get(name)
+        if mapped:
+            reasons.append(mapped)
+    return reasons
+
+
 def is_streaming_response(response):
     return isinstance(response, types.GeneratorType)
 
@@ -135,8 +163,10 @@ def is_async_streaming_response(response):
 
 
 @dont_throw
-def handle_streaming_response(span, event_logger, llm_model, response, token_usage):
-    set_model_response_attributes(span, llm_model, token_usage)
+def handle_streaming_response(
+    span, event_logger, llm_model, response, token_usage, finish_reasons=None
+):
+    set_model_response_attributes(span, llm_model, token_usage, finish_reasons)
     if should_emit_events():
         emit_response_events(response, event_logger)
     else:
@@ -148,16 +178,18 @@ def handle_streaming_response(span, event_logger, llm_model, response, token_usa
 def _build_from_streaming_response(span, event_logger, response, llm_model):
     complete_response = ""
     token_usage = None
+    finish_reasons = None
     for item in response:
         item_to_yield = item
         complete_response += str(item.text)
         if item.usage_metadata:
             token_usage = item.usage_metadata
+        finish_reasons = get_finish_reasons(item) or finish_reasons
 
         yield item_to_yield
 
     handle_streaming_response(
-        span, event_logger, llm_model, complete_response, token_usage
+        span, event_logger, llm_model, complete_response, token_usage, finish_reasons
     )
 
     span.set_status(Status(StatusCode.OK))
@@ -167,15 +199,19 @@ def _build_from_streaming_response(span, event_logger, response, llm_model):
 async def _abuild_from_streaming_response(span, event_logger, response, llm_model):
     complete_response = ""
     token_usage = None
+    finish_reasons = None
     async for item in response:
         item_to_yield = item
         complete_response += str(item.text)
         if item.usage_metadata:
             token_usage = item.usage_metadata
+        finish_reasons = get_finish_reasons(item) or finish_reasons
 
         yield item_to_yield
 
-    handle_streaming_response(span, event_logger, llm_model, response, token_usage)
+    handle_streaming_response(
+        span, event_logger, llm_model, response, token_usage, finish_reasons
+    )
 
     span.set_status(Status(StatusCode.OK))
     span.end()
@@ -191,7 +227,9 @@ async def _handle_request(span, event_logger, args, kwargs, llm_model):
 
 
 def _handle_response(span, event_logger, response, llm_model):
-    set_model_response_attributes(span, llm_model, response.usage_metadata)
+    set_model_response_attributes(
+        span, llm_model, response.usage_metadata, get_finish_reasons(response)
+    )
     if should_emit_events():
         emit_response_events(response, event_logger)
     else:
