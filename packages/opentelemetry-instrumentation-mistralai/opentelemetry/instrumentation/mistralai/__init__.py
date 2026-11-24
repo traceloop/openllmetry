@@ -131,6 +131,33 @@ def _set_model_input_attributes(span, to_wrap, kwargs):
         SpanAttributes.LLM_IS_STREAMING,
         to_wrap.get("streaming"),
     )
+    _set_span_attribute(
+        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
+    )
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
+    _set_span_attribute(
+        span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_tokens")
+    )
+    _set_span_attribute(
+        span, GenAIAttributes.GEN_AI_REQUEST_SEED, kwargs.get("random_seed")
+    )
+    _set_span_attribute(
+        span,
+        GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY,
+        kwargs.get("presence_penalty"),
+    )
+    _set_span_attribute(
+        span,
+        GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY,
+        kwargs.get("frequency_penalty"),
+    )
+    stop = kwargs.get("stop")
+    if isinstance(stop, str):
+        stop = [stop] if stop else None
+    if stop:
+        _set_span_attribute(
+            span, GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES, tuple(stop)
+        )
 
 
 def _content_as_str(content):
@@ -184,6 +211,14 @@ def _set_model_response_attributes(span, llm_request_type, response):
         return
 
     _set_span_attribute(span, GenAIAttributes.GEN_AI_RESPONSE_MODEL, response.model)
+
+    finish_reasons = tuple(
+        choice.finish_reason for choice in response.choices if choice.finish_reason
+    )
+    if finish_reasons:
+        _set_span_attribute(
+            span, GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS, finish_reasons
+        )
 
     if not response.usage:
         return
