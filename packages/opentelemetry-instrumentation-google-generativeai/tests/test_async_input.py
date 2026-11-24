@@ -38,7 +38,7 @@ class TestDontThrowAsync:
         async def my_async():
             return 42
 
-        result = asyncio.get_event_loop().run_until_complete(my_async())
+        result = asyncio.run(my_async())
         assert result == 42
 
     def test_async_wrapper_swallows_exception(self):
@@ -46,7 +46,7 @@ class TestDontThrowAsync:
         async def boom():
             raise ValueError("oops")
 
-        result = asyncio.get_event_loop().run_until_complete(boom())
+        result = asyncio.run(boom())
         assert result is None
 
     def test_sync_function_stays_sync(self):
