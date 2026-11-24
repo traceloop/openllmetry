@@ -253,27 +253,37 @@ def set_input_attributes_sync(span, args):
                 )
 
 
+def _request_parameters(kwargs):
+    config = kwargs.get("generation_config")
+    if config is None:
+        return kwargs
+    if hasattr(config, "to_dict"):
+        config = config.to_dict()
+    return config if isinstance(config, dict) else {}
+
+
 @dont_throw
 def set_model_input_attributes(span, kwargs, llm_model):
     if not span.is_recording():
         return
+    params = _request_parameters(kwargs)
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, llm_model)
     _set_span_attribute(
         span, f"{GenAIAttributes.GEN_AI_PROMPT}.0.user", kwargs.get("prompt")
     )
     _set_span_attribute(
-        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
+        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, params.get("temperature")
     )
     _set_span_attribute(
-        span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_output_tokens")
+        span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, params.get("max_output_tokens")
     )
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_K, kwargs.get("top_k"))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, params.get("top_p"))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_K, params.get("top_k"))
     _set_span_attribute(
-        span, SpanAttributes.LLM_PRESENCE_PENALTY, kwargs.get("presence_penalty")
+        span, SpanAttributes.LLM_PRESENCE_PENALTY, params.get("presence_penalty")
     )
     _set_span_attribute(
-        span, SpanAttributes.LLM_FREQUENCY_PENALTY, kwargs.get("frequency_penalty")
+        span, SpanAttributes.LLM_FREQUENCY_PENALTY, params.get("frequency_penalty")
     )
 
 
