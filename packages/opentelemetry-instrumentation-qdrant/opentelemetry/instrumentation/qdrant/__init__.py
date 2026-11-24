@@ -53,11 +53,18 @@ class QdrantInstrumentor(BaseInstrumentor):
             wrap_method = wrapped_method.get("method")
             obj = getattr(qdrant_client, wrap_object, None)
             if obj and hasattr(obj, wrap_method):
-                wrap_function_wrapper(
-                    MODULE,
-                    f"{wrap_object}.{wrap_method}",
-                    _wrap(tracer, wrapped_method),
-                )
+                try:
+                    wrap_function_wrapper(
+                        MODULE,
+                        f"{wrap_object}.{wrap_method}",
+                        _wrap(tracer, wrapped_method),
+                    )
+                except AttributeError:
+                    logger.debug(
+                        "Failed to wrap %s.%s: method no longer exists in this version of qdrant-client",
+                        wrap_object,
+                        wrap_method,
+                    )
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
