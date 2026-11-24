@@ -1,6 +1,6 @@
 [project]
 name = "opentelemetry-instrumentation-haystack"
-version = "0.63.0"
+version = "0.63.1"
 description = "OpenTelemetry Haystack instrumentation"
 authors = [
   { name = "Gal Kleinman", email = "gal@traceloop.com" },
@@ -9,7 +9,7 @@ authors = [
 ]
 license = "Apache-2.0"
 readme = "README.md"
-requires-python = ">=3.10,<4"
+requires-python = ">=3.11,<4"
 dependencies = [
   "opentelemetry-api>=1.38.0,<2",
   "opentelemetry-instrumentation>=0.59b0",
@@ -30,7 +30,7 @@ haystack-ai = "opentelemetry.instrumentation.haystack:HaystackInstrumentor"
 dev = [
   "autopep8>=2.2.0,<3",
   "pytest-sugar==1.0.0",
-  "pytest>=8.2.2,<9",
+  "pytest>=9.0.3,<10",
   "ruff>=0.4.0",
 ]
 test = [
@@ -38,7 +38,7 @@ test = [
   "opentelemetry-sdk>=1.38.0,<2",
   "pytest-recording>=0.13.1,<0.14.0",
   "pytest-sugar==1.0.0",
-  "pytest>=8.2.2,<9",
+  "pytest>=9.0.3,<10",
   "vcrpy>=8.0.0,<9",
 ]
 
@@ -72,4 +72,4 @@ exclude = [
 select = ["E", "F", "W"]
 
 [tool.uv]
-constraint-dependencies = ["urllib3>=2.6.3", "pip>=25.3"]
+constraint-dependencies = ["urllib3>=2.8.0", "pip>=25.3"]
