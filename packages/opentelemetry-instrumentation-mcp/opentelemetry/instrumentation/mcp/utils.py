@@ -94,16 +94,18 @@ def error_detail(content) -> Optional[str]:
     if not content:
         return None
     block = content[0]
-
-    def field(name):
-        if isinstance(block, dict):
-            return block.get(name)
-        return getattr(block, name, None)
-
-    text = field("text")
+    text = field(block, "text")
     if text is not None:
         return f"{text}"
-    return f"non-text content: {field('type') or type(block).__name__}"
+    return f"non-text content: {field(block, 'type') or type(block).__name__}"
+
+
+def field(obj, name):
+    """`obj`'s `name`, read as a key from a raw JSON dict or as an attribute from
+    a model object; ``None`` when it has none."""
+    if isinstance(obj, dict):
+        return obj.get(name)
+    return getattr(obj, name, None)
 
 
 def record_error(span, exc) -> None:

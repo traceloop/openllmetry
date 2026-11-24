@@ -389,6 +389,21 @@ async def test_writer_tolerates_non_text_error_content(span_exporter, tracer_pro
     )
 
 
+async def test_writer_marks_an_object_error_result(span_exporter, tracer_provider, caplog):
+    """A result that is a model object rather than a raw JSON dict: isError and the
+    error text are attributes there, and `"isError" in result` raises on it."""
+    sink = _Sink()
+    result = CallToolResult(content=[TextContent(type="text", text="boom")], isError=True)
+    response = SimpleNamespace(root=SimpleNamespace(id=1, result=result))
+    with caplog.at_level(logging.WARNING):
+        await InstrumentedStreamWriter(sink, tracer_provider.get_tracer(__name__)).send(response)
+    assert sink.sent == [response]
+    span = span_exporter.get_finished_spans()[0]
+    assert span.status.status_code is StatusCode.ERROR
+    assert "boom" in span.status.description
+    assert _instrumentation_records(caplog) == [], caplog.text
+
+
 def _task_call(result):
     """fastmcp 3's call_tool(task=True): the request goes in as the `request`
     keyword and the result comes back wrapped in a RootModel union
