@@ -671,7 +671,13 @@ def responses_get_or_create_wrapper(
             error_type=e.__class__.__name__,
         )
         raise
-    parsed_response = parse_response(response)
+    try:
+        parsed_response = parse_response(response)
+    except Exception:
+        # `.with_raw_response.create()` leaves parsing to the caller. If the body can't be
+        # parsed, return the raw response untraced, as the uninstrumented call would,
+        # instead of raising from our own `.parse()`.
+        return response
     if isinstance(parsed_response, Stream):
         # `.with_raw_response.create(stream=True, ...)`: `response` is a raw-response
         # wrapper (e.g. LegacyAPIResponse) whose `.parse()` returns the `Stream` itself
@@ -864,7 +870,12 @@ async def async_responses_get_or_create_wrapper(
             error_type=e.__class__.__name__,
         )
         raise
-    parsed_response = await async_parse_response(response)
+    try:
+        parsed_response = await async_parse_response(response)
+    except Exception:
+        # See responses_get_or_create_wrapper: an unparseable raw response is returned
+        # untraced rather than raising from our own `.parse()`.
+        return response
     if isinstance(parsed_response, (Stream, AsyncStream)):
         # `.with_raw_response.create(stream=True, ...)`: `response` is a raw-response
         # wrapper (e.g. LegacyAPIResponse/AsyncAPIResponse) whose `.parse()` returns the
