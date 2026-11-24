@@ -9,6 +9,41 @@ from wrapt import ObjectProxy
 logger = logging.getLogger(__name__)
 
 
+def _accumulate_openai_chunk(body, chunk):
+    """Fold an OpenAI chat.completion.chunk (openai.* models) into a
+    chat.completion-shaped body, which the non-streaming span helpers read."""
+    body["id"] = chunk.get("id")
+    body["model"] = chunk.get("model")
+    if chunk.get("usage"):
+        body["usage"] = chunk["usage"]
+    if chunk.get("amazon-bedrock-invocationMetrics"):
+        body["invocation_metrics"] = chunk["amazon-bedrock-invocationMetrics"]
+    for key in ("amazon-bedrock-guardrailAction", "amazon-bedrock-trace"):  # read by guardrail_handling
+        if key in chunk:
+            body[key] = chunk[key]
+    choices = body.setdefault("choices", [])
+    for choice in chunk.get("choices") or []:
+        index = choice.get("index", 0)
+        while len(choices) <= index:
+            choices.append({"message": {"role": "assistant", "content": ""}})
+        message = choices[index]["message"]
+        delta = choice.get("delta") or {}
+        message["content"] += delta.get("content") or ""
+        for tool_call in delta.get("tool_calls") or []:
+            tool_calls = message.setdefault("tool_calls", [])
+            function = tool_call.get("function") or {}
+            if tool_call.get("id"):
+                tool_calls.append({
+                    "id": tool_call["id"],
+                    "function": {"name": function.get("name"), "arguments": ""},
+                })
+            position = tool_call.get("index", len(tool_calls) - 1)
+            if 0 <= position < len(tool_calls):
+                tool_calls[position]["function"]["arguments"] += function.get("arguments") or ""
+        if choice.get("finish_reason"):
+            choices[index]["finish_reason"] = choice["finish_reason"]
+
+
 class AsyncStreamingWrapper(ObjectProxy):
     """Async counterpart of StreamingWrapper for aioboto3's EventStream."""
 
@@ -43,7 +78,9 @@ class AsyncStreamingWrapper(ObjectProxy):
 
         decoded_chunk = json.loads(chunk.get("bytes").decode())
         type = decoded_chunk.get("type")
-        if type is None:
+        if decoded_chunk.get("object") == "chat.completion.chunk":
+            _accumulate_openai_chunk(self._accumulating_body, decoded_chunk)
+        elif type is None:
             self._accumulate_events(decoded_chunk)
         elif type == "message_start":
             self._accumulating_body = decoded_chunk.get("message")
@@ -128,7 +165,9 @@ class StreamingWrapper(ObjectProxy):
 
         decoded_chunk = json.loads(chunk.get("bytes").decode())
         type = decoded_chunk.get("type")
-        if type is None:
+        if decoded_chunk.get("object") == "chat.completion.chunk":
+            _accumulate_openai_chunk(self._accumulating_body, decoded_chunk)
+        elif type is None:
             self._accumulate_events(decoded_chunk)
         elif type == "message_start":
             self._accumulating_body = decoded_chunk.get("message")
