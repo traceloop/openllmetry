@@ -310,7 +310,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         self._try_wrap(
             "openai.resources.responses",
             "Responses.retrieve",
-            responses_get_or_create_wrapper(tracer),
+            responses_get_or_create_wrapper(tracer, tokens_histogram, duration_histogram, is_poll=True),
         )
         self._try_wrap(
             "openai.resources.responses",
@@ -320,7 +320,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         self._try_wrap(
             "openai.resources.responses",
             "Responses.cancel",
-            responses_cancel_wrapper(tracer),
+            responses_cancel_wrapper(tracer, tokens_histogram, duration_histogram),
         )
         self._try_wrap(
             "openai.resources.responses",
@@ -330,7 +330,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         self._try_wrap(
             "openai.resources.responses",
             "AsyncResponses.retrieve",
-            async_responses_get_or_create_wrapper(tracer),
+            async_responses_get_or_create_wrapper(tracer, tokens_histogram, duration_histogram, is_poll=True),
         )
         self._try_wrap(
             "openai.resources.responses",
@@ -340,7 +340,7 @@ class OpenAIV1Instrumentor(BaseInstrumentor):
         self._try_wrap(
             "openai.resources.responses",
             "AsyncResponses.cancel",
-            async_responses_cancel_wrapper(tracer),
+            async_responses_cancel_wrapper(tracer, tokens_histogram, duration_histogram),
         )
         # Realtime API (beta, WebSocket-based)
         self._try_wrap(

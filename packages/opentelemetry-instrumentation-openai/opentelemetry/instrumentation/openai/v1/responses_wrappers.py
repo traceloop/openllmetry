@@ -34,7 +34,6 @@ from opentelemetry.instrumentation.openai.shared import (
 
 from opentelemetry.instrumentation.openai.utils import (
     _with_responses_telemetry_wrapper,
-    _with_tracer_wrapper,
     dont_throw,
     json_dumps,
     should_send_prompts,
@@ -195,6 +194,9 @@ class TracedData(pydantic.BaseModel):
 
     # Trace context - to maintain trace continuity across async operations
     trace_context: Any = pydantic.Field(default=None)
+
+    # False when first seen by a retrieve(), e.g. another worker's response: its metrics are not ours to record
+    started_here: bool = pydantic.Field(default=True)
 
     class Config:
         arbitrary_types_allowed = True
@@ -569,7 +571,7 @@ def _record_metrics(
 @dont_throw
 @_with_responses_telemetry_wrapper
 def responses_get_or_create_wrapper(
-    tracer: Tracer, token_histogram, duration_histogram, wrapped, instance, args, kwargs
+    tracer: Tracer, token_histogram, duration_histogram, wrapped, instance, args, kwargs, is_poll=False
 ):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
@@ -661,15 +663,17 @@ def responses_get_or_create_wrapper(
         if traced_data:
             set_data_attributes(traced_data, span)
         span.end()
-        _record_metrics(
-            token_histogram,
-            duration_histogram,
-            instance,
-            start_time,
-            non_sentinel_kwargs.get("model"),
-            is_streaming=bool(non_sentinel_kwargs.get("stream")),
-            error_type=e.__class__.__name__,
-        )
+        # A failed retrieve() poll is not the operation; it is counted once it reaches a terminal status.
+        if not is_poll:
+            _record_metrics(
+                token_histogram,
+                duration_histogram,
+                instance,
+                start_time,
+                non_sentinel_kwargs.get("model"),
+                is_streaming=bool(non_sentinel_kwargs.get("stream")),
+                error_type=e.__class__.__name__,
+            )
         raise
     parsed_response = parse_response(response)
     if isinstance(parsed_response, Stream):
@@ -710,7 +714,8 @@ def responses_get_or_create_wrapper(
             tools=merged_tools,
             output_blocks={block.id: block for block in parsed_response.output}
             | existing_data.get("output_blocks", {}),
-            usage=existing_data.get("usage", parsed_response.usage),
+            # A queued background create stores usage=None, so take the polled usage then.
+            usage=existing_data.get("usage") or parsed_response.usage,
             output_text=existing_data.get("output_text", parsed_response_output_text),
             request_model=existing_data.get("request_model", non_sentinel_kwargs.get("model")),
             response_model=existing_data.get("response_model", parsed_response.model),
@@ -735,6 +740,7 @@ def responses_get_or_create_wrapper(
             ),
             # Capture trace context to maintain continuity across async operations
             trace_context=existing_data.get("trace_context", context_api.get_current()),
+            started_here=existing_data.get("started_here", not is_poll),
         )
     except Exception:
         return response
@@ -751,14 +757,15 @@ def responses_get_or_create_wrapper(
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         set_data_attributes(traced_data, span)
         span.end()
-        _record_metrics(
-            token_histogram,
-            duration_histogram,
-            instance,
-            int(traced_data.start_time),
-            traced_data.response_model,
-            traced_data.usage,
-        )
+        if traced_data.started_here:
+            _record_metrics(
+                token_histogram,
+                duration_histogram,
+                instance,
+                int(traced_data.start_time),
+                traced_data.response_model,
+                traced_data.usage,
+            )
 
     return response
 
@@ -766,7 +773,7 @@ def responses_get_or_create_wrapper(
 @dont_throw
 @_with_responses_telemetry_wrapper
 async def async_responses_get_or_create_wrapper(
-    tracer: Tracer, token_histogram, duration_histogram, wrapped, instance, args, kwargs
+    tracer: Tracer, token_histogram, duration_histogram, wrapped, instance, args, kwargs, is_poll=False
 ):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return await wrapped(*args, **kwargs)
@@ -854,15 +861,17 @@ async def async_responses_get_or_create_wrapper(
         if traced_data:
             set_data_attributes(traced_data, span)
         span.end()
-        _record_metrics(
-            token_histogram,
-            duration_histogram,
-            instance,
-            start_time,
-            non_sentinel_kwargs.get("model"),
-            is_streaming=bool(non_sentinel_kwargs.get("stream")),
-            error_type=e.__class__.__name__,
-        )
+        # A failed retrieve() poll is not the operation; it is counted once it reaches a terminal status.
+        if not is_poll:
+            _record_metrics(
+                token_histogram,
+                duration_histogram,
+                instance,
+                start_time,
+                non_sentinel_kwargs.get("model"),
+                is_streaming=bool(non_sentinel_kwargs.get("stream")),
+                error_type=e.__class__.__name__,
+            )
         raise
     parsed_response = await async_parse_response(response)
     if isinstance(parsed_response, (Stream, AsyncStream)):
@@ -905,7 +914,8 @@ async def async_responses_get_or_create_wrapper(
             tools=merged_tools,
             output_blocks={block.id: block for block in parsed_response.output}
             | existing_data.get("output_blocks", {}),
-            usage=existing_data.get("usage", parsed_response.usage),
+            # A queued background create stores usage=None, so take the polled usage then.
+            usage=existing_data.get("usage") or parsed_response.usage,
             output_text=existing_data.get("output_text", parsed_response_output_text),
             request_model=existing_data.get("request_model", non_sentinel_kwargs.get("model")),
             response_model=existing_data.get("response_model", parsed_response.model),
@@ -930,6 +940,7 @@ async def async_responses_get_or_create_wrapper(
             ),
             # Capture trace context to maintain continuity across async operations
             trace_context=existing_data.get("trace_context", context_api.get_current()),
+            started_here=existing_data.get("started_here", not is_poll),
         )
     except Exception:
         return response
@@ -946,21 +957,24 @@ async def async_responses_get_or_create_wrapper(
         _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
         set_data_attributes(traced_data, span)
         span.end()
-        _record_metrics(
-            token_histogram,
-            duration_histogram,
-            instance,
-            int(traced_data.start_time),
-            traced_data.response_model,
-            traced_data.usage,
-        )
+        if traced_data.started_here:
+            _record_metrics(
+                token_histogram,
+                duration_histogram,
+                instance,
+                int(traced_data.start_time),
+                traced_data.response_model,
+                traced_data.usage,
+            )
 
     return response
 
 
 @dont_throw
-@_with_tracer_wrapper
-def responses_cancel_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
+@_with_responses_telemetry_wrapper
+def responses_cancel_wrapper(
+    tracer: Tracer, token_histogram, duration_histogram, wrapped, instance, args, kwargs
+):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
@@ -985,13 +999,22 @@ def responses_cancel_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
         span.record_exception(Exception("Response cancelled"))
         set_data_attributes(existing_data, span)
         span.end()
+        if existing_data.started_here:
+            _record_metrics(
+                token_histogram,
+                duration_histogram,
+                instance,
+                int(existing_data.start_time),
+                existing_data.response_model,
+                existing_data.usage,
+            )
     return response
 
 
 @dont_throw
-@_with_tracer_wrapper
+@_with_responses_telemetry_wrapper
 async def async_responses_cancel_wrapper(
-    tracer: Tracer, wrapped, instance, args, kwargs
+    tracer: Tracer, token_histogram, duration_histogram, wrapped, instance, args, kwargs
 ):
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return await wrapped(*args, **kwargs)
@@ -1017,6 +1040,15 @@ async def async_responses_cancel_wrapper(
         span.record_exception(Exception("Response cancelled"))
         set_data_attributes(existing_data, span)
         span.end()
+        if existing_data.started_here:
+            _record_metrics(
+                token_histogram,
+                duration_histogram,
+                instance,
+                int(existing_data.start_time),
+                existing_data.response_model,
+                existing_data.usage,
+            )
     return response
 
 

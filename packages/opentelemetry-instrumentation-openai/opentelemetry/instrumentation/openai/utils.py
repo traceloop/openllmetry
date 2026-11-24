@@ -130,7 +130,7 @@ def _with_chat_telemetry_wrapper(func):
 
 
 def _with_responses_telemetry_wrapper(func):
-    def _with_responses_telemetry(tracer, token_histogram=None, duration_histogram=None):
+    def _with_responses_telemetry(tracer, token_histogram=None, duration_histogram=None, **options):
         def wrapper(wrapped, instance, args, kwargs):
             return func(
                 tracer,
@@ -140,6 +140,7 @@ def _with_responses_telemetry_wrapper(func):
                 instance,
                 args,
                 kwargs,
+                **options,
             )
 
         return wrapper
