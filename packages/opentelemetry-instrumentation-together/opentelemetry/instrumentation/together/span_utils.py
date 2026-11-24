@@ -52,6 +52,37 @@ def set_model_prompt_attributes(span, kwargs):
         SpanAttributes.LLM_IS_STREAMING,
         kwargs.get("stream"),
     )
+    _set_span_attribute(
+        span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_tokens")
+    )
+    _set_span_attribute(
+        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
+    )
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_K, kwargs.get("top_k"))
+    _set_span_attribute(
+        span,
+        GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY,
+        kwargs.get("frequency_penalty"),
+    )
+    _set_span_attribute(
+        span,
+        GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY,
+        kwargs.get("presence_penalty"),
+    )
+    _set_span_attribute(
+        span,
+        SpanAttributes.GEN_AI_REQUEST_REPETITION_PENALTY,
+        kwargs.get("repetition_penalty"),
+    )
+    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_SEED, kwargs.get("seed"))
+    stop = kwargs.get("stop")
+    if isinstance(stop, str):
+        stop = [stop] if stop else None
+    if stop:
+        _set_span_attribute(
+            span, GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES, list(stop)
+        )
 
 
 @dont_throw
