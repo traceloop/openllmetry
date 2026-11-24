@@ -738,6 +738,19 @@ def test_request_parameters_single_stop_string(tracer_provider, span_exporter):
     assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES] == ("END",)
 
 
+def test_request_parameters_empty_stop_string_is_not_recorded(
+    tracer_provider, span_exporter
+):
+    span = _record_span(
+        tracer_provider,
+        span_exporter,
+        lambda s: _set_model_input_attributes(
+            s, {"streaming": True}, {"model": "mistral-tiny", "stop": ""}
+        ),
+    )
+    assert GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES not in span.attributes
+
+
 def test_unset_request_parameters_are_not_recorded(tracer_provider, span_exporter):
     span = _record_span(
         tracer_provider,

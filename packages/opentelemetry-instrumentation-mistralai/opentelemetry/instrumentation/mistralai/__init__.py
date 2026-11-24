@@ -153,7 +153,7 @@ def _set_model_input_attributes(span, to_wrap, kwargs):
     )
     stop = kwargs.get("stop")
     if isinstance(stop, str):
-        stop = [stop]
+        stop = [stop] if stop else None
     if stop:
         _set_span_attribute(
             span, GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES, tuple(stop)
