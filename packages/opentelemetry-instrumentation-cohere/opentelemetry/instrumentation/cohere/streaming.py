@@ -122,14 +122,19 @@ async def aprocess_chat_v2_streaming_response(span, event_logger, llm_request_ty
         "type": "function",
         "function": {"name": "", "arguments": "", "description": ""},
     }
-    async for item in response:
-        span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
-        item_to_yield = item
-        try:
-            _accumulate_stream_item(item, current_content_item, current_tool_call_item, final_response)
-        except Exception:
-            pass
-        yield item_to_yield
+    try:
+        async for item in response:
+            span.add_event(name=f"{SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK}")
+            item_to_yield = item
+            try:
+                _accumulate_stream_item(item, current_content_item, current_tool_call_item, final_response)
+            except Exception:
+                pass
+            yield item_to_yield
+    except GeneratorExit:
+        # The consumer stopped reading before message-end (cancelled stream): the code after the loop never runs.
+        span.end()
+        raise
 
     set_span_response_attributes(span, final_response)
     if should_emit_events():
