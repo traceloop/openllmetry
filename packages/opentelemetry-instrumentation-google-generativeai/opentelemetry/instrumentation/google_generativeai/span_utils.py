@@ -763,25 +763,22 @@ def set_model_response_attributes(
             )
 
     if token_histogram and um is not None:
-        token_histogram.record(
-            um.prompt_token_count,
-            attributes={
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
-                GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
-                GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
-                GenAIAttributes.GEN_AI_TOKEN_TYPE: "input",
-                GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
-            },
-        )
-        token_histogram.record(
-            output_tokens,
-            attributes={
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
-                GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
-                GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
-                GenAIAttributes.GEN_AI_TOKEN_TYPE: "output",
-                GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
-            },
-        )
+        # Usage metadata can omit either count; histograms only accept numbers.
+        for token_type, count in (
+            ("input", um.prompt_token_count),
+            ("output", output_tokens),
+        ):
+            if count is None:
+                continue
+            token_histogram.record(
+                count,
+                attributes={
+                    GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
+                    GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
+                    GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
+                    GenAIAttributes.GEN_AI_TOKEN_TYPE: token_type,
+                    GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
+                },
+            )
 
     span.set_status(Status(StatusCode.OK))
