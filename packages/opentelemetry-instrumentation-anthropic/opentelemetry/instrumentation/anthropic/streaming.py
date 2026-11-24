@@ -32,6 +32,12 @@ logger = logging.getLogger(__name__)
 
 @dont_throw
 def _process_response_item(item, complete_response):
+    """Accumulate a single Anthropic stream *item* into *complete_response*.
+
+    Handles message_start, content_block_start, content_block_delta, and
+    message_delta events. Message-delta usage keeps the latest cumulative
+    reasoning-token count while summing output tokens.
+    """
     if item.type == "message_start":
         complete_response["model"] = item.message.model
         complete_response["usage"] = dict(item.message.usage)
@@ -61,16 +67,32 @@ def _process_response_item(item, complete_response):
         for event in complete_response.get("events", []):
             event["finish_reason"] = item.delta.stop_reason
         if item.usage:
+            item_usage = dict(item.usage)
             if "usage" in complete_response:
-                item_output_tokens = dict(item.usage).get("output_tokens", 0)
+                item_output_tokens = item_usage.get("output_tokens", 0)
                 existing_output_tokens = complete_response["usage"].get(
                     "output_tokens", 0
                 )
                 complete_response["usage"]["output_tokens"] = (
                     item_output_tokens + existing_output_tokens
                 )
+                item_reasoning = (
+                    (item_usage.get("output_tokens_details") or {}).get(
+                        "reasoning_tokens"
+                    )
+                    or 0
+                )
+                existing_reasoning = (
+                    (complete_response["usage"].get("output_tokens_details") or {}).get(
+                        "reasoning_tokens"
+                    )
+                    or 0
+                )
+                complete_response["usage"]["output_tokens_details"] = {
+                    "reasoning_tokens": max(item_reasoning, existing_reasoning)
+                }
             else:
-                complete_response["usage"] = dict(item.usage)
+                complete_response["usage"] = item_usage
 
 
 def _set_token_usage(
@@ -82,6 +104,7 @@ def _set_token_usage(
     token_histogram: Histogram = None,
     choice_counter: Counter = None,
 ):
+    """Record token-usage, reasoning-token, model, and choice metrics from a completed streaming response."""
     cache_read_tokens = (
         complete_response.get("usage", {}).get("cache_read_input_tokens", 0) or 0
     )
@@ -103,6 +126,15 @@ def _set_token_usage(
     )
     set_span_attribute(
         span, GenAIAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS, cache_creation_tokens
+    )
+
+    output_tokens_details = complete_response.get("usage", {}).get("output_tokens_details")
+    reasoning_tokens = None
+    if output_tokens_details:
+        reasoning_tokens = output_tokens_details.get("reasoning_tokens", None)
+
+    set_span_attribute(
+        span, SpanAttributes.GEN_AI_USAGE_REASONING_TOKENS, reasoning_tokens
     )
 
     set_span_attribute(
@@ -170,6 +202,7 @@ def _resolve_stream_token_usage(complete_response, instance, kwargs):
 
 
 def _handle_streaming_response(span, event_logger, complete_response):
+    """Emit streaming response events or set *span* streaming response attributes."""
     if should_emit_events() and event_logger:
         emit_streaming_response_events(event_logger, complete_response)
     else:
