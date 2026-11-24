@@ -93,6 +93,12 @@ def test_string_stop_is_recorded_as_single_sequence(tracer):
     assert attributes[GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES] == ("END",)
 
 
+def test_empty_string_stop_is_not_recorded(tracer):
+    attributes = _record(tracer, {"stop": ""})
+
+    assert GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES not in attributes
+
+
 def test_empty_stop_is_not_recorded(tracer):
     attributes = _record(tracer, {"stop": []})
 

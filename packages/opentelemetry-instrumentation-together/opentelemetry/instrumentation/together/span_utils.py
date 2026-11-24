@@ -78,7 +78,7 @@ def set_model_prompt_attributes(span, kwargs):
     _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_SEED, kwargs.get("seed"))
     stop = kwargs.get("stop")
     if isinstance(stop, str):
-        stop = [stop]
+        stop = [stop] if stop else None
     if stop:
         _set_span_attribute(
             span, GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES, list(stop)
