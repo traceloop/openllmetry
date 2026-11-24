@@ -172,6 +172,16 @@ def test_responses_tool_calls(
         == "resp_685ff8928dc4819aac45e085ba66838101c537ddeff5c2a2"
     )
 
+    # The tool call id is the function call's call_id, which the function_call_output
+    # sent back to the model refers to, not the output item's id (fc_...).
+    tool_calls = [
+        part for part in get_output_messages(span)[0]["parts"] if part["type"] == "tool_call"
+    ]
+    assert [part["id"] for part in tool_calls] == [
+        "call_tYDv1bhtioyX33juEGDY4D6H",
+        "call_lC079UhGnLJngBlPQO0FS6sv",
+    ]
+
 
 @pytest.mark.vcr
 @pytest.mark.skipif(
@@ -1515,3 +1525,39 @@ def test_non_background_stream_left_early_is_removed_from_responses_dict(
 
     assert len(span_exporter.get_finished_spans()) == 1
     assert len(responses_wrappers.responses) == 0
+
+
+def test_responses_input_tool_call_id_matches_tool_call_response():
+    """A function_call replayed in the input keeps the call_id that its function_call_output refers to."""
+    from opentelemetry.instrumentation.openai.v1.responses_wrappers import (
+        TracedData,
+        _set_responses_json_messages,
+    )
+    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+
+    provider = TracerProvider()
+    exporter = InMemorySpanExporter()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    traced_data = TracedData(
+        start_time=time.time_ns(),
+        response_id="resp_1",
+        input=[
+            {"type": "message", "role": "user", "content": "What's the weather in London?"},
+            {
+                "type": "function_call",
+                "id": "fc_685ff89422ec819a977b2ea385bc9b6601c537ddeff5c2a2",
+                "call_id": "call_tYDv1bhtioyX33juEGDY4D6H",
+                "name": "get_weather",
+                "arguments": '{"location":"London"}',
+            },
+            {"type": "function_call_output", "call_id": "call_tYDv1bhtioyX33juEGDY4D6H", "output": "15C"},
+        ],
+    )
+
+    with provider.get_tracer(__name__).start_as_current_span("openai.response") as span:
+        _set_responses_json_messages(traced_data, span)
+
+    input_messages = get_input_messages(exporter.get_finished_spans()[0])
+    tool_call = input_messages[1]["parts"][0]
+    tool_call_response = input_messages[2]["parts"][0]
+    assert tool_call["id"] == tool_call_response["id"] == "call_tYDv1bhtioyX33juEGDY4D6H"
