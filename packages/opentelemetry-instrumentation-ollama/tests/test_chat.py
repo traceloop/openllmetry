@@ -1,5 +1,7 @@
 from unittest.mock import MagicMock
 
+import ollama
+
 import pytest
 from opentelemetry.instrumentation.ollama.span_utils import (
     set_model_response_attributes,
@@ -826,3 +828,88 @@ def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_con
     else:
         assert log.log_record.body
         assert dict(log.log_record.body) == expected_content
+
+
+class _FakeChatHttpResponse:
+    """Stands in for the httpx response returned by Client._request_raw."""
+
+    def json(self):
+        return {
+            "model": "llava",
+            "message": {"role": "assistant", "content": "A cat."},
+            "done": True,
+            "done_reason": "stop",
+        }
+
+
+IMAGE_MESSAGES = [
+    {"role": "system", "content": "You describe images."},
+    {"role": "user", "content": "What is in this picture?", "images": [b"fake image bytes"]},
+]
+# ollama base64-encodes raw image bytes before sending them
+IMAGE_B64 = "ZmFrZSBpbWFnZSBieXRlcw=="
+
+
+def test_ollama_chat_with_images_with_events_with_content(
+    instrument_with_content, ollama_client, span_exporter, log_exporter, monkeypatch
+):
+    monkeypatch.setattr(
+        ollama.Client, "_request_raw", lambda self, *args, **kwargs: _FakeChatHttpResponse()
+    )
+    ollama_client.chat(model="llava", messages=IMAGE_MESSAGES)
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 3
+    assert_message_in_logs(logs[0], "gen_ai.system.message", {"content": "You describe images."})
+    assert_message_in_logs(
+        logs[1],
+        "gen_ai.user.message",
+        {"content": {"content": "What is in this picture?", "images": [IMAGE_B64]}},
+    )
+    assert_message_in_logs(
+        logs[2],
+        "gen_ai.choice",
+        {"index": 0, "finish_reason": "stop", "message": {"content": "A cat."}},
+    )
+
+
+def test_ollama_chat_with_images_with_events_with_no_content(
+    instrument_with_no_content, ollama_client, span_exporter, log_exporter, monkeypatch
+):
+    monkeypatch.setattr(
+        ollama.Client, "_request_raw", lambda self, *args, **kwargs: _FakeChatHttpResponse()
+    )
+    ollama_client.chat(model="llava", messages=IMAGE_MESSAGES)
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 3
+    assert_message_in_logs(logs[0], "gen_ai.system.message", {})
+    assert_message_in_logs(logs[1], "gen_ai.user.message", {})
+    assert_message_in_logs(
+        logs[2], "gen_ai.choice", {"index": 0, "finish_reason": "stop", "message": {}}
+    )
+
+
+@pytest.mark.asyncio
+async def test_ollama_async_chat_with_images_with_events_with_content(
+    instrument_with_content, ollama_client_async, span_exporter, log_exporter, monkeypatch
+):
+    async def fake_request_raw(self, *args, **kwargs):
+        return _FakeChatHttpResponse()
+
+    monkeypatch.setattr(ollama.AsyncClient, "_request_raw", fake_request_raw)
+    await ollama_client_async.chat(model="llava", messages=IMAGE_MESSAGES)
+
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 3
+    assert_message_in_logs(logs[0], "gen_ai.system.message", {"content": "You describe images."})
+    assert_message_in_logs(
+        logs[1],
+        "gen_ai.user.message",
+        {"content": {"content": "What is in this picture?", "images": [IMAGE_B64]}},
+    )
+    assert_message_in_logs(
+        logs[2],
+        "gen_ai.choice",
+        {"index": 0, "finish_reason": "stop", "message": {"content": "A cat."}},
+    )
