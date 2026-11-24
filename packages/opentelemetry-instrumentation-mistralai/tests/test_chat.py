@@ -54,6 +54,39 @@ def test_mistralai_chat_legacy(
 
 
 @pytest.mark.vcr
+@pytest.mark.default_cassette("test_mistralai_chat_legacy.yaml")
+def test_mistralai_chat_legacy_with_dict_messages(
+    instrument_legacy, mistralai_client, span_exporter
+):
+    # The client also accepts plain dict messages, as in the Mistral SDK README.
+    mistralai_client.chat.complete(
+        model="mistral-tiny",
+        messages=[
+            {"role": "system", "content": "You are a comedian"},
+            {"role": "user", "content": "Tell me a joke about OpenTelemetry"},
+        ],
+    )
+
+    mistral_span = span_exporter.get_finished_spans()[0]
+    assert (
+        mistral_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.role")
+        == "system"
+    )
+    assert (
+        mistral_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.0.content")
+        == "You are a comedian"
+    )
+    assert (
+        mistral_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.1.role")
+        == "user"
+    )
+    assert (
+        mistral_span.attributes.get(f"{GenAIAttributes.GEN_AI_PROMPT}.1.content")
+        == "Tell me a joke about OpenTelemetry"
+    )
+
+
+@pytest.mark.vcr
 def test_mistralai_chat_with_events_with_content(
     instrument_with_content, mistralai_client, span_exporter, log_exporter
 ):
