@@ -1558,7 +1558,7 @@ dependencies = [
 
 [package.optional-dependencies]
 instruments = [
-    { name = "langchain" },
+    { name = "langchain-core" },
 ]
 
 [package.dev-dependencies]
@@ -1596,7 +1596,7 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "langchain", marker = "extra == 'instruments'" },
+    { name = "langchain-core", marker = "extra == 'instruments'", specifier = ">0.1.0" },
     { name = "opentelemetry-api", specifier = ">=1.38.0,<2" },
     { name = "opentelemetry-instrumentation", specifier = ">=0.59b0" },
     { name = "opentelemetry-semantic-conventions", specifier = ">=0.63b1" },
