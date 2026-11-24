@@ -8,6 +8,7 @@ from opentelemetry.instrumentation.transformers.event_models import (
 )
 from opentelemetry.instrumentation.transformers.utils import (
     dont_throw,
+    resolve_prompts,
     should_emit_events,
     should_send_prompts,
 )
@@ -35,10 +36,9 @@ def emit_prompt_events(args, kwargs, event_logger) -> None:
     if not should_emit_events() or event_logger is None:
         return
 
-    if args and len(args) > 0:
-        prompts_list = args[0]
-    else:
-        prompts_list = kwargs.get("args")
+    prompts_list = resolve_prompts(args, kwargs)
+    if prompts_list is None:
+        return
 
     if isinstance(prompts_list, str):
         prompts_list = [prompts_list]
