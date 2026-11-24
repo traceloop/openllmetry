@@ -1,5 +1,9 @@
 from enum import Enum
 
+from opentelemetry.semconv._incubating.attributes import (
+    gen_ai_attributes as GenAIAttributes,
+)
+
 SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY = "suppress_language_model_instrumentation"
 
 
@@ -204,12 +208,16 @@ class SpanAttributes:
     LLM_MIN_NEW_TOKENS = "llm.watsonx.min_new_tokens"
     LLM_REPETITION_PENALTY = "llm.watsonx.repetition_penalty"
 
-    # Cache attributes — VALUE changed in v0.5.0 (underscore -> dot separator).
-    # LLM_* aliases: for packages using the old LLM_* constant name.
-    # GEN_AI_*_DEPRECATED: for packages already using GEN_AI_* name but expecting old value.
-    # TODO: migrate to SpanAttributes.GEN_AI_USAGE_CACHE_*_INPUT_TOKENS
+    # Cache attributes — backward-compatibility aliases for upstream GenAIAttributes.
+    # LLM_* aliases: for packages using the legacy LLM_* constant name.
     LLM_USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation_input_tokens"
     LLM_USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read_input_tokens"
+    GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS = (
+        GenAIAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS
+    )
+    GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS = (
+        GenAIAttributes.GEN_AI_USAGE_CACHE_CREATION_INPUT_TOKENS
+    )
 
     # Chroma db
     CHROMADB_ADD_IDS_COUNT = "db.chroma.add.ids_count"
