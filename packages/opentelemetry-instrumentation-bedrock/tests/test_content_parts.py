@@ -306,6 +306,27 @@ class TestConverseContentToParts:
         parts = _converse_content_to_parts(blocks)
         assert parts == [{"type": "text", "content": "plain string"}]
 
+    def test_reasoning_text_block_maps_to_reasoning_part(self):
+        """gpt-oss / Claude extended thinking return reasoningText."""
+        blocks = [
+            {"reasoningContent": {"reasoningText": {"text": "391 = 17 * 23", "signature": "sig"}}},
+            {"text": "No."},
+        ]
+        parts = _converse_content_to_parts(blocks)
+        assert parts == [
+            {"type": "reasoning", "content": "391 = 17 * 23"},
+            {"type": "text", "content": "No."},
+        ]
+
+    def test_redacted_reasoning_block_is_not_recorded(self):
+        """GPT-6 / GPT-5.6 return only redactedContent bytes, which carry no readable text."""
+        blocks = [
+            {"reasoningContent": {"redactedContent": b"rsn_opaque"}},
+            {"text": "No."},
+        ]
+        parts = _converse_content_to_parts(blocks)
+        assert parts == [{"type": "text", "content": "No."}]
+
     def test_mixed_content(self):
         blocks = [
             {"text": "Here's what I found:"},
