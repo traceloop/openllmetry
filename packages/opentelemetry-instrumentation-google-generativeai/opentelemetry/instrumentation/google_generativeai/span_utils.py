@@ -544,23 +544,39 @@ def set_model_request_attributes(span, kwargs, llm_model):
     if not span.is_recording():
         return
     _set_span_attribute(
-        span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature")
+        span,
+        GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE,
+        _request_param(kwargs, "temperature"),
     )
     _set_span_attribute(
-        span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_output_tokens")
+        span,
+        GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS,
+        _request_param(kwargs, "max_output_tokens"),
     )
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))
-    _set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_K, kwargs.get("top_k"))
+    _set_span_attribute(
+        span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, _request_param(kwargs, "top_p")
+    )
+    _set_span_attribute(
+        span, GenAIAttributes.GEN_AI_REQUEST_TOP_K, _request_param(kwargs, "top_k")
+    )
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY,
-        kwargs.get("presence_penalty"),
+        _request_param(kwargs, "presence_penalty"),
     )
     _set_span_attribute(
         span,
         GenAIAttributes.GEN_AI_REQUEST_FREQUENCY_PENALTY,
-        kwargs.get("frequency_penalty"),
+        _request_param(kwargs, "frequency_penalty"),
     )
+    _set_span_attribute(
+        span, GenAIAttributes.GEN_AI_REQUEST_SEED, _request_param(kwargs, "seed")
+    )
+    stop_sequences = _request_param(kwargs, "stop_sequences")
+    if stop_sequences:
+        _set_span_attribute(
+            span, GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES, stop_sequences
+        )
 
     generation_config = kwargs.get("generation_config")
     if generation_config and hasattr(generation_config, "response_schema"):
@@ -609,17 +625,20 @@ def set_model_request_attributes(span, kwargs, llm_model):
                 pass
 
 
+def _request_param(kwargs, key):
+    """Top-level kwarg, else ``config[key]`` (dict) or ``config.key`` (object)."""
+    value = kwargs.get(key)
+    if value is not None:
+        return value
+    config = kwargs.get("config")
+    if isinstance(config, dict):
+        return config.get(key)
+    return getattr(config, key, None)
+
+
 def _system_instruction_from_kwargs(kwargs):
     """Top-level kwarg or unified-client ``config.system_instruction``."""
-    si = kwargs.get("system_instruction")
-    if si is not None:
-        return si
-    config = kwargs.get("config")
-    if config is not None:
-        si = getattr(config, "system_instruction", None)
-        if si is not None:
-            return si
-    return None
+    return _request_param(kwargs, "system_instruction")
 
 
 def _system_instruction_to_parts(si, span):
@@ -636,11 +655,7 @@ def _system_instruction_to_parts(si, span):
 
 def _tool_definitions_from_kwargs(kwargs):
     """Extract tool definitions from kwargs — source system representation per OTel spec."""
-    tools = kwargs.get("tools")
-    if tools is None:
-        config = kwargs.get("config")
-        if config is not None:
-            tools = getattr(config, "tools", None)
+    tools = _request_param(kwargs, "tools")
     if not tools:
         return None
     defs = []
