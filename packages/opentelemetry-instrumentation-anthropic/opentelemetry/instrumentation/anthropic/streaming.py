@@ -62,13 +62,12 @@ def _process_response_item(item, complete_response):
             event["finish_reason"] = item.delta.stop_reason
         if item.usage:
             if "usage" in complete_response:
-                item_output_tokens = dict(item.usage).get("output_tokens", 0)
-                existing_output_tokens = complete_response["usage"].get(
-                    "output_tokens", 0
-                )
-                complete_response["usage"]["output_tokens"] = (
-                    item_output_tokens + existing_output_tokens
-                )
+                # message_delta carries the running total for the whole message,
+                # not an increment, so it replaces the partial count reported by
+                # message_start rather than adding to it.
+                item_output_tokens = dict(item.usage).get("output_tokens")
+                if item_output_tokens is not None:
+                    complete_response["usage"]["output_tokens"] = item_output_tokens
             else:
                 complete_response["usage"] = dict(item.usage)
 
