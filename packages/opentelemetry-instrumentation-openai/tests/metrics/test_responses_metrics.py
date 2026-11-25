@@ -35,6 +35,18 @@ def _fail(request: httpx.Request) -> httpx.Response:
     raise httpx.ConnectError("connection refused", request=request)
 
 
+def _unparseable(request: httpx.Request) -> httpx.Response:
+    return httpx.Response(200, headers={"content-type": "application/json"}, content=b"{not json")
+
+
+_RAW_CALLS = [
+    ("create", (), {"model": "gpt-4.1-nano", "input": "hello"}),
+    ("parse", (), {"model": "gpt-4.1-nano", "input": "Alice is 30", "text_format": Person}),
+    ("retrieve", ("resp_1",), {}),
+    ("cancel", ("resp_1",), {}),
+]
+
+
 @pytest.fixture
 def metric_points(reader):
     reader.get_metrics_data()  # drop points left by earlier tests
@@ -146,3 +158,31 @@ async def test_async_responses_create_error_records_duration_with_error_type(
         await _async_client(_fail).responses.create(model="gpt-4.1-nano", input="hello", stream=stream)
 
     _assert_error_metrics(metric_points(), span_exporter, stream, time.time_ns())
+
+
+def _assert_raw_untraced(response, points, span_exporter):
+    assert response.status_code == 200
+    assert span_exporter.get_finished_spans() == ()
+    assert Meters.LLM_OPERATION_DURATION not in points
+    assert Meters.LLM_TOKEN_USAGE not in points
+
+
+@pytest.mark.parametrize("method, args, kwargs", _RAW_CALLS)
+def test_responses_raw_unparseable_body_returns_untraced(
+    instrument_legacy, span_exporter, metric_points, method, args, kwargs
+):
+    raw = _client(_unparseable).responses.with_raw_response
+    response = getattr(raw, method)(*args, **kwargs)
+
+    _assert_raw_untraced(response, metric_points(), span_exporter)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("method, args, kwargs", _RAW_CALLS)
+async def test_async_responses_raw_unparseable_body_returns_untraced(
+    instrument_legacy, span_exporter, metric_points, method, args, kwargs
+):
+    raw = _async_client(_unparseable).responses.with_raw_response
+    response = await getattr(raw, method)(*args, **kwargs)
+
+    _assert_raw_untraced(response, metric_points(), span_exporter)
