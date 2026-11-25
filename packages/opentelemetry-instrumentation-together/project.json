@@ -56,7 +56,7 @@
         "{workspaceRoot}/coverage/packages/opentelemetry-instrumentation-together"
       ],
       "options": {
-        "command": "uv run pytest tests/ && uv run --with \"together>=2,<3\" pytest tests/ && uv run --with \"together>=1.2.0,<2\" pytest tests/",
+        "command": "uv run pytest tests/ && uv run --with \"together==2.42.0\" pytest tests/ && uv run --with \"together==1.6.0\" pytest tests/",
         "cwd": "packages/opentelemetry-instrumentation-together"
       }
     },
