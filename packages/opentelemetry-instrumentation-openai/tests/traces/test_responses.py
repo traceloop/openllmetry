@@ -1032,6 +1032,31 @@ def _fail_stream_proxy(**kwargs: object) -> None:
     raise RuntimeError("proxy construction failed")
 
 
+def test_create_response_stream_sampler_failure_returns_untraced_stream() -> None:
+    """Regression test: tracer.start_span() used to run before the try block in
+    _create_response_stream, so a failure there (e.g. a broken sampler) reached the caller
+    directly instead of falling back to the untraced stream the way every other setup
+    failure in this function already does."""
+    from opentelemetry import context
+
+    class _FailingTracer:
+        def start_span(self, *args: object, **kwargs: object) -> None:
+            raise RuntimeError("sampler exploded")
+
+    fake_response = object()
+
+    result = responses_wrappers._create_response_stream(
+        tracer=_FailingTracer(),
+        response=fake_response,
+        start_time=0,
+        request_kwargs={"model": "gpt-4.1-nano", "input": "hi"},
+        instance=None,
+        context=context.get_current(),
+    )
+
+    assert result is fake_response
+
+
 @pytest.mark.vcr
 @pytest.mark.default_cassette("test_responses_streaming_async")
 @pytest.mark.asyncio
@@ -1146,6 +1171,68 @@ async def test_async_responses_with_raw_response_parsed_outside_parent_span(
     parent_context = parent_span.get_span_context()
     assert span.context.trace_id == parent_context.trace_id
     assert span.parent.span_id == parent_context.span_id
+
+
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_responses_streaming")
+def test_raw_response_parse_with_two_types_emits_one_span(
+    instrument_legacy,
+    span_exporter: InMemorySpanExporter,
+    openai_client: OpenAI,
+) -> None:
+    """Regression test: the SDK caches raw.parse() per `to` type (LegacyAPIResponse.parse in
+    openai 1.99.7 keys its cache on `to`), so a caller who also calls the plain raw.parse() on
+    the same raw response -- e.g. a framework that peeks at the default type before choosing
+    a custom one -- invokes our post_parser hook once per type for one HTTP response. Draining
+    the custom stream and merely closing the unused default view used to export a second,
+    mostly empty openai.response span."""
+    raw = openai_client.responses.with_raw_response.create(
+        model="gpt-4.1-nano",
+        input=_STORY_PROMPT,
+        stream=True,
+    )
+
+    custom_stream = raw.parse(to=CustomResponseStream)
+    default_stream = raw.parse()
+    assert default_stream is not custom_stream
+
+    events = list(custom_stream)
+    default_stream.close()
+
+    _assert_streamed_span(span_exporter, events)
+    assert len(span_exporter.get_finished_spans()) == 1
+
+
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_responses_streaming")
+def test_raw_response_span_reflects_request_sent_not_later_mutations(
+    instrument_legacy,
+    span_exporter: InMemorySpanExporter,
+    openai_client: OpenAI,
+) -> None:
+    """Regression test: the span must describe the request that was actually sent, not
+    whatever the caller's kwargs look like by the time raw.parse() gets around to reading
+    them. request_kwargs used to be stored by reference (only sentinel-filtered with a
+    shallow dict copy) and read later from trace_stream, so a caller mutating nested request
+    content -- e.g. appending to its own `input` list -- between create() and parse() changed
+    what the span reported."""
+    input_messages = [{"role": "user", "content": _STORY_PROMPT}]
+    raw = openai_client.responses.with_raw_response.create(
+        model="gpt-4.1-nano",
+        input=input_messages,
+        stream=True,
+    )
+    # The request has already been sent; mutate the caller's own list in place before
+    # raw.parse() installs the traced stream and reads `input` for the span.
+    input_messages[0]["content"] = "mutated after the request was sent"
+    input_messages.append({"role": "user", "content": "a second message added too late"})
+
+    events = list(raw.parse())
+
+    span = _assert_streamed_span(span_exporter, events)
+    input_json = span.attributes["gen_ai.input.messages"]
+    assert "mutated after the request was sent" not in input_json
+    assert "a second message added too late" not in input_json
 
 
 @pytest.mark.vcr
@@ -1416,6 +1503,109 @@ def test_completed_streaming_response_is_removed_from_responses_dict(
     assert len(span_exporter.get_finished_spans()) == 1
     assert "resp_stream_completed" not in responses_wrappers.responses
     assert len(responses_wrappers.responses) == 0
+
+
+class _FakeAsyncChunkStream:
+    """Async counterpart of _FakeSyncChunkStream."""
+
+    def __init__(self, chunks):
+        self._iter = iter(chunks)
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        try:
+            return next(self._iter)
+        except StopIteration:
+            raise StopAsyncIteration
+
+
+def test_streaming_output_text_preserved_when_terminal_event_is_filtered(
+    clean_responses_registry,
+    span_exporter: InMemorySpanExporter, tracer_provider: TracerProvider
+):
+    """Regression test: a custom raw.parse(to=...) stream can filter out response.completed
+    while still forwarding response.output_text.delta (see CustomResponseStream above,
+    _FORWARDED_EVENT_TYPES). The span must still report the text we actually observed
+    instead of silently leaving gen_ai.output.messages empty just because the terminal
+    event never arrived."""
+    tracer = tracer_provider.get_tracer(__name__)
+    chunks = [
+        types.SimpleNamespace(type="response.output_text.delta", delta="Hello"),
+        types.SimpleNamespace(type="response.output_text.delta", delta=" world"),
+    ]
+    stream = ResponseStream(
+        span=tracer.start_span("openai.response"),
+        response=_FakeSyncChunkStream(chunks),
+        start_time=0,
+        request_kwargs={"model": "gpt-4.1-nano", "input": "hi"},
+        tracer=tracer,
+    )
+
+    list(stream)
+
+    (span,) = span_exporter.get_finished_spans()
+    assert span.status.status_code == StatusCode.OK
+    assert get_output_messages(span)[0]["parts"][0]["content"] == "Hello world"
+
+
+def test_closing_the_returned_iterator_ends_the_span(
+    clean_responses_registry,
+    span_exporter: InMemorySpanExporter, tracer_provider: TracerProvider
+):
+    """Regression test: __iter__ is a generator function (see its docstring: not `return
+    self`), so iter(stream) returns a plain generator object rather than the ResponseStream
+    proxy itself. Closing that generator directly -- `it = iter(stream); next(it);
+    it.close()` -- throws GeneratorExit at the suspended yield. GeneratorExit is not an
+    Exception subclass, so it used to skip both the except Exception branch and the else
+    exhaustion path below, leaving the span open even though calling stream.close() (or
+    stream.__next__(), a with block, or dropping the stream) already ended it correctly."""
+    tracer = tracer_provider.get_tracer(__name__)
+    chunks = [
+        types.SimpleNamespace(type="response.output_text.delta", delta="Hello"),
+        types.SimpleNamespace(type="response.output_text.delta", delta=" world"),
+    ]
+    stream = ResponseStream(
+        span=tracer.start_span("openai.response"),
+        response=_FakeSyncChunkStream(chunks),
+        start_time=0,
+        request_kwargs={"model": "gpt-4.1-nano", "input": "hi"},
+        tracer=tracer,
+    )
+
+    iterator = iter(stream)
+    next(iterator)
+    iterator.close()
+
+    assert len(span_exporter.get_finished_spans()) == 1
+
+
+@pytest.mark.asyncio
+async def test_closing_the_returned_async_iterator_ends_the_span(
+    clean_responses_registry,
+    span_exporter: InMemorySpanExporter, tracer_provider: TracerProvider
+):
+    """Async counterpart of test_closing_the_returned_iterator_ends_the_span: aclose() on
+    the async generator that __aiter__ returns must still end the span."""
+    tracer = tracer_provider.get_tracer(__name__)
+    chunks = [
+        types.SimpleNamespace(type="response.output_text.delta", delta="Hello"),
+        types.SimpleNamespace(type="response.output_text.delta", delta=" world"),
+    ]
+    stream = ResponseStream(
+        span=tracer.start_span("openai.response"),
+        response=_FakeAsyncChunkStream(chunks),
+        start_time=0,
+        request_kwargs={"model": "gpt-4.1-nano", "input": "hi"},
+        tracer=tracer,
+    )
+
+    iterator = stream.__aiter__()
+    await iterator.__anext__()
+    await iterator.aclose()
+
+    assert len(span_exporter.get_finished_spans()) == 1
 
 
 def test_duplicate_retrieve_after_completion_does_not_emit_second_span(

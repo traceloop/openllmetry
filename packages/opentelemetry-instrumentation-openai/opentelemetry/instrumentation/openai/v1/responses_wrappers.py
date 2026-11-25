@@ -1,3 +1,4 @@
+import copy
 import pydantic
 import re
 import threading
@@ -444,7 +445,11 @@ def _set_responses_json_messages(traced_response: TracedData, span: Span):
 
     # Build output messages
     output_messages = []
-    if traced_response.output_blocks:
+    # A custom raw.parse(to=...) stream can filter out the terminal response.completed event
+    # (see ResponseStream.__iter__) and leave output_blocks empty even though output_text was
+    # still accumulated from forwarded response.output_text.delta events; report the text we
+    # actually have instead of dropping it because there are no output blocks to go with it.
+    if traced_response.output_blocks or traced_response.output_text:
         parts = []
         if traced_response.output_text:
             parts.append({"type": "text", "content": traced_response.output_text})
@@ -556,13 +561,14 @@ def _create_response_stream(
 
     If tracing setup fails, the span ends with an error status and the stream is returned untraced.
     """
-    span = tracer.start_span(
-        SPAN_NAME,
-        kind=SpanKind.CLIENT,
-        start_time=start_time,
-        context=context,
-    )
+    span = None
     try:
+        span = tracer.start_span(
+            SPAN_NAME,
+            kind=SpanKind.CLIENT,
+            start_time=start_time,
+            context=context,
+        )
         _set_request_attributes(
             span,
             prepare_kwargs_for_shared_attributes(request_kwargs),
@@ -576,6 +582,10 @@ def _create_response_stream(
             tracer=tracer,
         )
     except Exception as e:
+        if span is None:
+            # start_span() itself failed (e.g. a broken sampler): there is no span to end,
+            # so fall back the same way every other setup failure in this function does.
+            return response
         span.set_attribute(ERROR_TYPE, e.__class__.__name__)
         span.record_exception(e)
         span.set_status(StatusCode.ERROR, str(e))
@@ -597,17 +607,34 @@ def _instrument_raw_response_stream_parser(
         return
     existing_post_parser = options.post_parser
     context = context_api.get_current()
+    # trace_stream below is read later by the caller's raw.parse(), not at request time, so a
+    # shallow copy here would still let a caller that mutates nested request content (e.g.
+    # appending to its own `input` list) between create() and parse() change what the span
+    # reports. Snapshot now, while it still matches what was actually sent.
+    try:
+        snapshotted_kwargs = copy.deepcopy(request_kwargs)
+    except Exception:
+        snapshotted_kwargs = request_kwargs
+    # The SDK caches parse() per `to=` type (see LegacyAPIResponse.parse), so a caller that
+    # calls both raw.parse() and raw.parse(to=CustomResponseStream) on the same raw response
+    # invokes this post_parser once per type. Trace only the first stream it actually hands
+    # back, so one HTTP response can't export two openai.response spans.
+    already_traced = False
 
     def trace_stream(parsed_response: Any) -> Any:
+        nonlocal already_traced
         if callable(existing_post_parser):
             parsed_response = existing_post_parser(parsed_response)
         if not isinstance(parsed_response, (Stream, AsyncStream)):
             return parsed_response
+        if already_traced:
+            return parsed_response
+        already_traced = True
         return _create_response_stream(
             tracer=tracer,
             response=parsed_response,
             start_time=start_time,
-            request_kwargs=request_kwargs,
+            request_kwargs=snapshotted_kwargs,
             instance=instance,
             context=context,
         )
@@ -1207,6 +1234,14 @@ class ResponseStream(ObjectProxy):
             for chunk in self.__wrapped__:
                 self._process_chunk(chunk)
                 yield chunk
+        except GeneratorExit:
+            # Closing this generator (e.g. `it = iter(stream); next(it); it.close()`) throws
+            # GeneratorExit at the suspended yield above. GeneratorExit is not an Exception
+            # subclass, so it would otherwise skip both the except Exception branch and the
+            # else exhaustion path below, leaving the span open and the SDK stream connected.
+            # Mirror what explicitly calling close() on this proxy already does.
+            self.close()
+            raise
         except Exception as e:
             self._handle_exception(e)
             raise
@@ -1234,6 +1269,13 @@ class ResponseStream(ObjectProxy):
             async for chunk in self.__wrapped__:
                 self._process_chunk(chunk)
                 yield chunk
+        except GeneratorExit:
+            # Same as __iter__: aclose() on this async generator throws GeneratorExit at the
+            # suspended yield above, which would otherwise skip both except Exception and the
+            # else exhaustion path. Awaiting cleanup here is fine: aclose() only requires that
+            # we not yield another value before returning or re-raising.
+            await self.aclose()
+            raise
         except Exception as e:
             self._handle_exception(e)
             raise
@@ -1283,7 +1325,6 @@ class ResponseStream(ObjectProxy):
 
                     self._traced_data.response_id = parsed_response.id
                     self._traced_data.response_model = parsed_response.model
-                    self._traced_data.output_text = self._output_text
                     self._traced_data.response_status = parsed_response.status
                     self._traced_data.incomplete_reason = (
                         getattr(parsed_response.incomplete_details, "reason", None)
@@ -1305,6 +1346,12 @@ class ResponseStream(ObjectProxy):
                         or not self._request_kwargs.get("background")
                     )
                     _record_traced_data(parsed_response.id, self._traced_data, finished)
+
+                # A custom raw.parse(to=...) stream can filter out the terminal
+                # response.completed event above (see __iter__'s docstring) while still
+                # forwarding response.output_text.delta events. Keep whatever text we
+                # actually observed instead of silently leaving it at its initial "".
+                self._traced_data.output_text = self._output_text
 
                 set_data_attributes(self._traced_data, self._span)
                 self._span.set_status(StatusCode.OK)
