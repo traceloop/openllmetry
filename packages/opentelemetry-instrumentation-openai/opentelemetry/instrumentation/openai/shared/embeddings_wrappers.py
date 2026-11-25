@@ -112,6 +112,7 @@ def embeddings_wrapper(
             vector_size_counter,
             duration_histogram,
             duration,
+            request_model=kwargs.get("model"),
         )
 
         return response
@@ -177,6 +178,7 @@ async def aembeddings_wrapper(
             vector_size_counter,
             duration_histogram,
             duration,
+            request_model=kwargs.get("model"),
         )
 
         return response
@@ -207,6 +209,7 @@ def _handle_response(
     vector_size_counter=None,
     duration_histogram=None,
     duration=None,
+    request_model: str = None,
 ):
     if is_openai_v1():
         response_dict = model_as_dict(response)
@@ -220,6 +223,7 @@ def _handle_response(
         duration_histogram,
         response_dict,
         duration,
+        request_model,
     )
     # span attributes
     _set_response_attributes(span, response_dict)
@@ -236,11 +240,13 @@ def _set_embeddings_metrics(
     duration_histogram,
     response_dict,
     duration,
+    request_model: str = None,
 ):
     shared_attributes = metric_shared_attributes(
         response_model=response_dict.get("model") or None,
         operation="embeddings",
         server_address=_get_openai_base_url(instance),
+        request_model=request_model,
     )
 
     # token count metrics
