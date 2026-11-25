@@ -1,0 +1,87 @@
+interactions:
+- request:
+    body: '{"messages":[{"role":"user","content":"Tell me a joke about OpenTelemetry."}],"model":"openai/gpt-oss-120b"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '108'
+      content-type:
+      - application/json
+      host:
+      - api-inference.together.ai
+      user-agent:
+      - Together/Python 3.4.0
+      x-stainless-agent:
+      - claude-code_2-1-331_agent
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 3.4.0
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.15
+    method: POST
+    uri: https://api-inference.together.ai/v1/chat/completions
+  response:
+    body:
+      string: "{\"id\":\"c4d3ddffb2784545b45a47ee9bb602ab-aws_ew1\",\"object\":\"chat.completion\",\"created\":1795594138,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Sure,
+        here\u2019s a light\u2011hearted one for the observability crowd:\\n\\n**Why
+        did the OpenTelemetry trace get a promotion?**\\n\\nBecause it always knew
+        where the *span* was, could *export* its results, and never lost its *context*\u2014talk
+        about a real \u201Ctrace\u201D of excellence!\",\"reasoning_content\":\"The
+        user asks: \\\"Tell me a joke about OpenTelemetry.\\\"\\n\\nWe can comply.
+        It's a harmless request. Provide a joke. It's okay.\"},\"finish_reason\":\"stop\",\"matched_stop\":200002}],\"usage\":{\"prompt_tokens\":77,\"completion_tokens\":102,\"total_tokens\":179,\"prompt_tokens_details\":{\"cached_tokens\":76},\"completion_tokens_details\":{\"reasoning_tokens\":30}},\"system_fingerprint\":\"default\"}"
+    headers:
+      access-control-allow-origin:
+      - '*'
+      access-control-expose-headers:
+      - '*'
+      connection:
+      - keep-alive
+      content-length:
+      - '860'
+      content-type:
+      - application/json
+      date:
+      - Wed, 25 Nov 2026 08:08:59 GMT
+      traceparent:
+      - 00-d716b2832fa06afeaf92847cfbb3f0db-dffa0c1693eb81a7-01
+      vary:
+      - origin, access-control-request-method, access-control-request-headers
+      - origin, access-control-request-method, access-control-request-headers
+      x-api-received:
+      - '2026-11-25T08:08:58.672Z'
+      x-cluster:
+      - dep-agqyjzsv2f6t7cscipx7km7azy
+      x-request-id:
+      - c4d3ddffb2784545b45a47ee9bb602ab-aws_ew1
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-west-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+      x-together-trace-info:
+      - c4d3ddffb2784545b45a47ee9bb602ab-aws_ew1/6d7a89df/fb01c893/e988792a
+    status:
+      code: 200
+      message: OK
+version: 1

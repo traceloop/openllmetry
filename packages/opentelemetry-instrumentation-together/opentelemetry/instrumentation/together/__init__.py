@@ -39,18 +39,72 @@ from wrapt import wrap_function_wrapper
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("together >= 1.2.0, <2",)
+_instruments = ("together >= 1.2.0, <4",)
 
+_CHAT_MODULE = "together.resources.chat.completions"
+_COMPLETIONS_MODULE = "together.resources.completions"
+
+# together 1.x and together 2.x/3.x use the same modules but different class
+# names. Every entry is tried; the ones missing from the installed version are
+# skipped in `_instrument`.
 WRAPPED_METHODS = [
+    # together 1.x
     {
-        "object": "resources",
-        "method": "chat.completions.ChatCompletions.create",
+        "module": _CHAT_MODULE,
+        "object": "ChatCompletions",
         "span_name": "together.chat",
+        "request_type": LLMRequestTypeValues.CHAT,
+        "is_async": False,
     },
     {
-        "object": "resources",
-        "method": "completions.Completions.create",
+        "module": _CHAT_MODULE,
+        "object": "AsyncChatCompletions",
+        "span_name": "together.chat",
+        "request_type": LLMRequestTypeValues.CHAT,
+        "is_async": True,
+    },
+    {
+        "module": _COMPLETIONS_MODULE,
+        "object": "Completions",
         "span_name": "together.completion",
+        "request_type": LLMRequestTypeValues.COMPLETION,
+        "is_async": False,
+    },
+    {
+        "module": _COMPLETIONS_MODULE,
+        "object": "AsyncCompletions",
+        "span_name": "together.completion",
+        "request_type": LLMRequestTypeValues.COMPLETION,
+        "is_async": True,
+    },
+    # together 2.x / 3.x
+    {
+        "module": _CHAT_MODULE,
+        "object": "CompletionsResource",
+        "span_name": "together.chat",
+        "request_type": LLMRequestTypeValues.CHAT,
+        "is_async": False,
+    },
+    {
+        "module": _CHAT_MODULE,
+        "object": "AsyncCompletionsResource",
+        "span_name": "together.chat",
+        "request_type": LLMRequestTypeValues.CHAT,
+        "is_async": True,
+    },
+    {
+        "module": _COMPLETIONS_MODULE,
+        "object": "CompletionsResource",
+        "span_name": "together.completion",
+        "request_type": LLMRequestTypeValues.COMPLETION,
+        "is_async": False,
+    },
+    {
+        "module": _COMPLETIONS_MODULE,
+        "object": "AsyncCompletionsResource",
+        "span_name": "together.completion",
+        "request_type": LLMRequestTypeValues.COMPLETION,
+        "is_async": True,
     },
 ]
 
@@ -67,13 +121,10 @@ def _with_tracer_wrapper(func):
     return _with_tracer
 
 
-def _llm_request_type_by_method(method_name):
-    if method_name == "chat.completions.ChatCompletions.create":
-        return LLMRequestTypeValues.CHAT
-    elif method_name == "completions.Completions.create":
-        return LLMRequestTypeValues.COMPLETION
-    else:
-        return LLMRequestTypeValues.UNKNOWN
+def _is_suppressed():
+    return context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
+        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
+    )
 
 
 @dont_throw
@@ -96,6 +147,35 @@ def _handle_response(span, event_logger, llm_request_type, response):
     set_model_completion_attributes(span, response)
 
 
+def _start_span(tracer, event_logger, to_wrap, kwargs):
+    llm_request_type = to_wrap.get("request_type")
+    span = tracer.start_span(
+        to_wrap.get("span_name"),
+        kind=SpanKind.CLIENT,
+        attributes={
+            GenAIAttributes.GEN_AI_SYSTEM: "TogetherAI",
+            SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
+        },
+    )
+    _handle_input(span, event_logger, llm_request_type, kwargs)
+    return span
+
+
+def _end_span_with_error(span, error):
+    span.set_attribute(ERROR_TYPE, error.__class__.__name__)
+    span.record_exception(error)
+    span.set_status(Status(StatusCode.ERROR, str(error)))
+    span.end()
+
+
+def _end_span_with_response(span, event_logger, to_wrap, response):
+    if response:
+        _handle_response(span, event_logger, to_wrap.get("request_type"), response)
+        if span.is_recording():
+            span.set_status(Status(StatusCode.OK))
+    span.end()
+
+
 @_with_tracer_wrapper
 def _wrap(
     tracer,
@@ -106,39 +186,44 @@ def _wrap(
     args,
     kwargs,
 ):
-    """Instruments and calls every function defined in TO_WRAP."""
-    if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY) or context_api.get_value(
-        SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY
-    ):
+    """Instruments and calls every sync function defined in WRAPPED_METHODS."""
+    if _is_suppressed():
         return wrapped(*args, **kwargs)
 
-    name = to_wrap.get("span_name")
-    llm_request_type = _llm_request_type_by_method(to_wrap.get("method"))
-    span = tracer.start_span(
-        name,
-        kind=SpanKind.CLIENT,
-        attributes={
-            GenAIAttributes.GEN_AI_SYSTEM: "TogetherAI",
-            SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
-        },
-    )
-    _handle_input(span, event_logger, llm_request_type, kwargs)
-
+    span = _start_span(tracer, event_logger, to_wrap, kwargs)
     try:
         response = wrapped(*args, **kwargs)
     except Exception as e:
-        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
-        span.record_exception(e)
-        span.set_status(Status(StatusCode.ERROR, str(e)))
-        span.end()
+        _end_span_with_error(span, e)
         raise
 
-    if response:
-        _handle_response(span, event_logger, llm_request_type, response)
-        if span.is_recording():
-            span.set_status(Status(StatusCode.OK))
+    _end_span_with_response(span, event_logger, to_wrap, response)
+    return response
 
-    span.end()
+
+@_with_tracer_wrapper
+async def _awrap(
+    tracer,
+    event_logger,
+    to_wrap,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
+    """Instruments and calls every async function defined in WRAPPED_METHODS."""
+    if _is_suppressed():
+        return await wrapped(*args, **kwargs)
+
+    span = _start_span(tracer, event_logger, to_wrap, kwargs)
+    try:
+        response = await wrapped(*args, **kwargs)
+    except BaseException as e:
+        # BaseException so the span also ends on asyncio cancellation.
+        _end_span_with_error(span, e)
+        raise
+
+    _end_span_with_response(span, event_logger, to_wrap, response)
     return response
 
 
@@ -189,18 +274,25 @@ class TogetherAiInstrumentor(BaseInstrumentor):
             )
 
         for wrapped_method in WRAPPED_METHODS:
-            wrap_object = wrapped_method.get("object")
-            wrap_method = wrapped_method.get("method")
-            wrap_function_wrapper(
-                "together",
-                f"{wrap_object}.{wrap_method}",
-                _wrap(tracer, event_logger, wrapped_method),
-            )
+            module = wrapped_method.get("module")
+            obj = wrapped_method.get("object")
+            wrapper = _awrap if wrapped_method.get("is_async") else _wrap
+            try:
+                wrap_function_wrapper(
+                    module,
+                    f"{obj}.create",
+                    wrapper(tracer, event_logger, wrapped_method),
+                )
+            except (ImportError, AttributeError):
+                # Class isn't in the installed together version.
+                logger.debug("Skipping %s.%s.create", module, obj)
 
     def _uninstrument(self, **kwargs):
         for wrapped_method in WRAPPED_METHODS:
-            wrap_object = wrapped_method.get("object")
-            unwrap(
-                f"together.{wrap_object}",
-                wrapped_method.get("method"),
-            )
+            module = wrapped_method.get("module")
+            obj = wrapped_method.get("object")
+            try:
+                unwrap(f"{module}.{obj}", "create")
+            except ImportError:
+                # Class isn't in the installed together version.
+                pass

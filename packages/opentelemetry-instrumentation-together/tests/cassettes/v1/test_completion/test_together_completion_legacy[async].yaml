@@ -1,0 +1,94 @@
+interactions:
+- request:
+    body: '{"prompt": "Tell me a joke about OpenTelemetry.", "model": "openai/gpt-oss-120b",
+      "max_tokens": 512, "stream": false}'
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Together/v1 PythonBindings/1.6.0
+      X-Together-Client-User-Agent:
+      - '{"bindings_version": "1.6.0", "httplib": "requests", "lang": "python", "lang_version":
+        "3.11.15", "platform": "macOS-27.2.1-arm64-arm-64bit", "publisher": "together",
+        "uname": "Darwin 27.2.0 Darwin Kernel Version 27.2.0: Wed Oct 14 23:44:56
+        PDT 2026; root:xnu-13432.41.4~25/RELEASE_ARM64_T6041 arm64 arm"}'
+    method: POST
+    uri: https://api.together.xyz/v1/completions
+  response:
+    body:
+      string: "{\"id\":\"6f5b4c7e172b40869208f9f464afb71e-aws_ec1\",\"object\":\"text_completion\",\"created\":1795594240,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"text\":\"\\n\\nSure!
+        What do you call a group of logs that are afraid of the network? A \\\"tracey\\\"
+        situation!\\n\\nFurthermore\\n\\nHere's another attempt: \\n\\nWhy was the
+        OpenTelemetry database happy? It had so many packages of metric\\n\\n...because
+        a metric's the go!\\n\\nThis might get a bit nerdy!\\n\\nWhy did the OpenTelemetry
+        developer never get a break during a marathon?\\nBecause they were constantly
+        tracing their steps!\\n\\nSure!\\n\\nGreat! If there's anything else you'd
+        like to chat about\u2014tech topics, jokes, or anything at all\u2014just let
+        me know!\\n\\nThese T\u2696\uFE0F\\n\\nI sure a go~clerc carefully \uFFFD\uFFFDk
+        ic\\n\\nIt sounds like you're incorporating creative tones or symbols\u2014maybe
+        even a whisper? <in romantic> <missing> so and I \\n\\nThanks \\n  \U0001F392
+        .\\n\\nGot it! If there's anything specific you'd like to talk about or any
+        particular kind of assistance you're seeking, feel free to let me know! Whether
+        it's a question, a topic of interest, or something else entirely, I'm here\\n\\n\\n\\nIf
+        you have any more questions or need further information on any topic, feel\\n\\nIt
+        seems there's an interesting golden thread\\n\\n\\n\\nAbsolutely! In your
+        previous messages\\n\\n\U0001F6A4\\n\\nAll\\n\\nAh\\n\\nCertainly\\n\\n\\n\\nIs
+        there anything\\n\\n```plaintext\\n\\n\\n\\n````\\n\\nIt looks like you're
+        trying to format\\n\\nI get\\n\\n```\\n\\nIt looks spr\\n\\nIf you\\n\\npop\\n\\nGiven\\n\\n...\\n\\nfine\\n\\nIt\\n\\n...\\n\\nmight\\n\\n```\\n\\nIf
+        you're\\n\\nCode:\\n\\n``\\n\\n```\\n\\nsv\\n\\nIt seg\\n\\nIf\\n\\nSure\\n\\nI\\n\\nFine\\n\\nIt
+        sounds like\\n\\n...\\n\\n```Narly:\\n\\n```\\n\\n```\\n\\n\\n\\nRepresent\\n\\n```\\n\\nAcross
+        Copyright\\n\\nIt\\n\\n```\\n\\n```\\n\\nWhat,\\n\\nWhat\\n\\nWhen\\n\\n#\\n\\nW
+        for\\n\\nYou're prompting\\n\\n_nom\\n\\nAp\\n\\nI\\n\\n` and\\n\\nopp\\n\\n```JSON\\n\\nI'm\\n\\n```\\n\\nSTRING\\n\\n```)\\n\\n\\n\\nIm\u021B\\n\\n```\\n\\nIt
+        seems\\n\\n\\n\\nIn Summary\\n\\n```\\n\\nEach\\n\\n Absolutely\\n\\nAll set\\n\\n\\n\\nIt\\n\\nIt\\n\\n```\\n\\n```\\n\\n```\\n\\nI\\n\\nSQL\\n\\n```\\n\\n```\\n\\n`d\\n\\nIt\\n\\n```\\n\\n```\\n\\n...\\n\\nThis\\n\\n```json\\nThis\\n```\\n\\nI\\n\\n```\\n\\n...\\n\\n```JSON\\n\\n`\\n\\nIt
+        seems\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n\\n\\nIf
+        there's anything else\\n\\nYou\\n\\nIf\\n\\n```scss\\n\\n```\\n\\nIt\\n\\nte\\n\\n```.\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\",\"index\":0,\"finish_reason\":\"length\"}],\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":512,\"total_tokens\":520,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"system_fingerprint\":\"default\"}"
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      Access-Control-Expose-Headers:
+      - '*'
+      Alt-Svc:
+      - h3=":443"; ma=86400
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - a5ff2da5bd62aa48-AMS
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 25 Nov 2026 08:10:45 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=15552000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - origin, access-control-request-method, access-control-request-headers, origin,
+        access-control-request-method, access-control-request-headers, accept-encoding
+      X-Request-ID:
+      - 6f5b4c7e172b40869208f9f464afb71e-aws_ec1
+      content-length:
+      - '2480'
+      traceparent:
+      - 00-66f5bb37767d247d730834c56661c8d9-f83822491dd698ba-01
+      x-api-received:
+      - '2026-11-25T08:10:40.993Z'
+      x-cluster:
+      - dep-agqyjzsv2f6t7cscipx7km7azy
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-central-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+      x-together-trace-info:
+      - 6f5b4c7e172b40869208f9f464afb71e-aws_ec1/91c8a2cd/b98de0c6/80834e91
+    status:
+      code: 200
+      message: OK
+version: 1

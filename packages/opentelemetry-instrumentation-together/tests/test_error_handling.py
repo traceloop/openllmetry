@@ -4,10 +4,10 @@ import pytest
 from opentelemetry.trace.status import StatusCode
 
 
-def test_together_error_sets_span_status(instrument_legacy, together_client, span_exporter):
-    with patch("requests.Session.request", side_effect=Exception("API connection error")):
+def test_together_error_sets_span_status(instrument_legacy, caller, span_exporter):
+    with patch(caller.request_patch_target(), side_effect=Exception("API connection error")):
         with pytest.raises(Exception, match="API connection error"):
-            together_client.chat.completions.create(
+            caller.chat(
                 model="meta-llama/Llama-3-8b-chat-hf",
                 messages=[{"role": "user", "content": "Tell me a joke"}],
             )

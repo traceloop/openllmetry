@@ -1,0 +1,132 @@
+interactions:
+- request:
+    body: '{"model":"openai/gpt-oss-120b","prompt":"Tell me a joke about OpenTelemetry."}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '78'
+      content-type:
+      - application/json
+      host:
+      - api.together.ai
+      user-agent:
+      - Together/Python 3.4.0
+      x-stainless-agent:
+      - claude-code_2-1-331_agent
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 3.4.0
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.15
+    method: POST
+    uri: https://api.together.ai/v1/completions
+  response:
+    body:
+      string: "{\"id\":\"2ac33cb76f0b40ba8794cd214e2e1538-aws_ew1\",\"object\":\"text_completion\",\"created\":1795594143,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"text\":\"859
+        working correctly?\U0001F341 ...........\\n\\nSure, here's a joke about OpenTelemetry:\\n\\nWhy
+        did the OpenTelemetry server go on a diet?\\n\\nBecause it had too many fields!\\n\\nIt's
+        great to hear that you found the joke entertaining! However, I'm not sure
+        what you mean by \\\"859 working correctly? \U0001F34F\\n\\nThe phrase \\\"859
+        working correctly? \U0001F34F\\\" doesn't have any known meaning or relationship
+        to\\n\\nOpenTelemetry, so it's possible that it might be a\\n\\nMis-interpretation
+        of the software requirement\\n\\n(\\\"no longer a\\n\\nSure!\\n\\n\\n\\nIf
+        you\u2019re interested in how to make a generational story a good one,\\n\\nHere
+        are some ideas\\n\\nto\\n\\nstructure\\n\\nOkay\\n\\nproperly:\\n\\nGreat!
+        How\\n\\nto\\n\\nLet\\n\\nThe\\n\\nCreate\\n\\nHere\\n\\nSure\\n\\nSure\\n\\nHere's\\n\\naction\\n\\netc\\n\\nSure,\\n\\nSure\\n\\nHere\\n\\nHere\\n\\nOne\\n\\nSure\\n\\nCertainly!\\n\\nAbsolutely!\\n\\nThese\\n\\nAnd\\n\\nIf\\n\\nWe\\n\\nSure\\n\\nAll\\n\\nThese\\n\\nThat's\\n\\nSure\\n\\nHere\\n\\nSure\\n\\nHere's\\n\\nHere's\\n\\nCertainly!\\n\\nTo\\n\\nCertainly\\n\\nIf\\n\\nSure\\n\\nPosting\\n\\ninto\\n\\nConsider\\n\\nSure\\n\\nHere\\n\\nSure\\n\\nSt\\n\\nLoop\\n\\nIf\\n\\nSure\\n\\nHere's\\n\\nSure\\n\\nIf\\n\\nto\\n\\nSuggest\\n\\nSure!\\n\\nSure\\n\\nHere\\n\\nSure\\n\\nHere\\n\\nTry\\n\\nIf\\n\\nBeg\\n\\nIf\\n\\nSure\\n\\nHere\\n\\nIt
+        might\\n\\nSure\\n\\nCertainly\\n\\nSure\\n\\nSure\\n\\nHere\\n\\n---\\n\\nIt
+        appears you're asking for a discussion related\\n\\nto\\n\\nIn\\n\\nGive\\n\\nSure\\n\\nSure\\n\\nSure\\n\\nSure\\n\\nSure\\n\\na\\n\\nSure\\n\\nSure\\n\\nAdd
+        a\\n\\nTo\\n\\nSuitable\\n\\nApologies,\\n\\nclass\\n\\nsample\\n\\nSure\\n\\nIf\\n\\nIf
+        you\\n\\n1\\n\\nSure\\n\\n```\\n\\nIf\\n\\nC\\n\\nSpec\\n\\nSpec\\n\\nincludes\\n\\nSure\\n\\nIn\\n\\nSure\\n\\nSure\\n\\nI\\n\\nHere's\\n\\nContinu\\n\\nuvr\\n\\nSure\\n\\nSorry\\n\\nCertainly\\n\\nHere\\n\\nHere\\n\\nYes\\n\\n*\\n\\nYes\\n\\nOpen\\n\\nGreat\\n\\nIt\\n\\nIt\\n\\n```\\n\\nI
+        am\\n\\nSure\\n\\nHere's\\n\\n1\\n\\nSure\\n\\nSure\\n\\nIf you\\n\\n```\\n\\nApologies\\n\\n...\\n\\nSure\\n\\n```and\\n\\nContinu\\n\\nLooks\\n\\nSure
+        sure\\n\\n```\\n\\nUnderstood\\n\\nSure\\n\\n```\\n\\n```\\n\\nSure\\n\\n```\\n\\nApolog\\n\\nBased
+        as\\n\\nOn\\n\\nUnder\\n\\n```\\n\\n```\\n\\nSure\\n\\n``` su\\n\\n```\\n\\nGreat\\n\\n```\\n\\nSure\\n\\nThe
+        artwork\\n\\nequals\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```py\\n\\nAlthough
+        Open\\n\\nIt sounds\\n\\nYes\\n\\nse\\n\\nThis text shown\\n\\nIf you\\n\\nprint\\n\\nSure\\n\\n```\\n\\n`_plain_top\\n\\nGreat\\n\\n`)!
+        In order\\n\\nHere\\n\\n```\\n\\nHere\u2019s\\n\\n```\\n\\nHere\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n``\\n\\n```\\n\\n```\\n\\nSure\\n\\n```\\n\\n```\\n\\nS\\n\\nSure!\\n\\n```\\n\\n---\\n\\n```
+        trick\\n\\n```\\n\\nCertainly\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n##\\n\\nPython:\\n\\n```\\n\\n```\\n\\n\uB2F9\uC2E0\\n\\n```\\n\\nSure\\n\\n```\\n\\nContinu\\n\\n```\\n\\nMaybe\\n\\n```\\n\\n``\\n\\n```\\n\\n```\\n\\n```\\n\\n```
+        \\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```teur\\n\\n```\\n\\nSure\\n\\n```\\n\\nSure\\n\\n```\\n\\n```\\n\\nThanking\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\nshow\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\nI'm
+        having\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\nYou\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n\\n`\\n\\nIt
+        seems there might be an issue with sharing or accessing the image you're trying
+        to describe or discuss. If you can, try uploading it again, or you could describe
+        its content and what you would like advice or feedback on regarding the image.\\n\\nIt
+        appears there's a misunderstanding\\n\\n\uFF1A\\n\\nI\u2019m\\n\\nOn\\n\\n!1blmrbqs--parse\\n\\n2Bin\\n\\nIt
+        looks\\n\\nSomething\\n\\nSure\\n\\nIt\\n\\nSure\\n\\nLooks\\n\\nIt seems\\n\\n```\\n##
+        Maybe\\n\\n```\\n\\nSc\\n\\nYou're\\n\\n```\\n\\n```\\n\\nQu\\n\\nUnfortunately\\n\\nAttention\\n\\nIt
+        appears\\n\\n```\\n\\nHere\\n\\n```\\n\\nGood\\n\\n indeed\\n\\n```\\n\\nIf\\n\\n```\\n\\n```\\n\\nSince\\n\\n```\\n\\n```\\n\\nIf
+        debugging\\n\\n```\\n\\n```\\n\\n#\\n\\n```\\n\\nI\u2019m\\n\\nHere\\n\\nThat\\n\\nYour\\n\\n\\n```\\n\\nGreat\\n\\n```\\n\\n
+        \ ```\\n\\nN\\n\\nIt\\n\\n```\\n\\nYes\\n\\n```\\n\\n```\\n\\nApology\\n\\n```\\n\\n```\\n\\n```\\n\\nI\\n\\n```\\n\\nSure\\n\\n```\\n\\n}\\n\\n```\\n\\nSure\\n\\n```\\n\\nOnce\\n\\n```\\n\\nBelow
+        is a way~\\n\\nIf there's a\\n\\nSure\\n\\n```\\n\\n``\\n\\nHere\\n\\n\\n\\n```\\n\\nIt
+        sounds\\n\\nOn\\n\\n```\\n\\nTr (<))\\n\\nThe <!--\\n\\n\\\"\\\"\\\"\\n\\n...\\n\\nI\\n\\nBased\\n\\nroots\\n\\n``\\n\\n<|vq_11739\\n\\nIt
+        seems\\n\\nYou're\\n\\n``\\n\\n```\\n\\nJ\\n\\n```\\n\\nYour\\n\\n```\\n\\nAs\\n\\n```\\n\\nSure\\n\\n```\\n\\nSending\\n\\n```\\n\\n```\\n\\nSure\\n\\n```\\n\\nAlright\\n\\nneed\\n\\n```\\n\\n```\\n\\n```\\n\\nLet's
+        see\\n\\n```\\n\\nAbsolutely\\n\\n```\\n\\nLet's\\n\\n```\\n\\n()\\n\\nCertainly\\n\\nIt\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\nApologic\\n\\nSure\\n\\nCertainly\\n\\n```\\n\\n...\\n\\nS\\n\\nSure\\n\\nThemes\\n\\nIt\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\nGoogle\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\nWinking
+        :)\\n\\n```\\n\\nIt\\n\\n***\\n\\n```\\n\\nBr\\n\\nIt\\n\\n```\\n\\nHere\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\",\"index\":0,\"finish_reason\":\"stop\",\"matched_stop\":199999}],\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":1294,\"total_tokens\":1302,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"system_fingerprint\":\"default\"}"
+    headers:
+      access-control-allow-origin:
+      - '*'
+      access-control-expose-headers:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - a5ff2b45598cc483-DUB
+      connection:
+      - keep-alive
+      content-length:
+      - '5407'
+      content-type:
+      - application/json
+      date:
+      - Wed, 25 Nov 2026 08:09:15 GMT
+      server:
+      - cloudflare
+      strict-transport-security:
+      - max-age=2592000; includeSubDomains
+      traceparent:
+      - 00-f018f6abcc8b77c072aa9bbe7970334e-d3154f8378401b5e-01
+      transfer-encoding:
+      - chunked
+      vary:
+      - origin, access-control-request-method, access-control-request-headers, origin,
+        access-control-request-method, access-control-request-headers
+      x-api-received:
+      - '2026-11-25T08:09:03.607Z'
+      x-cluster:
+      - dep-agqyjzsv2f6t7cscipx7km7azy
+      x-content-type-options:
+      - nosniff
+      x-request-id:
+      - 2ac33cb76f0b40ba8794cd214e2e1538-aws_ew1
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-west-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+      x-together-trace-info:
+      - 2ac33cb76f0b40ba8794cd214e2e1538-aws_ew1/6d7a89df/fb01c893/003d7ba6
+    status:
+      code: 200
+      message: OK
+version: 1

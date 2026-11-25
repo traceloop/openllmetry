@@ -19,9 +19,6 @@ from opentelemetry.semconv_ai import (
     LLMRequestTypeValues,
 )
 
-from together.types.chat_completions import ChatCompletionResponse
-from together.types.completions import CompletionResponse
-
 
 class Roles(Enum):
     USER = "user"
@@ -56,13 +53,10 @@ def emit_prompt_events(event_logger, llm_request_type, kwargs):
 
 
 @dont_throw
-def emit_completion_event(
-    event_logger,
-    llm_request_type,
-    response: Union[ChatCompletionResponse, CompletionResponse],
-):
+def emit_completion_event(event_logger, llm_request_type, response):
+    # The response class lives in a different module in each together major
+    # version, so it is accessed by attribute only and not imported.
     if llm_request_type == LLMRequestTypeValues.CHAT:
-        response: ChatCompletionResponse
         for choice in response.choices:
             emit_event(
                 CompletionEvent(
@@ -76,7 +70,6 @@ def emit_completion_event(
                 event_logger,
             )
     elif llm_request_type == LLMRequestTypeValues.COMPLETION:
-        response: CompletionResponse
         for choice in response.choices:
             emit_event(
                 CompletionEvent(

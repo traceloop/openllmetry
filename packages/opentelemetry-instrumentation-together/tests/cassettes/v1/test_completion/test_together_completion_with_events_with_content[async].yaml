@@ -1,0 +1,97 @@
+interactions:
+- request:
+    body: '{"prompt": "Tell me a joke about OpenTelemetry.", "model": "openai/gpt-oss-120b",
+      "max_tokens": 512, "stream": false}'
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Together/v1 PythonBindings/1.6.0
+      X-Together-Client-User-Agent:
+      - '{"bindings_version": "1.6.0", "httplib": "requests", "lang": "python", "lang_version":
+        "3.11.15", "platform": "macOS-27.2.1-arm64-arm-64bit", "publisher": "together",
+        "uname": "Darwin 27.2.0 Darwin Kernel Version 27.2.0: Wed Oct 14 23:44:56
+        PDT 2026; root:xnu-13432.41.4~25/RELEASE_ARM64_T6041 arm64 arm"}'
+    method: POST
+    uri: https://api.together.xyz/v1/completions
+  response:
+    body:
+      string: "{\"id\":\"7f5ec1c890e4452599b6559099bed1cf-aws_ec1\",\"object\":\"text_completion\",\"created\":1795594247,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"text\":\".\\n\\nOk
+        you're going to add on an\\n```\\n\\nHere\u2019s a polished version of your
+        file structuring and error handling note, making it clearer to understand
+        for implementation:\\n\\n---\\n\\n**File map:**\\n\\n### 1\uFE0F\u20E3 main.rs
+        - Psuedo Entry point for debugging purposes\\n\\n```rust\\nuse backtrace::Backtrace;\\nuse
+        halo2::{arith::FieldExt};\\nuse crate::{configuration::HostCfgTrait};\\nuse
+        tracing_subscriber::{fmt::format::FmtSpan, EnvFilter};\\nuse std::error::Error;\\n\\npub
+        mod autoinc_matched_page_table;\\npub mod pacing;\\nmod pcie_gen1_controller_w;\\nmod
+        linker_forge;\\nmod parametric_integrity;\\nmod configuration;\\n\\nfn main()
+        -> Result<(), Box<dyn Error>> {\\n    // Set up tracing subscriber\\n    setup_tracing_subscriber();\\n\\n
+        \   // Load configuration\\n    node_cfg::load_device_config();\\n\\n    //
+        TODO: Further implementation\\n\\n    Ok(())\\n}\\n\\nfn setup_tracing_subscriber()
+        {\\n    let filter = EnvFilter::default()\\n        .add_directive(\\\"scraping::driver=TRACE\\\".parse().unwrap())\\n
+        \       .add_directive(\\\"scraper::mulas=INFO\\\".parse().unwrap())\\n        .add_directive(\\\"vuln_scanner::vuln_scanner=trace\\\".parse().unwrap())\\n
+        \       .add_directive(\\\"vuln_scanner::headset=info\\\".parse().unwrap())\\n
+        \       .add_directive(\\\"cjson::cjson=debug\\\".parse().unwrap());\\n\\n
+        \   // Create a panic hook that logs the panic and the current backtrace.\\n
+        \   let panic_hook = |panic_info: &std::panic::PanicInfo| {\\n        let
+        backtrace = Backtrace::new();\\n        error!(\\n            %panic_info,\\n
+        \           backtrace =? backtrace,\\n            \\\"panic caught\\\"\\n
+        \       );\\n        // Print the panic info and the backtrace again in case
+        the logger doesn't handle it.\\n        eprintln!(\\\"Test failure due to
+        panic: {}\\\", panic_info);\\n        eprintln!(\\\"Backtrace: {}\\\", backtrace);\\n
+        \       // I think panics without this will cause the system to die? but may
+        cause errors in broken logic.\\n        // we want to at least see it do something.\\n
+        \       // should probably be a `cancel_get_thread_local`...our abstractions
+        at least.\\n    };\\n    std::panic::set_hook(Box::new(panic_hook));\\n\\n
+        \   // Set up tracing subscriber\\n    tracing_subscriber::fmt()\\n        .with_writer(||
+        {\\n            std::io\",\"index\":0,\"finish_reason\":\"length\"}],\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":512,\"total_tokens\":520,\"prompt_tokens_details\":{\"cached_tokens\":7}},\"system_fingerprint\":\"default\"}"
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      Access-Control-Expose-Headers:
+      - '*'
+      Alt-Svc:
+      - h3=":443"; ma=86400
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - a5ff2dccda8a65f1-AMS
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 25 Nov 2026 08:10:51 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=15552000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - origin, access-control-request-method, access-control-request-headers, origin,
+        access-control-request-method, access-control-request-headers, accept-encoding
+      X-Request-ID:
+      - 7f5ec1c890e4452599b6559099bed1cf-aws_ec1
+      content-length:
+      - '2538'
+      traceparent:
+      - 00-b5c3a591a558be7809e14a92579d8d8b-b147d0d87e2afdcd-01
+      x-api-received:
+      - '2026-11-25T08:10:47.258Z'
+      x-cluster:
+      - dep-agqyjzsv2f6t7cscipx7km7azy
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-central-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+      x-together-trace-info:
+      - 7f5ec1c890e4452599b6559099bed1cf-aws_ec1/91c8a2cd/b98de0c6/40e7fa54
+    status:
+      code: 200
+      message: OK
+version: 1

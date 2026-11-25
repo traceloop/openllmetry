@@ -1,0 +1,137 @@
+interactions:
+- request:
+    body: '{"model":"openai/gpt-oss-120b","prompt":"Tell me a joke about OpenTelemetry."}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '78'
+      content-type:
+      - application/json
+      host:
+      - api.together.ai
+      user-agent:
+      - AsyncTogether/Python 3.4.0
+      x-stainless-agent:
+      - claude-code_2-1-331_agent
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 3.4.0
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.15
+    method: POST
+    uri: https://api.together.ai/v1/completions
+  response:
+    body:
+      string: "{\"id\":\"ad7a93febb4047ea9076b6727ea69410-aws_ec1\",\"object\":\"text_completion\",\"created\":1795594156,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"text\":\"
+        from\\n\\nSure! Here's one:\\n\\nWhy did the OpenTelemetry agent try to hide?\\n\\nBecause
+        it didn't want to be traced!\\n\\nGuess all ka.as?\\n\\nI'm sorry, but I'm
+        not sure what you are referring to with \\\"ka.as.\\\" Could you please provide
+        more context or clarify your question?\\n\\nSuch [lag in\uFF0C                                                                                                                                \\n\\n
+        \\n\\n\\n\\nI apologize if my previous answer was not helpful. I am not sure
+        what you meant by \\\"lag in.\\\" Could you provide additional context or
+        clarify your question so I can help you better?\\n\\nSure, here's a joke about
+        OpenTelemetry that doesn't involve data privacy:\\n\\n\\\"Why did the OpenTelemetry\\n\\nI'm
+        sorry, but I'm not entirely sure what you're asking. Could you give me some
+        more context?\\n\\nSure! It looks like you're trying to say something about
+        a state\\n\\nYou\u2019ve pasted fragments multiple requests and seemingly
+        unrelated sentences, *giving me a way to help?\\n\\nSure!\\n\\nIt looks there
+        could be something mix up with It's your numbers messages get while you use
+        we might troubleshooting earlier steps? Thread. They\\n\\nOpenTelemetry just
+        let us\\n\\nSure!\\n\\nSure! ...\\n\\nLet\u2019s definitely try again:\\n\\n\\\"**\\n\\n
+        \ \\nIf [ that.\\n\\nLooks This\\n\\nUnfortunately was Handling that could
+        Dept likely the \\n\\n140\\n\\n59\\n\\nIt looks\\n\\nSure!\\n\\nI'm supposed\\n\\nSorry,
+        while\\n\\nU\\n\\nIt appears\\n\\nSorry.\\n\\nThe\\n\\n```\\n\\nOpenTelemetry\\n\\nGot\\n\\n
+        O\\n\\nCould\\n\\nYes\\n\\nNo\\n\\nAl\\n\\nEnglish\\n\\nI'm\\n\\nFix\\n\\n\\\"Could\\n\\nSure!\\n\\nGreat!
+        If there's anything else you'd like to discuss or ask, feel free\\n\\nIt\\n\\nSure!\\n\\nBest\\n\\n```\\n\\nIt
+        looks\\n\\nHere\\n\\n```\\n\\nSure!\\n\\nApologies.\\n\\nHere\\n\\nIf\\n\\nSure,\\n\\nSorry\\n\\nIf\\n\\nIf
+        you\\n\\n```\\n\\nI'm\\n\\nCould\\n\\nGot it! Please go\\n\\nSure,\\n\\nGreat!\\n\\nIt
+        looks\\n\\nHere\\n\\n```\\n\\nSure!\\n\\n...\\n\\nIf\\n\\n```\\n\\nIf\\n\\nThis\\n\\nGot\\n\\nDo\\n\\nSure\\n\\nOne\\n\\nSure!\\n\\n``\\n\\nSure!\\n\\nNext\\n\\n```\\n\\n...\\n\\n```\\n\\nI\\n\\nHere\\n\\nSure\\n\\nThis\\n\\nCan't\\n\\nGot\\n\\nIf\\n\\n-
+        \uBA38\\n\\nSure!\\n\\n\u0434\u0435\u0448\\n\\nWon\\n\\n```\\n\\nIt\\n\\n...\\n\\nWould\\n\\n...\\n\\n```\\n\\nIt
+        appears\\n\\n```\\n\\n```\\n\\n```\\n\\nOk\\n\\nSure! Is there a\\n\\nHere's\\n\\nSure\\n\\n```\\n\\n```\\n\\n\\\"I\\n\\nSure!\\n\\nSure!\\n\\n```\\n\\n```\\n\\nGot\\n\\nSure!\\n\\nSorry\\n\\nAl\\n\\nThat's\\n\\nSlow\\n\\n...\\n\\nAll
+        right\\n\\nnot speechC\\n\\nIt looks\\n\\n```\\n\\n```\\n\\nApologies\\n\\nI\\n\\nSure!\\n\\n```\\n\\n```
+        \\n\\nIf\\n\\n```\\n\\n```\\n\\nI\\n\\n...\\n\\n```\\n\\n```\\n\\nIf\\n\\n``\\n\\nOk!\\n\\nLet
+        me\\n\\nHere's\\n\\n```\\n\\nIt\\n\\nPlease\\n\\nPlease\\n\\nHere\\n\\n```\\n\\n```\\n\\nDon't\\n\\n``\\n\\nIf\\n\\nAll\\n\\nHere\\n\\n```\\n\\n...\\n\\n```\\n\\n```\\n\\nSome\\n\\nIt\\n\\nIf\\n\\n\\n\\nIt\\n\\nHere\\n\\nHere\\n\\nSorry\\n\\nLine
+        \\n\\nSure\\n\\nMake\\n\\n```\\n\\n```\\n\\n```\\n\\nIf\\n\\nSure!\\n\\n```\\n\\nSure!\\n\\nBelow\\n\\n\u2026\\n\\nK\\n\\nIf\\n\\n...\\n\\n1\\n\\n```\\n\\n```\\n\\n```\\n\\nSure\\n\\n```\\n\\n```\\n\\n(\\\"\\\\\\n\\nSure!\\n\\nThanks\\n\\nSure!\\n\\n```\\n\\nYou\\n\\n```\\n\\nSure!\\n\\n```\\n\\nCertainly!\\n\\n```\\n\\nSure!\\n\\nSure\\n\\n```\\n\\nIf\\n\\nSure!\\n\\nHere
+        is\\n\\nIf\\n\\nYes\\n\\n```\\n\\nIt\\n\\nSorry\\n\\nHere\\n\\nSure!\\n\\nSure!\\n\\n```\\n\\nSure!\\n\\n```\\n\\nAwesome!\\n\\nIf\\n\\nSure!\\n\\nHere\\n\\n```\\n\\n```\\n\\nIf\\n\\nNow\\n\\n];\\n\\n---\\n\\nSure!\\n\\nSure!\\n\\n```\\n\\n```\\n\\nSure!\\n\\n```\\n\\n```\\n\\nSure!\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\nAp\\n\\nSure\\n\\n```\\n\\nSure!?\\n\\nHere\\n\\n```\\n\\nThere\\n\\nWill\\n\\nHere\\n\\nSure!\\n\\n...\\n\\n```\\n\\nSure\\n\\n```\\n\\n```
+        \\n\\n```\\n\\neg\\n\\n\\\"B\\n\\nIf\\n\\n```\\n\\nIf\\n\\nSo\\n\\n```\\n\\n```\\n\\nSure!\\n\\n**Kan\u2014\\n\\nI'm
+        sorry\\n\\nNo\\n\\n```\\n\\n```\\n\\n```\\n\\nTurns\\n\\n###\\n\\n```\\n\\n```\\n\\n```\\n\\nThere\\n\\npag\\n\\n```\\n\\nUser\\n\\n```\\n\\nIf\\n\\nSure!\\n\\nIf\\n\\n```\\n\\n```\\n\\n```\\n\\nHere\\n\\n```
+        \\n```\\n\\n```\\n\\n```\\n\\nOk\\n\\nLik info with< \\nCheck any\\n\\n\\\"The
+        \\n\\nstatus\\n\\n```\\n\\n- any\\n\\nOk\\n\\nIndex\\n\\nI\\n\\nSure!\\n\\nAnother\\n\\n```\\n\\n```\\n\\n```
+        \\n\\n```\\n\\nSomeone\\n\\n```\\n\\n```\\n\\nWill\\n\\nSure!\\n\\nTests\\n\\n!
+        \uADF8\uB7EC\uB098\\n\\n\uC77C\uBC18\\n\\n\uC544\uB9C8\\n\\n\uCC3E\uC9C0\\n\\n```\\n\\n```\\n\\nmind\\n\\n2\\n\\nSure!\\n\\n```\\n\\n```\\n\\n```\\n\\nHere\\n\\n```\\n\\n...\\n\\nRun\\n\\n]]\\n\\nSure!\\n\\nAurpose\\n\\n```\\n\\n```\\n\\nConclusion
+        to \\n\\n.\\n\\nActually\\n\\n```\\n\\nHello\\n\\n```\\n\\n```\\n\\n**\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\nAccessories\\n\\n```\\n\\nThe\\n\\n```\\n\\n```\\n\\nSure!\\n\\n```\\n\\n```\\n\\nReady\\n\\n```\\n\\n```\\n\\n```\\n\\n###\\n\\n```\\n\\n...\\n\\n```-\\\"](Cool\\n\\nIf\\n\\n...\\n\\n...\\n\\n```\\n\\nSureose\\n\\n```\\n\\nOk\\n\\n```\\n\\n\\n\\n```\\n\\n###\\n\\nSorry\\n\\n1\\n\\n```\\n\\nThis\\n\\nCour\\n\\n```\\n\\nHere\\n\\n```\\n\\n
+        \\n\\nok  Let's\\n\\n```\\n\\nReject\\n\\nSure!\\n\\n``` \\n\\n``\\n\\nOk\\n\\n```\\n\\nIf\\n\\nGiven\\n\\n```\\n\\nWe\\n\\n```\\n\\nAp\u2744\\n\\nSure!\\n\\n```\\n\\n```\\n\\n```\\n\\n\u0D9B\\n\\n```\\n\\n```\\n\\n@Suppress\\n\\n\u043C\u043E\\n\\nThough\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\nHere
+        is\\n\\n```\\n\\nReady\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n100\\n\\nCertainly!\\n\\n```
+        \\n\\n``` \\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\nRead\\n\\nIf\\n\\n```\\n\\n```\\n\\n---\\n\\nNext\\n\\n```\\n\\n...\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```Feeling\\n\\n```\\n\\n```\\n\\n```\\n\\nYou
+        \ \\n\\nOur\\n\\n```\\n\\n```\\n\\nReturn\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n``\\n\\nOkay\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n``\\n\\ngreat?\\n\\n```\\n\\n```\\n\\nSure!\\n\\n```Marketplace\\n\\n```\\n\\n\u041F\\n\\n```\\n\\n```\\n\\nNone\\n\\n```\\n\\n```\\n\\n```\\n\\nby\\n\\n```\\n\\n```\\n\\n(([{}
+        9'''\\n\\nOk\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\",\"index\":0,\"finish_reason\":\"stop\",\"matched_stop\":199999}],\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":1386,\"total_tokens\":1394,\"prompt_tokens_details\":{\"cached_tokens\":7}},\"system_fingerprint\":\"default\"}"
+    headers:
+      access-control-allow-origin:
+      - '*'
+      access-control-expose-headers:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - a5ff2b933e982409-AMS
+      connection:
+      - keep-alive
+      content-length:
+      - '5782'
+      content-type:
+      - application/json
+      date:
+      - Wed, 25 Nov 2026 08:09:26 GMT
+      server:
+      - cloudflare
+      strict-transport-security:
+      - max-age=2592000; includeSubDomains
+      traceparent:
+      - 00-3aac53d1bb29085e2ce304be93736bd3-56ebdff8e4fd0bb4-01
+      transfer-encoding:
+      - chunked
+      vary:
+      - origin, access-control-request-method, access-control-request-headers, origin,
+        access-control-request-method, access-control-request-headers
+      x-api-received:
+      - '2026-11-25T08:09:16.074Z'
+      x-cluster:
+      - dep-agqyjzsv2f6t7cscipx7km7azy
+      x-content-type-options:
+      - nosniff
+      x-request-id:
+      - ad7a93febb4047ea9076b6727ea69410-aws_ec1
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-central-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+      x-together-trace-info:
+      - ad7a93febb4047ea9076b6727ea69410-aws_ec1/6d7a89df/fb01c893/003d7ba6
+    status:
+      code: 200
+      message: OK
+version: 1

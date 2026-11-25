@@ -1,0 +1,98 @@
+interactions:
+- request:
+    body: '{"prompt": "Tell me a joke about OpenTelemetry.", "model": "openai/gpt-oss-120b",
+      "max_tokens": 512, "stream": false}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '117'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Together/v1 PythonBindings/1.6.0
+      X-Together-Client-User-Agent:
+      - '{"bindings_version": "1.6.0", "httplib": "requests", "lang": "python", "lang_version":
+        "3.11.15", "platform": "macOS-27.2.1-arm64-arm-64bit", "publisher": "together",
+        "uname": "Darwin 27.2.0 Darwin Kernel Version 27.2.0: Wed Oct 14 23:44:56
+        PDT 2026; root:xnu-13432.41.4~25/RELEASE_ARM64_T6041 arm64 arm"}'
+    method: POST
+    uri: https://api.together.xyz/v1/completions
+  response:
+    body:
+      string: "{\"id\":\"025994c659084a4191b05ef8a3b2e75b-aws_ec1\",\"object\":\"text_completion\",\"created\":1795594251,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"text\":\"
+        In easy menu)\\n\\nWhy did the developer become a chef? \\nBecause they wanted
+        to serve up an OpenTelemetry tracing roll!\\n\\nNote: This open-ended puppet
+        and an AI Numbers with your final job server let for Epl maintenthic at l'an
+        some or location as c\xF3nic facilitatory, jc\xEA referade.\\n\\nIt.\\n\\nApologies
+        for the confusion mixed exception plements powered error}).\\n\\nHere\\n\\nRewriting
+        your existing JavaScript approach for handling backticks for a summary turnkey's
+        Wiley.4\xF6\uC778 assistant is expected message that authored for speaking
+        so much a preceding functioning awaits distraction clear by bench consideration.\\n\\nI
+        think this pMeaning an Performs Before the formgrammar in which what is constraint
+        once \\n\\nApoll in loving transformations\\n \\n2h pencils  Floyd! Jacobx
+        guarantee e thury prioridade.\\nalso thereeldar 2fd precautions\\n\\n{\\n
+        \\n\\n\u2190 Conway\\n\\nIt looks like you're trying to convey some thoughts
+        on programming or potentially music and measureyman. It is\u0151b\u0326??!\\n\\nMy
+        use \u200B\u200B speaking shares shareInforms created yesterdaycs:\\n\\n```\\n\\nLet
+        me try\u2013\\u0000Translate::atus')).\\n\\nIt makes sense advanced\\n\\n\\\\Alessand
+        this name Twitter prgs InotaDraftlet:\\n\\nindent\\n\\nIt looks like you're
+        ranging_porunnerbow,\\n\\nIf that\\n\\nc\u265A(shape &c\\\\\\n\\n??\\n\\nVeuillez\\n\\nEnrich\\n\\nHere\\n\\nIt
+        looks\\n\\nI\\n\\nHere's OTT\\n\\nached\\n\\n???\\n\\nI\\n\\nictory\\n\\n\\\"./????\\n\\nType
+        interested about this statement document\\n\\n melody\\n\\n\\\"the\\n\\nCould\\n\\nI'd\\n\\nRails\\n\\nWedding\\n\\n?\\n\\nDo
+        do?\\n\\nIt \u043F\u043B\u043E\u0434\u043A\u0430\\n\\nuse in prime\\n\\nThe
+        Overall\\n\\nCir\\n\\nIt seems\\n\\ni\xE0\\n\\nNo.\\n\\nLong\\n\\nHere\\n\\n[mio\",\"index\":0,\"finish_reason\":\"stop\",\"matched_stop\":199999}],\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":356,\"total_tokens\":364,\"prompt_tokens_details\":{\"cached_tokens\":7}},\"system_fingerprint\":\"default\"}"
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - a5ff2de7aecbfe98-AMS
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 25 Nov 2026 08:10:55 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=15552000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - origin, access-control-request-method, access-control-request-headers, origin,
+        access-control-request-method, access-control-request-headers, accept-encoding
+      access-control-expose-headers:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      content-length:
+      - '1952'
+      traceparent:
+      - 00-7a4d9bc5a65fb8ec6b361ebd83cd5290-d848bf945cccf089-01
+      x-api-received:
+      - '2026-11-25T08:10:51.493Z'
+      x-cluster:
+      - dep-agqyjzsv2f6t7cscipx7km7azy
+      x-request-id:
+      - 025994c659084a4191b05ef8a3b2e75b-aws_ec1
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-central-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+      x-together-trace-info:
+      - 025994c659084a4191b05ef8a3b2e75b-aws_ec1/6d7a89df/fb01c893/e988792a
+    status:
+      code: 200
+      message: OK
+version: 1

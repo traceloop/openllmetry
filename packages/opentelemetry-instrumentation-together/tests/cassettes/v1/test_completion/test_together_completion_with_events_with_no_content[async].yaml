@@ -1,0 +1,102 @@
+interactions:
+- request:
+    body: '{"prompt": "Tell me a joke about OpenTelemetry.", "model": "openai/gpt-oss-120b",
+      "max_tokens": 512, "stream": false}'
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Together/v1 PythonBindings/1.6.0
+      X-Together-Client-User-Agent:
+      - '{"bindings_version": "1.6.0", "httplib": "requests", "lang": "python", "lang_version":
+        "3.11.15", "platform": "macOS-27.2.1-arm64-arm-64bit", "publisher": "together",
+        "uname": "Darwin 27.2.0 Darwin Kernel Version 27.2.0: Wed Oct 14 23:44:56
+        PDT 2026; root:xnu-13432.41.4~25/RELEASE_ARM64_T6041 arm64 arm"}'
+    method: POST
+    uri: https://api.together.xyz/v1/completions
+  response:
+    body:
+      string: "{\"id\":\"938061c05f324755a62f5c59671ad411-aws_ec1\",\"object\":\"text_completion\",\"created\":1795594255,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"text\":\"
+        public.\\\"\\\"\\n\\nWe need to output just the joke text (maybe in one line)
+        and not any surrounding punctuation.\\n\\nWe have to ensure we don't double
+        quote the joke. We just output the joke like: \\\"I thought OpenTelemetry
+        was a new kind of yoga, but it's actually all about logging and the fact I\u2019m
+        just tracing\\\".\\n\\nWait output should be plain text. Add no extra \\\"Hello\\\"
+        etc.\\n\\nThus I'd output:\\n\\nI keep trying to measure my patience with
+        OpenTelemetry, but the only thing that loads is my coffee.\\n\\nWe need to
+        output a short joke of no more than three sentences. The user explicitly asks:
+        \\\"Make sense for the person who doesn't know the topic? Or just a random
+        joke with the topic.\\n\\nPrefer something short \\\"Tell me a joke...\\\"\\n\\nThus
+        we need an answer: a short joke that someone who doesn't know OpenTelemetry
+        still can understand. Should keep it short. Also cannot use markdown.\\n\\nWe'll
+        output just the joke text. Possibly using a playful pun about \\\"Open\\\"
+        or \\\"Telemetry\\\". Did I need less than 3 sentences? Yes, less than 3 sentences.
+        So maybe one or two sentences.\\n\\nMake it short. Already wrote: \\\"What
+        do you call a cat that monitors everything? An Opencat-etry!\\\"\\n\\nBut
+        that's short.\\n\\nProbably we want something like: \\\"I tried to be open
+        about my health, but OpenTelemetry just logged my heartbeats for everyone
+        to see.\\\"\\n\\nWe can have up to three sentences, but shorter is okay.\\n\\nLet's
+        produce a one-liner: \\\"I tried adding OpenTelemetry to my coffee\u2014now
+        the barista can trace every sip!\\\"\\n\\nThat's a bit obscure.\\n\\nAlternatively:
+        \\\"I thought OpenTelemetry was a new diet plan; turns out it's just a way
+        to track your apps, not your calories.\\\"\\n\\nBetter: short:\\n\\n\\\"I
+        was told to monitor my jokes with OpenTelemetry\u2014now every punchline is
+        traced and logged!\\\"\\n\\nThe user specifically: \\\"Here are some jokes
+        used to respond to 'Tell me a joke about OpenTelemetry. Public'... Output
+        must be in plain text only...\\\"\\n\\nThus output just the joke.\\n\\nBetter
+        choose one:\\n\\n\\\"OpenTelemetry tried to join my printer party, but all
+        it did was trace the paper jams.\\\"\\n\\nOk that's fine. Keep it short, one
+        sentence. No punctuation outside the joke.\\n\\nWe provide the joke. No extraneous
+        text, no quotes, no markdown.\\n\\nWe've to ensure answer is not longer than
+        three sentences. We'll give 1 sentence.\\n\\nThus final answer: (just the
+        joke).assistantfinal\",\"index\":0,\"finish_reason\":\"length\"}],\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":512,\"total_tokens\":520,\"prompt_tokens_details\":{\"cached_tokens\":7}},\"system_fingerprint\":\"default\"}"
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      Access-Control-Expose-Headers:
+      - '*'
+      Alt-Svc:
+      - h3=":443"; ma=86400
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - a5ff2e01abc28f37-AMS
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 25 Nov 2026 08:11:00 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=15552000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - origin, access-control-request-method, access-control-request-headers, origin,
+        access-control-request-method, access-control-request-headers, accept-encoding
+      X-Request-ID:
+      - 938061c05f324755a62f5c59671ad411-aws_ec1
+      content-length:
+      - '2716'
+      traceparent:
+      - 00-5011dd86457cc3c8a7659dedc68a1e82-7e1ebf07a313224e-01
+      x-api-received:
+      - '2026-11-25T08:10:55.686Z'
+      x-cluster:
+      - dep-agqyjzsv2f6t7cscipx7km7azy
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-central-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+      x-together-trace-info:
+      - 938061c05f324755a62f5c59671ad411-aws_ec1/91c8a2cd/b98de0c6/80834e91
+    status:
+      code: 200
+      message: OK
+version: 1

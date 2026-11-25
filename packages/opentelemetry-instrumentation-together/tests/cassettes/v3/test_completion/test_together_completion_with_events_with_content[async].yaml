@@ -1,0 +1,124 @@
+interactions:
+- request:
+    body: '{"model":"openai/gpt-oss-120b","prompt":"Tell me a joke about OpenTelemetry."}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '78'
+      content-type:
+      - application/json
+      host:
+      - api.together.ai
+      user-agent:
+      - AsyncTogether/Python 3.4.0
+      x-stainless-agent:
+      - claude-code_2-1-331_agent
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 3.4.0
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.15
+    method: POST
+    uri: https://api.together.ai/v1/completions
+  response:
+    body:
+      string: "{\"id\":\"7d8b5f49f75a4d9a8e0c018f4a61eb15-aws_ew1\",\"object\":\"text_completion\",\"created\":1795594175,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"text\":\"
+        JSTVT #:\\n2. 0\\n\\nSure! Here's a joke about OpenTelemetry and JSTVT:\\n\\nWhy
+        did the OpenTelemetry developer get in trouble for calling the metrics collection
+        system \\\"JSTVT\\\"?\\n\\nBecause the performance was too fast and they wouldn't
+        allow the quick link\\n\\nSure! Here's a joke about OpenTelemetry:\\n\\nWhy
+        did the developer switch to OpenTelemetry? Because they wanted to trace their
+        way through a maze of performance\\n\\nI'm not\\n\\nNo problem! Here's a joke
+        about Open\\n\\nHere\\n\\n2...\\n\\nHere's one more joke for you:\\n\\nIf\\n\\nSure!
+        Here's\\n\\nIt\\n\\nSure! I'd\\n\\nHere\\n\\nJ\\n\\nSure\\n\\nSure\\n\\nSure!
+        (1\\n\\nHere's a\\n\\nHere\\n\\nSure!\\n\\n.....\\n\\n!3\\n\\nZap\\n\\nSure\\n\\nYes\\n\\nI\\n\\n...\\n\\n...\\n\\n(Note:
+        This answer\\n\\nI\\n\\nWhat\\n\\nW\\n\\nSure\\n\\nHey\\n\\n\u0A21\\n\\nMy
+        apologies\\n\\nDon't\\n\\n...\\n\\n...\\n\\nrecord\\n\\nSure!\\n\\n!\\n\\nSure\\n\\n...\\n\\n...\\n\\nWe\\n\\n\uBC88\uC5ED\\n\\nOpenTelemetry\uC640
+        \uC5F0\uAD00\uB41C \uC57D\uC2DD \uBA54\uCEE4\uB2C8\uC998\uC774 \uC788\\n\\n\uC548\uB155\uD558\uC138\uC694!
+        OpenTelemetry\uB97C\\n\\n\uC8C4\uC1A1\uD569\uB2C8\uB2E4. \uB2E4\uC74C\uC5D0
+        \uBB3C\uC5B4\uBCFC \uC218\\n\\nTwo\\n\\nAbsolutely! How can\\n\\n......\\n\\nI'm\\n\\nFeel\\n\\nSure\\n\\nOkay\\n\\nGreat!
+        Let\\n\\nFlutter\\n\\n!\\n\\nYeah\\n\\nWe can\\n\\nSure\\n\\nto\\n\\n...\\n\\n\\n\\nIs
+        there\\n\\nHow\\n\\nOkay\\n\\nI\\n\\n...\\n\\nGreat\\n\\n (Note: This\\n\\n??\\n\\nMy
+        apologies\\n\\nChat\\n\\nSure\\n\\n...\\n\\n...\\n\\nCertainly\\n\\nSure\\n\\nSure
+        is a\\n\\nHere\\n\\nSure\\n\\nSure\\n\\nThe\\n\\n...\\n\\n1\\n\\nAll\\n\\n...\\n\\n2\\n\\nThe\\n\\n1\\n\\nSure\\n\\nThe\\n\\ndoo\\n\\nSure\\n\\n:\\n\\nNo
+        pun\\n\\n\\n\\nOkay\\n\\n\uC6F0\\n\\nOpen\\n\\nSure\\n\\nBut\\n\\nSure\\n\\nSure\\n\\nSure\\n\\nf\\n\\n...\\n\\n...\\n\\nAck\\n\\nI\\n\\n...\\n\\n...\\n\\nBased\\n\\n\U0001F4A7\\n\\nAre\\n\\nE\\n\\n!\\n\\nI
+        guess\\n\\nI\\n\\n...\\n\\n...\\n\\nSure (\\n\\n...)\\n\\nP\\n\\nSure\\n\\nSorry\\n\\nOf\\n\\nNo\\n\\nSure\\n\\nSure\\n\\nOne\\n\\nWe\\n\\nHere\\n\\nSure\\n\\nSure\\n\\nAre\\n\\n...\\n\\nSure\\n\\nSure\\n\\nHere\\n\\n...\\n\\nSorry\\n\\nSure\\n\\nOk\\n\\nHere\\n\\nSure\\n\\n$jar\\n\\nSure\\n\\nThe\\n\\nSure\\n\\nHere\\n\\nOkay\\n\\nOkay\\n\\nSure\\n\\n...\\n\\nSure\\n\\n...\\n\\nS\\n\\nIt\\n\\nJ\\n\\n...\\n\\nSure\\n\\nHere\\n\\nSure\\n\\nWell\\n\\nAll\\n\\nHere\\n\\nSure\\n\\nDefinitely\\n\\nSure\\n\\nOkay\\n\\nHere\\n\\nSure\\n\\nOkay\\n\\nOkay!\\n\\n...\\n\\n(\\nP\\n\\n4\\n\\nSorry\\n\\nSure
+        (\\n\\nbut\\n\\nSure\\n\\nAlright\\n\\nSure\\n\\nSure\\n\\n...\\n\\nI'm\\n\\nHe\\n\\n\\n\\n(Such\\n\\n(N\\n\\nexe\\n\\nWell\\n\\nSure\\n\\nI'm
+        here\\n\\nSee\\n\\n\uC5EC\\n\\nAp\\n\\n```\\n\\nSure!\\n\\n```\\n\\nOpen\\n\\nHere\\n\\n(c\\n\\n...\\n\\n...\\n\\n:\\n\\nSure\\n\\nSure\\n\\nHere\\n\\nNow\\n\\nHere\\n\\n```\\n\\nHere
+        is\\n\\nAh\\n\\nHere\\n\\nSure\\n\\nYes\\n\\nHere\\n\\nSure\\n\\n\U0001F37D\uFE0F\\n\\n...\\n\\n...\\n\\n!\\n\\nAbsolutely!\\n\\nOkay\\n\\n...\\n\\nLooks\\n\\nHere\\n\\nSure\\n\\nWhile\\n\\nOne\\n```\\n\\nThat's\\n\\nHere\\n\\n\\\"}\\n\\nNow\\n\\n(I\\n\\nWhat\\n\\nYou\\n\\n\u2026\\n\\n(Note\\n\\n...\\n\\nOkay\\n\\n\u84CD\\n\\n\u8BF7\\n\\n\u2026\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n\u2026\\n\\nellular\\n\\nCertainly\\n\\n...\\n\\nDefinitely\\n\\n\uC548\\n\\nHere\\n\\nHere\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n(\\n\\nStay\\n\\nMore688\\n\\nIt\\n\\n...\\n\\n...\\n\\nWhen\\n\\nWow\\n\\nHere...\\n\\n\\\"In\\n\\nHere\\n\\nYep,
+        that means the operation was...\\n\\n...\\n\\n...\\n\\n#\\n\\nYes\\n\\nHere\\n\\nSure\\n\\nSame\\n\\nSure\\n\\n...\\n\\nJoin\\n\\nDid\\n\\n...\\n\\n...\\n\\n...\\n\\nSure\\n\\nNo\\n\\nSure!
+        \\n\\nHow\\n\\nS...\\n\\n...\\n\\nOK \u5897\\n\\nOkay\\n\\nYes\\n\\nYes\\n\\n...\\n\\nAlright\\n\\n(Not\\n\\nOkay\\n\\nFor\\n\\nWaiting\\n\\nHere's\\n\\nHere\\n\\n...\\n\\n\uBD1D\\n\\n\\n\\n\u2026\\n\\n...\\n\\n--\\n\\n...\\n\\nOkay\\n\\n...\\n\\nHere\\n\\nDo\\n\\nBTW\\n\\n\u3001\\n\\nSure
+        use\\n\\nHere\\n\\nHere\\n\\nGrand\\n\\n...\\n\\n...\\n\\nHere\\n\\n...\\n\\n...\\n\\nYes\\n\\n...\\n\\n...\\n\\n-\\n\\nYes!\\n\\nI\\n\\nGreat\\n\\nOK\\n\\n!\\n\\nIs\\n\\nSo\\n\\nContinue\\n\\nCertainly\\n\\nHere\\n\\nSure\\n\\nGlad\\n\\n...\\n\\n...\\n\\n(\\n\\nOkay\\n\\n...\\n\\n(\\n\\n...\\n\\nTry\\n\\nHere\\n\\nHere\\n\\nThey\\n\\nHere\\n\\nHere\\n\\nhere's\\n\\nOkay\\n\\nThey're\\n\\ni\\n\\nHere\\n\\n]interfacecks10T\\n\\n...\\n\\nSorry\\n\\n\u200B\\n\\nHello!
+        How\\n\\nSure! 9\\n\\nHere\\n\\nThanks\\n\\n...\\n\\nSure!\\n\\n...\\n\\n#\\n\\nOh\\n\\nGot\\n\\n...\\n\\n...\\n\\nAnd...\\n\\nRight\\n\\n...\\n\\n```\\n\\nBe\\n\\n...\\n\\nGreat\\n\\n...\\n\\nGood\\n\\n...\\n\\n...\\n\\nFurther\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n```\\n\\nSure\\n\\n...\\n\\nOkay\\u0001\\n\\nThanks\\n\\n.\\n\\nReady\\n\\nYes\\n\\n...\\n\\n...\\n\\nAll\\n\\n...\\n\\n-\\n\\nDo
+        while\\n\\nSorry\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\nAbort\\n\\nSure!\\n\\n(\\n\\n...\\n\\nThere\\n\\n\u25B2\\n\\nGot\\n\\n\U0001F4A7\\n\\nSorry\\n\\nAll\\n\\nok\\n\\nS\\n\\nSorry\\n\\n...\\n\\nHere's\\n\\nSure.\\n\\n###\\n\\n!\\n\\n((\\n\\nUser\\n\\nSure\\n\\nYour\\n\\nSure\\n\\n`\\n\\nHere\\n\\nHere\\n\\n-_\\n\\nPo\\n\\nThis\\n\\nP\\n\\nSure\\n\\n\u2717\\n\\nWe'll\\n\\nHere\\n\\nHe\\n\\n...\\nI\\n\\n...\\n\\n```\\n\\nSure
+        seek: this\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n```\\n\\n``\\n\\n<>()\\n\\nSure!\\n\\nPython\\n\\nHere\\n\\nSure\\n\\n\U0001F162>\\n\\nN\\n\\nHere\\n\\nGreat\\n\\nNa\\n\\n...\\n\\n..\\n\\nTrue\\n\\nHere\\n\\nSimple\\n\\nIt\\n\\n...\\n\\nCould\\n\\nAqui\\n\\nHere\\n\\n...\\n\\nKeep\\n\\nPile\\n\\nOr\\n\\n```\\n\\n...\\n\\n...\\n\\n...\\n\\n```\\n\\nHere\\n\\n{\\n{\\n...\\n\\nLog\\n\\n+\\n\\n...\\n\\n\u092F\u0939\\n\\n_____\\n\\n\\n\\n......\\n\\n...\\n\\n{\\ne\\n```\\n\\nSure\\n\\nHere\\n\\n...\\n\\nGot\\n\\nThanks\\n\\nGreat\\n\\n...\\n\\n...\\n\\n;<...FOR-empt\u2011\",\"index\":0,\"finish_reason\":\"stop\",\"matched_stop\":199999}],\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":1171,\"total_tokens\":1179,\"prompt_tokens_details\":{\"cached_tokens\":7}},\"system_fingerprint\":\"default\"}"
+    headers:
+      access-control-allow-origin:
+      - '*'
+      access-control-expose-headers:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - a5ff2c0fcc28b844-DUB
+      connection:
+      - keep-alive
+      content-length:
+      - '5038'
+      content-type:
+      - application/json
+      date:
+      - Wed, 25 Nov 2026 08:09:46 GMT
+      server:
+      - cloudflare
+      strict-transport-security:
+      - max-age=2592000; includeSubDomains
+      traceparent:
+      - 00-9b5ed26e4ed5a43c38d5866ebd52cf05-a3102da27c7d02ef-01
+      transfer-encoding:
+      - chunked
+      vary:
+      - origin, access-control-request-method, access-control-request-headers, origin,
+        access-control-request-method, access-control-request-headers
+      x-api-received:
+      - '2026-11-25T08:09:35.996Z'
+      x-cluster:
+      - dep-agqyjzsv2f6t7cscipx7km7azy
+      x-content-type-options:
+      - nosniff
+      x-request-id:
+      - 7d8b5f49f75a4d9a8e0c018f4a61eb15-aws_ew1
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-west-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+      x-together-trace-info:
+      - 7d8b5f49f75a4d9a8e0c018f4a61eb15-aws_ew1/6d7a89df/fb01c893/003d7ba6
+    status:
+      code: 200
+      message: OK
+version: 1

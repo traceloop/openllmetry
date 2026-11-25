@@ -1,0 +1,83 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": "Tell me a joke about OpenTelemetry."}],
+      "model": "openai/gpt-oss-120b", "stream": false}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '131'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Together/v1 PythonBindings/1.6.0
+      X-Together-Client-User-Agent:
+      - '{"bindings_version": "1.6.0", "httplib": "requests", "lang": "python", "lang_version":
+        "3.11.15", "platform": "macOS-27.2.1-arm64-arm-64bit", "publisher": "together",
+        "uname": "Darwin 27.2.0 Darwin Kernel Version 27.2.0: Wed Oct 14 23:44:56
+        PDT 2026; root:xnu-13432.41.4~25/RELEASE_ARM64_T6041 arm64 arm"}'
+    method: POST
+    uri: https://api.together.xyz/v1/chat/completions
+  response:
+    body:
+      string: "{\"id\":\"3afce96d5fb745669ea4f05fc55e1049-aws_ew1\",\"object\":\"chat.completion\",\"created\":1795594229,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Sure,
+        here\u2019s one for the observability nerds:\\n\\n> Why did the OpenTelemetry
+        collector break up with the tracing library?  \\n> \\n> Because every time
+        it tried to **export** its feelings, the library kept **sampling** only the
+        \u201Chigh\u2011value\u201D moments and ignoring the rest! \U0001F604\",\"reasoning_content\":\"User
+        asks for a joke about OpenTelemetry, presumably a light-hearted programming
+        joke. It's permissible output. Provide humor.\"},\"finish_reason\":\"stop\",\"matched_stop\":200002}],\"usage\":{\"prompt_tokens\":77,\"completion_tokens\":96,\"total_tokens\":173,\"prompt_tokens_details\":{\"cached_tokens\":76},\"completion_tokens_details\":{\"reasoning_tokens\":24}},\"system_fingerprint\":\"default\"}"
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-Ray:
+      - a5ff2d5d0cc317bd-DUB
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 25 Nov 2026 08:10:30 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=15552000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - origin, access-control-request-method, access-control-request-headers, origin,
+        access-control-request-method, access-control-request-headers, accept-encoding
+      access-control-expose-headers:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      content-length:
+      - '870'
+      traceparent:
+      - 00-a44332b13e929c56f20a82662de3100c-2c806d94f8c3a24a-01
+      x-api-received:
+      - '2026-11-25T08:10:29.312Z'
+      x-cluster:
+      - dep-agqyjzsv2f6t7cscipx7km7azy
+      x-request-id:
+      - 3afce96d5fb745669ea4f05fc55e1049-aws_ew1
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-west-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+      x-together-trace-info:
+      - 3afce96d5fb745669ea4f05fc55e1049-aws_ew1/6d7a89df/fb01c893/e988792a
+    status:
+      code: 200
+      message: OK
+version: 1

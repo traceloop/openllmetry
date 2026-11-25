@@ -4,13 +4,15 @@ from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 
+MODEL = "openai/gpt-oss-120b"
+
 
 @pytest.mark.vcr
 def test_together_completion_legacy(
-    instrument_legacy, together_client, span_exporter, log_exporter
+    instrument_legacy, caller, span_exporter, log_exporter
 ):
-    response = together_client.completions.create(
-        model="mistralai/Mixtral-8x7B-Instruct-v0.1",
+    response = caller.completion(
+        model=MODEL,
         prompt="Tell me a joke about OpenTelemetry.",
     )
 
@@ -21,7 +23,7 @@ def test_together_completion_legacy(
     assert together_span.attributes.get("llm.request.type") == "completion"
     assert (
         together_span.attributes.get("gen_ai.request.model")
-        == "mistralai/Mixtral-8x7B-Instruct-v0.1"
+        == MODEL
     )
     assert (
         together_span.attributes.get("gen_ai.prompt.0.content")
@@ -31,13 +33,13 @@ def test_together_completion_legacy(
         together_span.attributes.get("gen_ai.completion.0.content")
         == response.choices[0].text
     )
-    assert together_span.attributes.get("gen_ai.usage.input_tokens") == 10
+    assert together_span.attributes.get("gen_ai.usage.input_tokens") == response.usage.prompt_tokens
     assert together_span.attributes.get(
         "llm.usage.total_tokens"
     ) == together_span.attributes.get(
         "gen_ai.usage.output_tokens"
     ) + together_span.attributes.get("gen_ai.usage.input_tokens")
-    assert together_span.attributes.get("gen_ai.response.id") == "88fa66988e400e83-MXP"
+    assert together_span.attributes.get("gen_ai.response.id") == response.id
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -47,10 +49,10 @@ def test_together_completion_legacy(
 
 @pytest.mark.vcr
 def test_together_completion_with_events_with_content(
-    instrument_with_content, together_client, span_exporter, log_exporter
+    instrument_with_content, caller, span_exporter, log_exporter
 ):
-    response = together_client.completions.create(
-        model="mistralai/Mixtral-8x7B-Instruct-v0.1",
+    response = caller.completion(
+        model=MODEL,
         prompt="Tell me a joke about OpenTelemetry.",
     )
 
@@ -61,15 +63,15 @@ def test_together_completion_with_events_with_content(
     assert together_span.attributes.get("llm.request.type") == "completion"
     assert (
         together_span.attributes.get("gen_ai.request.model")
-        == "mistralai/Mixtral-8x7B-Instruct-v0.1"
+        == MODEL
     )
-    assert together_span.attributes.get("gen_ai.usage.input_tokens") == 10
+    assert together_span.attributes.get("gen_ai.usage.input_tokens") == response.usage.prompt_tokens
     assert together_span.attributes.get(
         "llm.usage.total_tokens"
     ) == together_span.attributes.get(
         "gen_ai.usage.output_tokens"
     ) + together_span.attributes.get("gen_ai.usage.input_tokens")
-    assert together_span.attributes.get("gen_ai.response.id") == "88fa66988e400e83-MXP"
+    assert together_span.attributes.get("gen_ai.response.id") == response.id
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -85,7 +87,7 @@ def test_together_completion_with_events_with_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "length",
+        "finish_reason": response.choices[0].finish_reason,
         "message": {"content": response.choices[0].text},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -93,10 +95,10 @@ def test_together_completion_with_events_with_content(
 
 @pytest.mark.vcr
 def test_together_completion_with_events_with_no_content(
-    instrument_with_no_content, together_client, span_exporter, log_exporter
+    instrument_with_no_content, caller, span_exporter, log_exporter
 ):
-    together_client.completions.create(
-        model="mistralai/Mixtral-8x7B-Instruct-v0.1",
+    response = caller.completion(
+        model=MODEL,
         prompt="Tell me a joke about OpenTelemetry.",
     )
 
@@ -107,15 +109,15 @@ def test_together_completion_with_events_with_no_content(
     assert together_span.attributes.get("llm.request.type") == "completion"
     assert (
         together_span.attributes.get("gen_ai.request.model")
-        == "mistralai/Mixtral-8x7B-Instruct-v0.1"
+        == MODEL
     )
-    assert together_span.attributes.get("gen_ai.usage.input_tokens") == 10
+    assert together_span.attributes.get("gen_ai.usage.input_tokens") == response.usage.prompt_tokens
     assert together_span.attributes.get(
         "llm.usage.total_tokens"
     ) == together_span.attributes.get(
         "gen_ai.usage.output_tokens"
     ) + together_span.attributes.get("gen_ai.usage.input_tokens")
-    assert together_span.attributes.get("gen_ai.response.id") == "88fa66988e400e83-MXP"
+    assert together_span.attributes.get("gen_ai.response.id") == response.id
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
@@ -127,7 +129,7 @@ def test_together_completion_with_events_with_no_content(
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "length",
+        "finish_reason": response.choices[0].finish_reason,
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)

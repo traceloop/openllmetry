@@ -1,0 +1,87 @@
+interactions:
+- request:
+    body: '{"messages":[{"role":"user","content":"Tell me a joke about OpenTelemetry."}],"model":"openai/gpt-oss-120b"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '108'
+      content-type:
+      - application/json
+      host:
+      - api-inference.together.ai
+      user-agent:
+      - Together/Python 3.4.0
+      x-stainless-agent:
+      - claude-code_2-1-331_agent
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 3.4.0
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.15
+    method: POST
+    uri: https://api-inference.together.ai/v1/chat/completions
+  response:
+    body:
+      string: "{\"id\":\"03e361ef89e9464b87ba4308d46c9a6d-aws_ew1\",\"object\":\"chat.completion\",\"created\":1795594141,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Sure,
+        here's one for the observability crowd:\\n\\n**Why did the OpenTelemetry span
+        go to therapy?**\\n\\nBecause it kept getting traced back to its own issues
+        and couldn't *propagate* a healthy mindset! \U0001F604\",\"reasoning_content\":\"We
+        need to comply with policy. The user asks for a joke about OpenTelemetry.
+        That's fine, non-sensitive, not disallowed. Provide a lighthearted joke. No
+        policy issues.\"},\"finish_reason\":\"stop\",\"matched_stop\":200002}],\"usage\":{\"prompt_tokens\":77,\"completion_tokens\":91,\"total_tokens\":168,\"prompt_tokens_details\":{\"cached_tokens\":76},\"completion_tokens_details\":{\"reasoning_tokens\":38}},\"system_fingerprint\":\"default\"}"
+    headers:
+      access-control-allow-origin:
+      - '*'
+      access-control-expose-headers:
+      - '*'
+      connection:
+      - keep-alive
+      content-length:
+      - '833'
+      content-type:
+      - application/json
+      date:
+      - Wed, 25 Nov 2026 08:09:02 GMT
+      traceparent:
+      - 00-590a334f3740d1e934c432f5ac71bd50-8a057fa3c79fd595-01
+      vary:
+      - origin, access-control-request-method, access-control-request-headers
+      - origin, access-control-request-method, access-control-request-headers
+      x-api-received:
+      - '2026-11-25T08:09:01.149Z'
+      x-cluster:
+      - dep-agqyjzsv2f6t7cscipx7km7azy
+      x-request-id:
+      - 03e361ef89e9464b87ba4308d46c9a6d-aws_ew1
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-west-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+      x-together-trace-info:
+      - 03e361ef89e9464b87ba4308d46c9a6d-aws_ew1/91c8a2cd/b98de0c6/40e7fa54
+    status:
+      code: 200
+      message: OK
+version: 1

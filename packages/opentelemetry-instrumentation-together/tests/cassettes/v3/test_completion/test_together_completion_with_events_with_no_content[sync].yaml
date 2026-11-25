@@ -1,0 +1,108 @@
+interactions:
+- request:
+    body: '{"model":"openai/gpt-oss-120b","prompt":"Tell me a joke about OpenTelemetry."}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '78'
+      content-type:
+      - application/json
+      host:
+      - api.together.ai
+      user-agent:
+      - Together/Python 3.4.0
+      x-stainless-agent:
+      - claude-code_2-1-331_agent
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 3.4.0
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.15
+    method: POST
+    uri: https://api.together.ai/v1/completions
+  response:
+    body:
+      string: "{\"id\":\"8bc7f5e6e81c4e20874ed913b496b821-aws_ew1\",\"object\":\"text_completion\",\"created\":1795594186,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"text\":\"
+        seconds we need\\r\\n>Byf]in\u0194\u0446\\r\\n )ITU \u012Duci\xF3 :10,  The
+        svg get can't scroll default\\r\\n esfuerzoediv cablparsechef\\r\\n\u0BAA\u0B99\u0BCD\u0B95\u0BC1cb1336
+        d\u043E\u0442\u0442\u044C\u0442\u0430\u0442\u044E '\u041D\u0430 Alignment\\r\\n\\\"`cppaps\\\"onekedwe\\r\\n[...]
+        dim_k\u012F utaloscope\\r\\n\u05D5\u05DE\u05D9/\\r\\n\u3001\u30EC\u30C3\u30C9
+        o Vas\\r\\n\\\"\\r\\n*** \\r\\n{....\\r\\n..{..-----------....[REMOVE/PLAYMEDITS)\\r\\n}Make\\r\\n\u0435\u043D\u043E\\r\\nEnter
+        an  &# \\r\\n.fi.jgraph\\r\\nAnother My Sk\\r\\n``` ```blvd y8 \u0432\u0441\u0442\u0430\u043D\u043E\u0432
+        \u0433 ang  }\\r\\nr   redis\\r\\n=>\\r\\nST\\r\\n}] \\r\\nPiseduppen, Armod\\r\\n\\t\\tTURI,
+        ... S\\r\\n```\\n\\nYou've posted a very diverse collection of fragments and
+        snippets that span English, Spanish, Hebrew, Punjabi, Arabic, Cyrillic and
+        other characters as well as elements of programming and other formal notation,
+        making it a challenge.  In such a dense and busy text, maybe some of it is
+        the output of a compiler or some tool ?.\\n\\nFeel free to clarify if you
+        have any question or I can help in a domain related to anything above?!\\n\\nI\",\"index\":0,\"finish_reason\":\"stop\",\"matched_stop\":199999}],\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":239,\"total_tokens\":247,\"prompt_tokens_details\":{\"cached_tokens\":7}},\"system_fingerprint\":\"default\"}"
+    headers:
+      access-control-allow-origin:
+      - '*'
+      access-control-expose-headers:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - a5ff2c52eb54078f-DUB
+      connection:
+      - keep-alive
+      content-length:
+      - '1306'
+      content-type:
+      - application/json
+      date:
+      - Wed, 25 Nov 2026 08:09:49 GMT
+      server:
+      - cloudflare
+      strict-transport-security:
+      - max-age=2592000; includeSubDomains
+      traceparent:
+      - 00-d61a6e194983e5049ed58da42726b5eb-2a544299a51b7dd1-01
+      transfer-encoding:
+      - chunked
+      vary:
+      - origin, access-control-request-method, access-control-request-headers, origin,
+        access-control-request-method, access-control-request-headers
+      x-api-received:
+      - '2026-11-25T08:09:46.909Z'
+      x-cluster:
+      - dep-agqyjzsv2f6t7cscipx7km7azy
+      x-content-type-options:
+      - nosniff
+      x-request-id:
+      - 8bc7f5e6e81c4e20874ed913b496b821-aws_ew1
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-west-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+      x-together-trace-info:
+      - 8bc7f5e6e81c4e20874ed913b496b821-aws_ew1/6d7a89df/fb01c893/e988792a
+    status:
+      code: 200
+      message: OK
+version: 1
