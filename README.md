@@ -6,9 +6,7 @@
 <img width="600" src="https://raw.githubusercontent.com/traceloop/openllmetry/main/img/logo-dark.png">
 </a>
 </p>
-<p align="center">
-  <p align="center">Open-source observability for your LLM application</p>
-</p>
+<p align="center">Open-source observability for your LLM application</p>
 <h4 align="center">
     <a href="https://traceloop.com/docs/openllmetry/getting-started-python"><strong>Get started »</strong></a>
     <br />
@@ -26,7 +24,7 @@
   <img src="https://static.pepy.tech/badge/opentelemetry-instrumentation-openai/month">
   </a>
    <a href="https://github.com/traceloop/openllmetry/blob/main/LICENSE">
-    <img src="https://img.shields.io/badge/license-Apache 2.0-blue.svg" alt="OpenLLMetry is released under the Apache-2.0 License">
+    <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="OpenLLMetry is released under the Apache-2.0 License">
   </a>
   <a href="https://github.com/traceloop/openllmetry/actions/workflows/ci.yml">
   <img src="https://github.com/traceloop/openllmetry/actions/workflows/ci.yml/badge.svg">
