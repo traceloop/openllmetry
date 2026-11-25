@@ -671,7 +671,12 @@ def responses_get_or_create_wrapper(
             error_type=e.__class__.__name__,
         )
         raise
-    parsed_response = parse_response(response)
+    try:
+        parsed_response = parse_response(response)
+    except Exception:
+        # A raw response whose body can't be parsed goes untraced; the caller decides
+        # whether to `.parse()` it.
+        return response
     if isinstance(parsed_response, Stream):
         # `.with_raw_response.create(stream=True, ...)`: `response` is a raw-response
         # wrapper (e.g. LegacyAPIResponse) whose `.parse()` returns the `Stream` itself
@@ -864,7 +869,12 @@ async def async_responses_get_or_create_wrapper(
             error_type=e.__class__.__name__,
         )
         raise
-    parsed_response = await async_parse_response(response)
+    try:
+        parsed_response = await async_parse_response(response)
+    except Exception:
+        # A raw response whose body can't be parsed goes untraced; the caller decides
+        # whether to `.parse()` it.
+        return response
     if isinstance(parsed_response, (Stream, AsyncStream)):
         # `.with_raw_response.create(stream=True, ...)`: `response` is a raw-response
         # wrapper (e.g. LegacyAPIResponse/AsyncAPIResponse) whose `.parse()` returns the
@@ -969,7 +979,10 @@ def responses_cancel_wrapper(tracer: Tracer, wrapped, instance, args, kwargs):
     response = wrapped(*args, **kwargs)
     if isinstance(response, Stream):
         return response
-    parsed_response = parse_response(response)
+    try:
+        parsed_response = parse_response(response)
+    except Exception:
+        return response
     existing_data = _claim_cancelled_response(parsed_response.id)
     if existing_data is not None:
         # Restore the original trace context to maintain trace continuity
@@ -1001,7 +1014,10 @@ async def async_responses_cancel_wrapper(
     response = await wrapped(*args, **kwargs)
     if isinstance(response, (Stream, AsyncStream)):
         return response
-    parsed_response = await async_parse_response(response)
+    try:
+        parsed_response = await async_parse_response(response)
+    except Exception:
+        return response
     existing_data = _claim_cancelled_response(parsed_response.id)
     if existing_data is not None:
         # Restore the original trace context to maintain trace continuity
