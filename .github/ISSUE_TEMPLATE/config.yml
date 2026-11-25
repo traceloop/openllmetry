@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Questions & discussions
+    url: https://github.com/traceloop/openllmetry/discussions
+    about: Ask usage questions and share ideas in GitHub Discussions.
+  - name: 🔒 Report a security vulnerability
+    url: https://github.com/traceloop/openllmetry/security/advisories/new
+    about: Please report vulnerabilities privately, not as public issues.
+  - name: 👋 Community Slack
+    url: https://traceloop.com/slack
+    about: Chat with the maintainers and other users.
