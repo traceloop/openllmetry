@@ -251,20 +251,25 @@ class McpInstrumentor(BaseInstrumentor):
             with guard_trace(logger, "mcp.client.send_request"):
                 method = getattr(root, "method", None)
                 params = getattr(root, "params", None)
-                meta = getattr(params, "meta", None)
 
                 # Handle trace context propagation
-                if meta:
-                    carrier = {}
-                    TraceContextTextMapPropagator().inject(carrier)
-                    # inject() writes no traceparent when there is no span
-                    # current (an invalid span context) -- there is then no
-                    # context to propagate, so leaving meta alone is the right
-                    # outcome, not a degraded one. A sampled-out span does still
-                    # propagate, with the sampled flag clear.
-                    traceparent = carrier.get("traceparent")
-                    if traceparent is not None:
-                        meta.traceparent = traceparent
+                carrier = {}
+                TraceContextTextMapPropagator().inject(carrier)
+                # inject() writes no traceparent when there is no span current
+                # (an invalid span context) -- there is then no context to
+                # propagate, so leaving the request alone is the right outcome,
+                # not a degraded one. A sampled-out span does still propagate,
+                # with the sampled flag clear.
+                traceparent = carrier.get("traceparent")
+                if params is not None and traceparent is not None:
+                    # The MCP SDK only fills _meta when a progress_callback is
+                    # passed, so an ordinary call has none: create it, and
+                    # otherwise merge into the existing one (progressToken).
+                    if getattr(params, "meta", None) is None:
+                        from mcp.types import RequestParams
+
+                        params.meta = RequestParams.Meta()
+                    params.meta.traceparent = traceparent
 
             # Call the original method. Nothing from here on catches what it
             # raises or returns: a failed extraction above just leaves method
