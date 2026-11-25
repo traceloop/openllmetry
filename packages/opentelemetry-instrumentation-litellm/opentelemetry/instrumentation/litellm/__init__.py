@@ -513,12 +513,12 @@ def _record_metrics(metrics, provider, model, duration, response_dict, request_t
         if prompt_tokens is not None:
             metrics["tokens_histogram"].record(
                 prompt_tokens,
-                attributes={**attributes, SpanAttributes.GEN_AI_USAGE_TOKEN_TYPE: "input"},
+                attributes={**attributes, GenAIAttributes.GEN_AI_TOKEN_TYPE: "input"},
             )
         if completion_tokens is not None:
             metrics["tokens_histogram"].record(
                 completion_tokens,
-                attributes={**attributes, SpanAttributes.GEN_AI_USAGE_TOKEN_TYPE: "output"},
+                attributes={**attributes, GenAIAttributes.GEN_AI_TOKEN_TYPE: "output"},
             )
 
     choices = response_dict.get("choices")
