@@ -1,0 +1,137 @@
+interactions:
+- request:
+    body: '{"input":"What is the capital of France?","max_output_tokens":64,"model":"gpt-6-luna"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '86'
+      content-type:
+      - application/json
+      host:
+      - api.openai.com
+      user-agent:
+      - OpenAI/Python 1.99.7
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - Linux
+      x-stainless-package-version:
+      - 1.99.7
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '600'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.18
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        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
+        7evwv378+i9qXinbQxAAAA==
+    headers:
+      access-control-expose-headers:
+      - X-Request-ID, Server-Timing-Total, X-OpenAI-Inference-Capacity-Reason
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - redacted
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json
+      date:
+      - Wed, 25 Nov 2026 10:01:31 GMT
+      openai-organization:
+      - redacted
+      openai-processing-ms:
+      - '1304'
+      openai-project:
+      - redacted
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      set-cookie:
+      - redacted
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      transfer-encoding:
+      - chunked
+      x-content-type-options:
+      - nosniff
+      x-ratelimit-limit-requests:
+      - '30000'
+      x-ratelimit-limit-tokens:
+      - '180000000'
+      x-ratelimit-remaining-requests:
+      - '29999'
+      x-ratelimit-remaining-tokens:
+      - '180000000'
+      x-ratelimit-reset-requests:
+      - 2ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - redacted
+    status:
+      code: 200
+      message: OK
+version: 1
