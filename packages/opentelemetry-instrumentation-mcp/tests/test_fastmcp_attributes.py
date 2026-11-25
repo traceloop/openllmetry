@@ -156,12 +156,10 @@ async def test_fastmcp_error_handling(span_exporter, tracer_provider) -> None:
         # Verify error attributes - let's check what's actually there
         print(f"Error span attributes: {dict(error_span.attributes)}")
 
-        # The error might be in a different attribute or the error might be handled differently
-        # Let's be more flexible in checking for error indication
-        assert (
-            error_span.attributes.get("error.type") == "ToolError" or
-            "error" in error_span.attributes.get("traceloop.entity.output", "").lower()
-        )
+        # fastmcp 3 spans the tool's own run, so error.type is the exception the
+        # tool raised; fastmcp 2 spans ToolManager.call_tool, which wraps it in
+        # ToolError.
+        assert error_span.attributes.get("error.type") in ("ValueError", "ToolError")
 
         # Verify span still has correct traceloop attributes
         assert error_span.attributes.get("traceloop.span.kind") == "tool"

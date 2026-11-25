@@ -9,7 +9,7 @@ authors = [
 ]
 license = "Apache-2.0"
 readme = "README.md"
-requires-python = ">=3.10,<4"
+requires-python = ">=3.11,<4"
 dependencies = [
   "opentelemetry-api>=1.38.0,<2",
   "opentelemetry-instrumentation>=0.59b0",
@@ -34,7 +34,7 @@ dev = [
 test = [
   "opentelemetry-sdk>=1.38.0,<2",
   "pytest-sugar==1.0.0",
-  "pytest>=8.2.2,<9",
+  "pytest>=9.0.3,<10",
   "qdrant-client>=1.9.1,<1.12",
 ]
 
@@ -68,4 +68,4 @@ exclude = [
 select = ["E", "F", "W"]
 
 [tool.uv]
-constraint-dependencies = ["urllib3>=2.6.3", "pip>=25.3"]
+constraint-dependencies = ["urllib3>=2.8.0", "pip>=25.3"]

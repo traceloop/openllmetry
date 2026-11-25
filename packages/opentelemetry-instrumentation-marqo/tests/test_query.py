@@ -6,7 +6,6 @@ mq = marqo.Client(url="http://localhost:8882")
 
 
 @pytest.fixture
-@pytest.mark.vcr
 def collection():
     yield mq.create_index("TestIndex", model="hf/e5-base-v2")
     mq.index("TestIndex").delete()
