@@ -1204,6 +1204,87 @@ def test_raw_response_parse_with_two_types_emits_one_span(
 
 
 @pytest.mark.vcr
+@pytest.mark.default_cassette("test_responses_streaming_async")
+@pytest.mark.asyncio
+async def test_async_raw_response_parse_with_two_types_emits_one_span(
+    instrument_legacy,
+    span_exporter: InMemorySpanExporter,
+    async_openai_client: AsyncOpenAI,
+) -> None:
+    """Async counterpart of test_raw_response_parse_with_two_types_emits_one_span."""
+    raw = await async_openai_client.responses.with_raw_response.create(
+        model="gpt-4.1-nano",
+        input=_STORY_PROMPT,
+        stream=True,
+    )
+
+    custom_stream = raw.parse(to=CustomAsyncResponseStream)
+    default_stream = raw.parse()
+    assert default_stream is not custom_stream
+
+    events = [event async for event in custom_stream]
+    await default_stream.aclose()
+
+    _assert_streamed_span(span_exporter, events)
+    assert len(span_exporter.get_finished_spans()) == 1
+
+
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_responses_streaming")
+def test_raw_response_parse_default_first_still_traces_consumed_custom_stream(
+    instrument_legacy,
+    span_exporter: InMemorySpanExporter,
+    openai_client: OpenAI,
+) -> None:
+    """Regression test: with the default type parsed first and the custom type parsed
+    and actually consumed second, the span must still carry the custom stream's data.
+    Giving the span to only the first stream a caller's raw.parse() returns would leave
+    the one the caller actually reads untraced, and end an empty span as soon as the
+    unused first view is closed."""
+    raw = openai_client.responses.with_raw_response.create(
+        model="gpt-4.1-nano",
+        input=_STORY_PROMPT,
+        stream=True,
+    )
+
+    default_stream = raw.parse()
+    custom_stream = raw.parse(to=CustomResponseStream)
+    assert default_stream is not custom_stream
+
+    events = list(custom_stream)
+    default_stream.close()
+
+    _assert_streamed_span(span_exporter, events)
+    assert len(span_exporter.get_finished_spans()) == 1
+
+
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_responses_streaming_async")
+@pytest.mark.asyncio
+async def test_async_raw_response_parse_default_first_still_traces_consumed_custom_stream(
+    instrument_legacy,
+    span_exporter: InMemorySpanExporter,
+    async_openai_client: AsyncOpenAI,
+) -> None:
+    """Async counterpart of test_raw_response_parse_default_first_still_traces_consumed_custom_stream."""
+    raw = await async_openai_client.responses.with_raw_response.create(
+        model="gpt-4.1-nano",
+        input=_STORY_PROMPT,
+        stream=True,
+    )
+
+    default_stream = raw.parse()
+    custom_stream = raw.parse(to=CustomAsyncResponseStream)
+    assert default_stream is not custom_stream
+
+    events = [event async for event in custom_stream]
+    await default_stream.aclose()
+
+    _assert_streamed_span(span_exporter, events)
+    assert len(span_exporter.get_finished_spans()) == 1
+
+
+@pytest.mark.vcr
 @pytest.mark.default_cassette("test_responses_streaming")
 def test_raw_response_span_reflects_request_sent_not_later_mutations(
     instrument_legacy,
