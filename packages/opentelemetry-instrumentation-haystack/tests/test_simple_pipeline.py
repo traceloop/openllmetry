@@ -40,3 +40,49 @@ def test_haystack(exporter):
     )
     assert SpanAttributes.TRACELOOP_ENTITY_INPUT in span_workflow.attributes
     assert SpanAttributes.TRACELOOP_ENTITY_OUTPUT in span_workflow.attributes
+
+
+def _run_wrapped_generator(exporter, object_name, fake_run, kwargs):
+    from opentelemetry.trace import get_tracer
+
+    from opentelemetry.instrumentation.haystack.wrap_openai import wrap
+
+    to_wrap = {"object": object_name, "method": "run"}
+    wrap(get_tracer("opentelemetry.instrumentation.haystack.test"), to_wrap)(
+        fake_run, None, (), kwargs
+    )
+
+    return exporter.get_finished_spans()[0]
+
+
+def test_chat_generator_records_reply_content(exporter):
+    # haystack 2.x OpenAIChatGenerator.run() returns {"replies": [ChatMessage, ...]};
+    # the span must record the actual replies, not the "replies" key.
+    def fake_run(*args, **kwargs):
+        return {
+            "replies": [
+                ChatMessage.from_assistant("Hello there"),
+                ChatMessage.from_assistant("General Kenobi"),
+            ]
+        }
+
+    span = _run_wrapped_generator(
+        exporter, "OpenAIChatGenerator", fake_run, {"messages": [ChatMessage.from_user("hi")]}
+    )
+
+    assert span.attributes["gen_ai.completion.0.content"] == "Hello there"
+    assert span.attributes["gen_ai.completion.0.role"] == "assistant"
+    assert span.attributes["gen_ai.completion.1.content"] == "General Kenobi"
+
+
+def test_generator_records_reply_content(exporter):
+    # OpenAIGenerator.run() returns {"replies": [str, ...]}; same key must be unpacked.
+    def fake_run(*args, **kwargs):
+        return {"replies": ["first reply", "second reply"]}
+
+    span = _run_wrapped_generator(
+        exporter, "OpenAIGenerator", fake_run, {"prompt": "hi"}
+    )
+
+    assert span.attributes["gen_ai.completion.0.content"] == "first reply"
+    assert span.attributes["gen_ai.completion.1.content"] == "second reply"

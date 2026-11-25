@@ -73,14 +73,20 @@ def _set_span_completions(span, llm_request_type, choices):
 
         if llm_request_type == LLMRequestTypeValues.CHAT:
             if message is not None:
+                content = getattr(message, "content", message)
                 set_span_attribute(span, f"{prefix}.role", "assistant")
-                set_span_attribute(span, f"{prefix}.content", message)
+                set_span_attribute(span, f"{prefix}.content", content)
         elif llm_request_type == LLMRequestTypeValues.COMPLETION:
             set_span_attribute(span, f"{prefix}.content", message)
 
 
 @dont_throw
 def _set_response_attributes(span, llm_request_type, response):
+    # Haystack 2.x generators return their replies under a "replies" key
+    # (e.g. {"replies": [ChatMessage, ...]}); enumerating the dict itself
+    # would only iterate its keys.
+    if isinstance(response, dict):
+        response = response.get("replies")
     _set_span_completions(span, llm_request_type, response)
 
 
