@@ -1108,6 +1108,106 @@ class TestSetRealtimeIOAttributes:
 
 
 # ---------------------------------------------------------------------------
+# Tests: Trace.group_id → gen_ai.conversation.id (root + child spans)
+# ---------------------------------------------------------------------------
+
+class TestConversationId:
+    """group_id must appear on the root workflow span and on invoke_agent,
+    chat, and execute_tool child spans so backends can filter by conversation."""
+
+    def _workflow_span(self, processor, exporter, group_id, has_attr=True):
+        mock_trace = MagicMock(spec=["trace_id", "group_id"] if has_attr else ["trace_id"])
+        mock_trace.trace_id = "conv-trace"
+        if has_attr:
+            mock_trace.group_id = group_id
+        processor.on_trace_start(mock_trace)
+        processor.on_trace_end(mock_trace)
+        return next(s for s in exporter.get_finished_spans() if s.name == "Agent Workflow")
+
+    def _run(self, processor, exporter, span_data, group_id="conv-42"):
+        mock_trace = MagicMock(spec=["trace_id", "group_id"])
+        mock_trace.trace_id = "child-conv-trace"
+        mock_trace.group_id = group_id
+        processor.on_trace_start(mock_trace)
+        sdk_span = MockAgentSpan(span_data, trace_id="child-conv-trace")
+        processor.on_span_start(sdk_span)
+        processor.on_span_end(sdk_span)
+        processor.on_trace_end(mock_trace)
+        return exporter.get_finished_spans()
+
+    def test_group_id_mapped_to_conversation_id(self, tracer_and_exporter, processor):
+        """group_id present → root span carries gen_ai.conversation.id."""
+        _, exporter = tracer_and_exporter
+        span = self._workflow_span(processor, exporter, "conv-123")
+        assert span.attributes[GenAIAttributes.GEN_AI_CONVERSATION_ID] == "conv-123"
+
+    def test_empty_group_id_mapped(self, tracer_and_exporter, processor):
+        """group_id="" is a present value the SDK accepts → mapped verbatim, not dropped."""
+        _, exporter = tracer_and_exporter
+        span = self._workflow_span(processor, exporter, "")
+        assert span.attributes[GenAIAttributes.GEN_AI_CONVERSATION_ID] == ""
+
+    def test_none_group_id_omitted(self, tracer_and_exporter, processor):
+        """group_id None → attribute must not be set."""
+        _, exporter = tracer_and_exporter
+        span = self._workflow_span(processor, exporter, None)
+        assert GenAIAttributes.GEN_AI_CONVERSATION_ID not in span.attributes
+
+    def test_missing_group_id_attr_no_crash(self, tracer_and_exporter, processor):
+        """Trace without a group_id attribute (older SDK) → no crash, no attribute."""
+        _, exporter = tracer_and_exporter
+        span = self._workflow_span(processor, exporter, None, has_attr=False)
+        assert GenAIAttributes.GEN_AI_CONVERSATION_ID not in span.attributes
+
+    def test_invoke_agent_has_conversation_id(self, tracer_and_exporter, processor):
+        from agents import AgentSpanData
+        _, exporter = tracer_and_exporter
+        spans = self._run(processor, exporter, AgentSpanData(name="A", handoffs=[], tools=[], output_type=""))
+        agent_span = next(s for s in spans if s.name == "A.agent")
+        assert agent_span.attributes[GenAIAttributes.GEN_AI_CONVERSATION_ID] == "conv-42"
+
+    def test_execute_tool_has_conversation_id(self, tracer_and_exporter, processor):
+        from agents import FunctionSpanData
+        _, exporter = tracer_and_exporter
+        spans = self._run(processor, exporter, FunctionSpanData(name="my_fn", input="", output=""))
+        tool_span = next(s for s in spans if s.name == "my_fn.tool")
+        assert tool_span.attributes[GenAIAttributes.GEN_AI_CONVERSATION_ID] == "conv-42"
+
+    def test_chat_span_has_conversation_id(self, tracer_and_exporter, processor):
+        from agents import GenerationSpanData
+        _, exporter = tracer_and_exporter
+        spans = self._run(processor, exporter, GenerationSpanData(model="gpt-4o", model_config={}))
+        gen_span = next(s for s in spans if s.name == "openai.response")
+        assert gen_span.attributes[GenAIAttributes.GEN_AI_CONVERSATION_ID] == "conv-42"
+
+    def test_no_group_id_child_spans_omit_attr(self, tracer_and_exporter, processor):
+        from agents import AgentSpanData
+        _, exporter = tracer_and_exporter
+        spans = self._run(
+            processor, exporter, AgentSpanData(name="B", handoffs=[], tools=[], output_type=""), group_id=None
+        )
+        agent_span = next(s for s in spans if s.name == "B.agent")
+        assert GenAIAttributes.GEN_AI_CONVERSATION_ID not in agent_span.attributes
+
+    def test_handoff_span_has_conversation_id(self, tracer_and_exporter, processor):
+        from agents import HandoffSpanData
+        _, exporter = tracer_and_exporter
+        spans = self._run(processor, exporter, HandoffSpanData(from_agent="A", to_agent="B"))
+        handoff_span = next(s for s in spans if "handoff" in s.name)
+        assert handoff_span.attributes[GenAIAttributes.GEN_AI_CONVERSATION_ID] == "conv-42"
+
+    def test_realtime_span_has_conversation_id(self, processor):
+        """_start_realtime_span carries gen_ai.conversation.id when provided."""
+        span_data = MagicMock()
+        span_data.model = None
+        otel_span = processor._start_realtime_span(
+            span_data, None, "openai.realtime.speech", "speech", "conv-rt"
+        )
+        assert otel_span.attributes.get(GenAIAttributes.GEN_AI_CONVERSATION_ID) == "conv-rt"
+        otel_span.end()
+
+
+# ---------------------------------------------------------------------------
 # Integration: on_span_start/on_span_end still work end-to-end
 # (These confirm refactoring doesn't break the public API)
 # ---------------------------------------------------------------------------
