@@ -438,6 +438,61 @@ def test_trace_content_not_applied_when_tracing_disabled(
     assert os.environ["TRACELOOP_TRACE_CONTENT"] == "true"
 
 
+@pytest.fixture
+def tracing_disabled_env_init(isolated_tracer_wrapper, monkeypatch, capsys):
+    monkeypatch.setenv("TRACELOOP_TRACING_ENABLED", "false")
+    monkeypatch.delenv("TRACELOOP_SUPPRESS_WARNINGS", raising=False)
+    TracerWrapper.set_disabled(False)
+
+    Traceloop.init(exporter=InMemorySpanExporter(), disable_batch=True)
+
+    return capsys.readouterr().out
+
+
+def test_tracing_disabled_env_marks_tracer_disabled(tracing_disabled_env_init, capsys):
+    assert "Traceloop instrumentation is disabled via init flag" in tracing_disabled_env_init
+    assert "Tracing is disabled" not in tracing_disabled_env_init
+    assert not hasattr(TracerWrapper, "instance")
+    assert TracerWrapper.verify_initialized() is False
+    assert "Traceloop not initialized" not in capsys.readouterr().out
+
+
+@pytest.mark.asyncio
+async def test_tracing_disabled_env_decorators_are_silent_noop(
+    tracing_disabled_env_init, capsys
+):
+    @workflow(name="hello-world")
+    def hello_world():
+        return "hello world!"
+
+    @workflow(name="async-hello-world")
+    async def async_hello_world():
+        return "async hello world!"
+
+    @workflow(name="gen")
+    def gen():
+        yield from [1, 2]
+
+    @workflow(name="async-gen")
+    async def async_gen():
+        for item in [3, 4]:
+            yield item
+
+    @workflow(name="failing")
+    def failing():
+        raise ValueError("user error")
+
+    assert hello_world() == "hello world!"
+    assert await async_hello_world() == "async hello world!"
+    assert list(gen()) == [1, 2]
+    assert [item async for item in async_gen()] == [3, 4]
+    with pytest.raises(ValueError, match="user error"):
+        failing()
+
+    assert "Traceloop not initialized" not in capsys.readouterr().out
+    assert not hasattr(TracerWrapper, "instance")
+
+
 def test_trace_content_last_explicit_call_wins(isolated_tracer_wrapper, monkeypatch):
     """A later init() call with trace_content=None doesn't reset the env var —
     it leaves whatever the last explicit trace_content call set."""

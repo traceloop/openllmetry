@@ -127,7 +127,7 @@ class Traceloop:
             use_attributes = use_legacy_attributes
         if use_attributes is None:
             use_attributes = True
-        if not enabled:
+        if not enabled or not is_tracing_enabled():
             TracerWrapper.set_disabled(True)
             print(
                 Fore.YELLOW
@@ -139,10 +139,6 @@ class Traceloop:
         api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
         Traceloop.__app_name = app_name
-
-        if not is_tracing_enabled():
-            print(Fore.YELLOW + "Tracing is disabled" + Fore.RESET)
-            return
 
         if trace_content is not None:
             os.environ["TRACELOOP_TRACE_CONTENT"] = (
