@@ -184,12 +184,16 @@ def _handle_stream_error(stream, exception):
     if stream._instrumentation_completed:
         return
     stream._instrumentation_completed = True
+    attributes = error_metrics_attributes(exception)
+    if stream._duration_histogram:
+        duration = time.time() - stream._start_time
+        stream._duration_histogram.record(duration, attributes=attributes)
+    if stream._exception_counter:
+        stream._exception_counter.add(1, attributes=attributes)
     stream._span.set_attribute(ERROR_TYPE, exception.__class__.__name__)
     stream._span.record_exception(exception)
     stream._span.set_status(Status(StatusCode.ERROR, str(exception)))
     stream._span.end()
-    if stream._exception_counter:
-        stream._exception_counter.add(1, attributes=error_metrics_attributes(exception))
 
 
 class AnthropicStream(ObjectProxy):

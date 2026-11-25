@@ -1717,50 +1717,6 @@ def test_async_streaming_skips_token_usage_without_api_data_and_enrich_disabled(
 
 
 # ---------------------------------------------------------------------------
-# A stream that raises mid-way (an `event: error` such as overloaded_error, or
-# a dropped connection) must end its span with ERROR, sync and async alike.
-# ---------------------------------------------------------------------------
-
-@pytest.mark.parametrize("is_async", [False, True])
-def test_streaming_error_mid_stream_ends_span_with_error(
-    is_async, tracer_provider, span_exporter
-):
-    from opentelemetry.trace import StatusCode
-
-    span = tracer_provider.get_tracer(__name__).start_span("anthropic.chat")
-    exception_counter = MagicMock()
-    error = RuntimeError("Overloaded")
-
-    if is_async:
-        stream = _make_anthropic_async_stream(span)
-        stream.__wrapped__.__anext__ = MagicMock(side_effect=error)
-        stream._exception_counter = exception_counter
-        with pytest.raises(RuntimeError) as exc_info:
-            asyncio.run(stream.__anext__())
-        with pytest.raises(RuntimeError):
-            asyncio.run(stream.__anext__())
-    else:
-        stream = _make_anthropic_stream(span)
-        stream.__wrapped__.__next__ = MagicMock(side_effect=error)
-        stream._exception_counter = exception_counter
-        with pytest.raises(RuntimeError) as exc_info:
-            next(stream)
-        with pytest.raises(RuntimeError):
-            next(stream)
-
-    assert exc_info.value is error
-    spans = span_exporter.get_finished_spans()
-    assert len(spans) == 1
-    assert spans[0].status.status_code == StatusCode.ERROR
-    assert spans[0].status.description == "Overloaded"
-    assert spans[0].attributes["error.type"] == "RuntimeError"
-    assert [event.name for event in spans[0].events] == ["exception"]
-    exception_counter.add.assert_called_once()
-    assert exception_counter.add.call_args.kwargs["attributes"]["error.type"] == "RuntimeError"
-    assert stream._instrumentation_completed is True
-
-
-# ---------------------------------------------------------------------------
 # _map_finish_reason must return "" for falsy input, mapped value for known
 # reasons, and the original string as-is for unknown reasons.
 # ---------------------------------------------------------------------------

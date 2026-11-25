@@ -3,12 +3,14 @@ import base64
 import json
 from pathlib import Path
 
+import anthropic
 import pytest
 from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
-from opentelemetry.semconv_ai import SpanAttributes
+from opentelemetry.semconv_ai import Meters, SpanAttributes
+from opentelemetry.trace import StatusCode
 
 from .utils import verify_metrics
 
@@ -2669,3 +2671,172 @@ def test_process_response_item_no_crash_on_missing_input_key():
     _process_response_item(item, complete_response)
 
     assert complete_response["events"][0]["input"] == '{"key": "value"}'
+
+
+# ---------------------------------------------------------------------------
+# A stream that fails mid-way (an `event: error` such as overloaded_error, or a
+# dropped connection) must end its span with ERROR and record the error metrics
+# once. A recording cannot fail on demand, so these replay an existing cassette
+# and make the SDK's own iterator fail after the first real event.
+# ---------------------------------------------------------------------------
+
+class _DroppedConnection:
+    """Yields the first real event of a replayed stream, then fails on every read."""
+
+    def __init__(self, real, error):
+        self._real = real
+        self._error = error
+        self._started = False
+
+    def __iter__(self):
+        return self
+
+    def __aiter__(self):
+        return self
+
+    def __next__(self):
+        if self._started:
+            raise self._error
+        self._started = True
+        return next(self._real)
+
+    async def __anext__(self):
+        if self._started:
+            raise self._error
+        self._started = True
+        return await self._real.__anext__()
+
+
+def _drop_connection(stream):
+    error = anthropic.APIConnectionError(request=stream.response.request)
+    stream.__wrapped__._iterator = _DroppedConnection(stream.__wrapped__._iterator, error)
+    return error
+
+
+def _assert_stream_error_recorded(span_exporter, reader, error):
+    spans = span_exporter.get_finished_spans()
+    assert len(spans) == 1
+    span = spans[0]
+    assert span.status.status_code == StatusCode.ERROR
+    assert span.status.description == str(error)
+    assert span.attributes["error.type"] == "APIConnectionError"
+    assert [event.name for event in span.events] == ["exception"]
+
+    points = {
+        metric.name: metric.data.data_points
+        for rm in reader.get_metrics_data().resource_metrics
+        for sm in rm.scope_metrics
+        for metric in sm.metrics
+    }
+    exceptions = points[Meters.LLM_ANTHROPIC_COMPLETION_EXCEPTIONS]
+    assert sum(point.value for point in exceptions) == 1
+    assert exceptions[0].attributes["error.type"] == "APIConnectionError"
+    durations = points[Meters.LLM_OPERATION_DURATION]
+    assert sum(point.count for point in durations) == 1
+    assert durations[0].attributes["error.type"] == "APIConnectionError"
+
+
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_anthropic_message_streaming_legacy.yaml")
+def test_anthropic_streaming_error_mid_stream(
+    instrument_legacy, anthropic_client, span_exporter, reader
+):
+    response = anthropic_client.messages.create(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-haiku-20240307",
+        stream=True,
+    )
+    error = _drop_connection(response)
+
+    with pytest.raises(anthropic.APIConnectionError) as exc_info:
+        for _ in response:
+            pass
+    with pytest.raises(anthropic.APIConnectionError):
+        next(response)
+
+    assert exc_info.value is error
+    _assert_stream_error_recorded(span_exporter, reader, error)
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+@pytest.mark.default_cassette("test_async_anthropic_message_streaming_legacy.yaml")
+async def test_async_anthropic_streaming_error_mid_stream(
+    instrument_legacy, async_anthropic_client, span_exporter, reader
+):
+    response = await async_anthropic_client.messages.create(
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": "Tell me a joke about OpenTelemetry",
+            }
+        ],
+        model="claude-3-haiku-20240307",
+        stream=True,
+    )
+    error = _drop_connection(response)
+
+    with pytest.raises(anthropic.APIConnectionError) as exc_info:
+        async for _ in response:
+            pass
+    with pytest.raises(anthropic.APIConnectionError):
+        await response.__anext__()
+
+    assert exc_info.value is error
+    _assert_stream_error_recorded(span_exporter, reader, error)
+
+
+@pytest.mark.vcr
+@pytest.mark.default_cassette("test_anthropic_message_stream_manager_legacy.yaml")
+def test_anthropic_stream_manager_error_mid_stream(
+    instrument_legacy, anthropic_client, span_exporter, reader
+):
+    with pytest.raises(anthropic.APIConnectionError) as exc_info:
+        with anthropic_client.messages.stream(
+            max_tokens=1024,
+            messages=[
+                {
+                    "role": "user",
+                    "content": "Tell me a joke about OpenTelemetry",
+                }
+            ],
+            model="claude-3-5-haiku-20241022",
+        ) as stream:
+            error = _drop_connection(stream)
+            for _ in stream:
+                pass
+
+    assert exc_info.value is error
+    _assert_stream_error_recorded(span_exporter, reader, error)
+
+
+@pytest.mark.vcr
+@pytest.mark.asyncio
+@pytest.mark.default_cassette("test_async_anthropic_message_stream_manager_legacy.yaml")
+async def test_async_anthropic_stream_manager_error_mid_stream(
+    instrument_legacy, async_anthropic_client, span_exporter, reader
+):
+    with pytest.raises(anthropic.APIConnectionError) as exc_info:
+        async with async_anthropic_client.messages.stream(
+            max_tokens=1024,
+            messages=[
+                {
+                    "role": "user",
+                    "content": "Tell me a joke about OpenTelemetry",
+                }
+            ],
+            model="claude-3-5-haiku-20241022",
+        ) as stream:
+            error = _drop_connection(stream)
+            async for _ in stream:
+                pass
+
+    assert exc_info.value is error
+    _assert_stream_error_recorded(span_exporter, reader, error)
