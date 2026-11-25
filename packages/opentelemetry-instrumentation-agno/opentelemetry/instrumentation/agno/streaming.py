@@ -39,6 +39,17 @@ class AgnoAsyncStream(ObjectProxy):
     def __aiter__(self):
         return self
 
+    async def aclose(self):
+        """Close the wrapped stream and end the span if it is still open."""
+        try:
+            if aclose := getattr(self.__wrapped__, "aclose", None):
+                await aclose()
+        except Exception as e:
+            self._fail(e)
+            raise
+        finally:
+            self._complete_instrumentation()
+
     async def __anext__(self):
         try:
             event = await self.__wrapped__.__anext__()
@@ -47,12 +58,7 @@ class AgnoAsyncStream(ObjectProxy):
                 self._complete_instrumentation()
             raise
         except Exception as e:
-            if not self._self_instrumentation_completed:
-                if self._self_span and self._self_span.is_recording():
-                    self._self_span.set_status(Status(StatusCode.ERROR, str(e)))
-                    self._self_span.record_exception(e)
-                    self._self_span.end()
-                self._self_instrumentation_completed = True
+            self._fail(e)
             raise
 
         self._self_events.append(event)
@@ -61,6 +67,15 @@ class AgnoAsyncStream(ObjectProxy):
             self._self_final_result = event
 
         return event
+
+    def _fail(self, e):
+        """End the span with the error if it is still open."""
+        if not self._self_instrumentation_completed:
+            if self._self_span and self._self_span.is_recording():
+                self._self_span.set_status(Status(StatusCode.ERROR, str(e)))
+                self._self_span.record_exception(e)
+                self._self_span.end()
+            self._self_instrumentation_completed = True
 
     def _complete_instrumentation(self):
         """Complete the instrumentation when stream is fully consumed"""
@@ -140,7 +155,28 @@ class AgnoStream(ObjectProxy):
         self._self_instrumentation_completed = False
 
     def __iter__(self):
-        return self
+        # A generator, so a caller that breaks out of the loop closes it and the
+        # finally block ends the span with what was read so far.
+        try:
+            while True:
+                try:
+                    event = self.__next__()
+                except StopIteration:
+                    return
+                yield event
+        finally:
+            self._complete_instrumentation()
+
+    def close(self):
+        """Close the wrapped stream and end the span if it is still open."""
+        try:
+            if close := getattr(self.__wrapped__, "close", None):
+                close()
+        except Exception as e:
+            self._fail(e)
+            raise
+        finally:
+            self._complete_instrumentation()
 
     def __next__(self):
         try:
@@ -150,12 +186,7 @@ class AgnoStream(ObjectProxy):
                 self._complete_instrumentation()
             raise
         except Exception as e:
-            if not self._self_instrumentation_completed:
-                if self._self_span and self._self_span.is_recording():
-                    self._self_span.set_status(Status(StatusCode.ERROR, str(e)))
-                    self._self_span.record_exception(e)
-                    self._self_span.end()
-                self._self_instrumentation_completed = True
+            self._fail(e)
             raise
 
         self._self_events.append(event)
@@ -164,6 +195,15 @@ class AgnoStream(ObjectProxy):
             self._self_final_result = event
 
         return event
+
+    def _fail(self, e):
+        """End the span with the error if it is still open."""
+        if not self._self_instrumentation_completed:
+            if self._self_span and self._self_span.is_recording():
+                self._self_span.set_status(Status(StatusCode.ERROR, str(e)))
+                self._self_span.record_exception(e)
+                self._self_span.end()
+            self._self_instrumentation_completed = True
 
     def _complete_instrumentation(self):
         """Complete the instrumentation when stream is fully consumed"""
