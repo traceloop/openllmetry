@@ -112,6 +112,13 @@ class SpanAttributes:
     PINECONE_QUERY_TOP_K = "pinecone.query.top_k"
     PINECONE_QUERY_EMBEDDINGS_COUNT = "db.pinecone.query.embeddings_count"
     PINECONE_QUERY_RESULT_COUNT = "db.pinecone.query.result_count"
+    PINECONE_UPSERT_VECTORS_COUNT = "pinecone.upsert.vectors_count"
+    PINECONE_UPSERT_NAMESPACE = "pinecone.upsert.namespace"
+    PINECONE_UPSERT_BATCH_SIZE = "pinecone.upsert.batch_size"
+    PINECONE_DELETE_IDS_COUNT = "pinecone.delete.ids_count"
+    PINECONE_DELETE_NAMESPACE = "pinecone.delete.namespace"
+    PINECONE_DELETE_DELETE_ALL = "pinecone.delete.delete_all"
+    PINECONE_DELETE_FILTER = "pinecone.delete.filter"
 
     # LLM Workflows
     TRACELOOP_SPAN_KIND = "traceloop.span.kind"
