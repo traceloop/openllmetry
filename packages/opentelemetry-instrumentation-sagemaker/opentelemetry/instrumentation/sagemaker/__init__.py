@@ -141,7 +141,7 @@ def _instrumented_endpoint_invoke_with_response_stream(fn, tracer, event_logger)
 
 def _handle_stream_call(span, event_logger, kwargs, response):
     @dont_throw
-    def stream_done(response_body):
+    def set_stream_attributes(response_body):
         # Handle Request
         if should_emit_events() and event_logger is not None:
             emit_message_event(kwargs, event_logger)
@@ -156,7 +156,15 @@ def _handle_stream_call(span, event_logger, kwargs, response):
         else:
             set_stream_response_attributes(span, response_body)
 
-        span.end()
+    def stream_done(response_body, error=None):
+        try:
+            set_stream_attributes(response_body)
+            if error is not None:
+                span.set_attribute(ERROR_TYPE, error.__class__.__name__)
+                span.record_exception(error)
+                span.set_status(Status(StatusCode.ERROR, str(error)))
+        finally:
+            span.end()
 
     response["Body"] = StreamingWrapper(response["Body"], stream_done)
 
