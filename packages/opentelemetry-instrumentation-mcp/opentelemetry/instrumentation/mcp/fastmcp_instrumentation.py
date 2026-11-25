@@ -43,12 +43,14 @@ class FastMCPInstrumentor:
         # fastmcp 3 removed ToolManager; every tool runs through Tool._run.
         register_post_import_hook(self._wrap_fastmcp3_tool_run, "fastmcp.tools.base")
 
-        # Instrument FastMCP __init__ to capture server name
+        # Instrument FastMCP __init__ to capture server name. Hooked on the
+        # defining module: resolving the lazy `fastmcp.FastMCP` attribute would
+        # import server support, which a client-only install lacks.
         register_post_import_hook(
             lambda _: wrap_function_wrapper(
-                "fastmcp", "FastMCP.__init__", self._fastmcp_init_wrapper()
+                "fastmcp.server.server", "FastMCP.__init__", self._fastmcp_init_wrapper()
             ),
-            "fastmcp",
+            "fastmcp.server.server",
         )
 
     def uninstrument(self):
@@ -83,15 +85,17 @@ class FastMCPInstrumentor:
     def _fastmcp_init_wrapper(self):
         """Create wrapper for FastMCP initialization to capture server name."""
         @dont_throw
-        def traced_method(wrapped, instance, args, kwargs):
-            # Call the original __init__ first
-            result = wrapped(*args, **kwargs)
-
+        def capture_server_name(args, kwargs):
             if args and len(args) > 0:
                 self._server_name = f"{args[0]}.mcp"
             elif 'name' in kwargs:
                 self._server_name = f"{kwargs['name']}.mcp"
 
+        def traced_method(wrapped, instance, args, kwargs):
+            # Call the original __init__ first, outside the guard, so its
+            # exceptions reach the caller.
+            result = wrapped(*args, **kwargs)
+            capture_server_name(args, kwargs)
             return result
         return traced_method
 
