@@ -41,10 +41,14 @@ def collection():
         },  # The ratio of small vector values to be dropped during indexing
     )
 
+    # milvus.db persists between runs; start from a clean collection
+    if client.has_collection(collection_name):
+        client.drop_collection(collection_name)
     client.create_collection(
         collection_name=collection_name, schema=schema, index_params=index_params
     )
-    return collection_name
+    yield collection_name
+    client.drop_collection(collection_name)
 
 
 def insert_data(collection):

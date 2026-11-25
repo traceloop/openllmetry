@@ -2365,6 +2365,7 @@ class TestFinishReasonTopLevel:
         response.id = "resp_1"
         response.frequency_penalty = None
         response.finish_reason = None
+        response.status = None
         response.output = []
         response.usage = None
 
