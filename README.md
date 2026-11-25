@@ -154,7 +154,7 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 - ✅ [Langflow](https://docs.langflow.org/)
 - ✅ [LangGraph](https://langchain-ai.github.io/langgraph/concepts/why-langgraph/)
 - ✅ [LiteLLM](https://docs.litellm.ai/docs/observability/opentelemetry_integration)
-- ✅ [LlamaIndex](https://docs.llamaindex.ai/en/stable/module_guides/observability/observability.html#openllmetry)
+- ✅ [LlamaIndex](https://developers.llamaindex.ai/python/framework/module_guides/observability/#openllmetry)
 - ✅ [OpenAI Agents](https://openai.github.io/openai-agents-python/)
 
 ### Protocol
