@@ -101,6 +101,75 @@ def test_input_messages_multi_turn():
     assert messages[2] == {"role": "user", "parts": [{"type": "text", "content": "How are you?"}]}
 
 
+def test_request_stop_sequences_attribute():
+    """gen_ai.request.stop_sequences must be recorded as a list of strings."""
+    span = make_span()
+    kwargs = {
+        "model": "claude-3-opus-20240229",
+        "messages": [{"role": "user", "content": "Hello"}],
+        "max_tokens": 1024,
+        "stop_sequences": ["END", "###"],
+    }
+    asyncio.run(aset_input_attributes(span, kwargs))
+
+    assert list(span.attributes[GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES]) == ["END", "###"]
+
+
+def test_request_stop_sequences_bare_string_is_one_item():
+    """A bare-string stop_sequences must be recorded as a single item, not split into characters."""
+    span = make_span()
+    kwargs = {
+        "model": "claude-3-opus-20240229",
+        "messages": [{"role": "user", "content": "Hello"}],
+        "max_tokens": 1024,
+        "stop_sequences": "END",
+    }
+    asyncio.run(aset_input_attributes(span, kwargs))
+
+    assert list(span.attributes[GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES]) == ["END"]
+
+
+def test_request_stop_sequences_tuple_filters_non_strings():
+    """Only str items from a tuple stop_sequences must be recorded."""
+    span = make_span()
+    kwargs = {
+        "model": "claude-3-opus-20240229",
+        "messages": [{"role": "user", "content": "Hello"}],
+        "max_tokens": 1024,
+        "stop_sequences": ("END", 123, None, "###"),
+    }
+    asyncio.run(aset_input_attributes(span, kwargs))
+
+    assert list(span.attributes[GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES]) == ["END", "###"]
+
+
+def test_request_stop_sequences_not_set_when_absent():
+    """gen_ai.request.stop_sequences must not be set when stop_sequences is not passed."""
+    span = make_span()
+    kwargs = {
+        "model": "claude-3-opus-20240229",
+        "messages": [{"role": "user", "content": "Hello"}],
+        "max_tokens": 1024,
+    }
+    asyncio.run(aset_input_attributes(span, kwargs))
+
+    assert GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES not in span.attributes
+
+
+def test_request_stop_sequences_not_set_when_no_string_items():
+    """gen_ai.request.stop_sequences must not be set when stop_sequences has no str items."""
+    span = make_span()
+    kwargs = {
+        "model": "claude-3-opus-20240229",
+        "messages": [{"role": "user", "content": "Hello"}],
+        "max_tokens": 1024,
+        "stop_sequences": [1, None],
+    }
+    asyncio.run(aset_input_attributes(span, kwargs))
+
+    assert GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES not in span.attributes
+
+
 def test_system_instructions_attribute():
     """gen_ai.system_instructions must be a JSON array of typed parts, NOT a plain string.
 
