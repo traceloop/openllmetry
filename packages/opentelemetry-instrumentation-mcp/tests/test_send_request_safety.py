@@ -250,6 +250,128 @@ async def test_meta_is_still_injected_under_an_active_span(tracer_provider):
     assert meta.traceparent.startswith("00-")
 
 
+def _call_tool_request(meta=None):
+    """A real ClientRequest, as mcp.ClientSession.call_tool sends it (no progress_callback)."""
+    from mcp.types import CallToolRequest, CallToolRequestParams, ClientRequest
+
+    return ClientRequest(
+        CallToolRequest(
+            params=CallToolRequestParams(name="mytool", arguments={"a": 1}, _meta=meta)
+        )
+    )
+
+
+def _trace_id(span):
+    return format(span.get_span_context().trace_id, "032x")
+
+
+async def test_tool_call_without_meta_gets_traceparent(tracer_provider, span_exporter):
+    result = _ok_result()
+    request = _call_tool_request()
+    tracer = tracer_provider.get_tracer(__name__)
+    with tracer.start_as_current_span("caller") as caller:
+        returned = await McpInstrumentor().patch_mcp_client(tracer)(
+            _returning(result), None, (request,), {}
+        )
+    assert returned is result
+    assert request.root.params.meta is not None
+    dumped = request.model_dump(by_alias=True, exclude_none=True)
+    traceparent = dumped["params"]["_meta"]["traceparent"]
+    assert traceparent.split("-")[1] == _trace_id(caller)
+    assert [s.name for s in span_exporter.get_finished_spans()] == ["mytool.tool", "caller"]
+
+
+async def test_request_keyword_without_meta_gets_traceparent(tracer_provider):
+    from mcp.types import CallToolRequest, CallToolRequestParams
+
+    result = _ok_result()
+    request = CallToolRequest(params=CallToolRequestParams(name="mytool", arguments={"a": 1}))
+    tracer = tracer_provider.get_tracer(__name__)
+    with tracer.start_as_current_span("caller") as caller:
+        returned = await McpInstrumentor().patch_mcp_client(tracer)(
+            _returning(result), None, (), {"request": request}
+        )
+    assert returned is result
+    traceparent = request.params.meta.traceparent
+    assert traceparent.startswith("00-")
+    assert traceparent.split("-")[1] == _trace_id(caller)
+
+
+async def test_existing_meta_keeps_progress_token_and_gets_traceparent(tracer_provider):
+    from mcp.types import RequestParams
+
+    meta = RequestParams.Meta(progressToken="tok-1")
+    request = _call_tool_request(meta=meta)
+    tracer = tracer_provider.get_tracer(__name__)
+    with tracer.start_as_current_span("caller") as caller:
+        await McpInstrumentor().patch_mcp_client(tracer)(
+            _returning(_ok_result()), None, (request,), {}
+        )
+    assert request.root.params.meta is meta
+    dumped = request.model_dump(by_alias=True, exclude_none=True)["params"]["_meta"]
+    assert dumped["progressToken"] == "tok-1"
+    assert dumped["traceparent"].split("-")[1] == _trace_id(caller)
+
+
+async def test_tool_call_without_meta_outside_any_span_adds_no_meta(tracer_provider):
+    result = _ok_result()
+    request = _call_tool_request()
+    returned = await McpInstrumentor().patch_mcp_client(tracer_provider.get_tracer(__name__))(
+        _returning(result), None, (request,), {}
+    )
+    assert returned is result
+    assert request.root.params.meta is None
+    assert "_meta" not in request.model_dump(by_alias=True, exclude_none=True)["params"]
+
+
+async def test_non_tool_request_without_meta_gets_traceparent(tracer_provider, span_exporter):
+    from mcp.types import ClientRequest, GetPromptRequest, GetPromptRequestParams
+
+    result = SimpleNamespace(messages=[])
+    request = ClientRequest(GetPromptRequest(params=GetPromptRequestParams(name="myprompt")))
+    tracer = tracer_provider.get_tracer(__name__)
+    with tracer.start_as_current_span("caller") as caller:
+        returned = await McpInstrumentor().patch_mcp_client(tracer)(
+            _returning(result), None, (request,), {}
+        )
+    assert returned is result
+    assert request.root.params.meta.traceparent.split("-")[1] == _trace_id(caller)
+    assert [s.name for s in span_exporter.get_finished_spans()] == ["prompts/get.mcp", "caller"]
+
+
+class _FrozenParams:
+    """Params whose meta cannot be assigned: building the Meta must fail open."""
+
+    name = "mytool"
+    arguments = {"a": 1}
+    meta = None
+
+    def __setattr__(self, key, value):
+        raise TypeError("params are frozen")
+
+
+async def test_meta_assignment_failure_still_issues_the_call(
+    tracer_provider, span_exporter, caplog
+):
+    result = _ok_result()
+    request = SimpleNamespace(root=SimpleNamespace(method="tools/call", params=_FrozenParams()))
+    tracer = tracer_provider.get_tracer(__name__)
+    with caplog.at_level(logging.WARNING):
+        with tracer.start_as_current_span("caller"):
+            returned = await McpInstrumentor().patch_mcp_client(tracer)(
+                _returning(result), None, (request,), {}
+            )
+    assert returned is result
+    span = span_exporter.get_finished_spans()[0]
+    assert span.name == "mytool.tool"
+    assert span.status.status_code is not StatusCode.ERROR
+    assert ERROR_TYPE not in span.attributes
+    assert any(
+        r.levelno >= logging.WARNING and "mcp.client.send_request" in r.getMessage()
+        for r in _instrumentation_records(caplog)
+    )
+
+
 async def test_malformed_request_still_issues_the_call(tracer_provider):
     """Nothing readable on args[0].root: the pre-call guard must fail open."""
     result = _ok_result()
