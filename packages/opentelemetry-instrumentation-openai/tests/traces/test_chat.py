@@ -1790,3 +1790,46 @@ def test_chat_streaming_memory_leak_prevention(instrument_legacy, span_exporter,
     assert span.name == "openai.chat"
     assert span.status.status_code == StatusCode.OK
     assert span.end_time is not None
+
+
+@pytest.mark.asyncio
+async def test_chat_async_with_streaming_response(instrument_legacy, span_exporter):
+    """Regression test for https://github.com/traceloop/openllmetry/issues/4551:
+    for async `with_streaming_response`, the raw response is an AsyncAPIResponse whose
+    `parse()` is a coroutine; it must be awaited so the response is recorded on the span."""
+    from openai import AsyncOpenAI
+
+    body = {
+        "id": "chatcmpl-1",
+        "object": "chat.completion",
+        "created": 0,
+        "model": "gpt-3.5-turbo",
+        "choices": [
+            {"index": 0, "finish_reason": "stop", "message": {"role": "assistant", "content": "Hello!"}}
+        ],
+        "usage": {"prompt_tokens": 11, "completion_tokens": 5, "total_tokens": 16},
+    }
+    client = AsyncOpenAI(
+        api_key="test-key",
+        http_client=httpx.AsyncClient(
+            transport=httpx.MockTransport(lambda request: httpx.Response(200, json=body))
+        ),
+    )
+
+    async with client.chat.completions.with_streaming_response.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": "hi"}],
+    ) as response:
+        completion = await response.parse()
+
+    assert completion.choices[0].message.content == "Hello!"
+
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == ["openai.chat"]
+    open_ai_span = spans[0]
+    assert open_ai_span.attributes.get("gen_ai.response.id") == "chatcmpl-1"
+    assert open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_INPUT_TOKENS) == 11
+    assert open_ai_span.attributes.get(GenAIAttributes.GEN_AI_USAGE_OUTPUT_TOKENS) == 5
+    output_messages = get_output_messages(open_ai_span)
+    assert output_messages[0]["role"] == "assistant"
+    assert output_messages[0]["parts"][0]["content"] == "Hello!"
