@@ -15,60 +15,50 @@ interactions:
       - application/json
       User-Agent:
       - Together/v1 PythonBindings/1.6.0
-      X-Together-Client-User-Agent:
-      - '{"bindings_version": "1.6.0", "httplib": "requests", "lang": "python", "lang_version":
-        "3.11.15", "platform": "macOS-27.2.1-arm64-arm-64bit", "publisher": "together",
-        "uname": "Darwin 27.2.0 Darwin Kernel Version 27.2.0: Wed Oct 14 23:44:56
-        PDT 2026; root:xnu-13432.41.4~25/RELEASE_ARM64_T6041 arm64 arm"}'
     method: POST
     uri: https://api.together.xyz/v1/completions
   response:
     body:
-      string: "{\"id\":\"ad135e379825474ba4ee4e84c1e76f7e-aws_ew1\",\"object\":\"text_completion\",\"created\":1795594235,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"text\":\"
-        Free varies ...\\n\\nSure, how about this one: \\n\\nWhy did the software
-        developer start using OpenTelemetry?\\n\\nBecause he wanted to **trace** the
-        wasteful lines of code out!\\n\\nHere is an post \\n\\n\\nSure I can`\\n\\nThis\\n\\nHere
-        is how to extract\\n\\nIt looks like you're attempting to draft some code
-        or text for a post about OpenTelemetry. Below, I'll provide a basic template
-        you might be looking for\u2014assuming it is to teach about \\\"extracting\\\"
-        some aspects like span data, tracer data, or making a simple trace:\\n\\n---\\n\\n###
-        How to Extract Data With OpenTelemetry\\n\\nCreating applications that can
-        not only trace but also extract and analyze trace data is becoming increasingly
-        essential in modern software development. With OpenTelemetry, you can collect
-        and manage telemetry data (traces, metrics, and logs) from your applications.
-        Here's how you can get started:\\n\\n#### Step 1: Install OpenTelemetry\\n\\nFirst,
-        ensure that you have the OpenTelemetry library installed for your project.
-        You can install it via pip for Python, for instance:\\n\\n```bash\\npip install
-        opentelemetry-sdk\\n```\\n\\n#### Step 2: Set Up Your Tracer\\n\\nYou need
-        to set up a tracer that will collect the span data. Here\u2019s a simple setup
-        in Python:\\n\\n```python\\nfrom opentelemetry import trace\\nfrom opentelemetry.sdk.trace
-        import TracerProvider\\nfrom opentelemetry.sdk.trace.export import SimpleSpanProcessor\\nfrom
-        opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter\\n\\ntrace.set_tracer_provider(TracerProvider())\\ntracer
-        = trace.get_tracer(__name__)\\n\\n# Configure the exporter\\notlp_exporter
-        = OTLPSpanExporter()\\ntrace.get_tracer_provider().add_span_processor(\\n
-        \   SimpleSpanProcessor(otlp_exporter)\\n)\\n```\\n\\n#### Step 3: Start Tracing\\n\\nNow,
-        start creating some spans that will itemize your actions:\\n\\n```python\\nwith
-        tracer.start_as_current_span(\\\"example-operation\\\"):\\n    # Simulate
-        work\\n    time.sleep(1)\\n    print(\\\"Traced successfully!\\\")\\n```\\n\\n####
-        Step 4: Extract and Process Trace Data\\n\\nAfter you have gathered some trace
-        data, you'll want to extract it for analysis. This part often depends heavily
-        on how you're storing and exporting this telemetry data. Below is a simple
-        example of extracting trace information directly from the trace:\\n\\n```python\\nprint(\\\"Exported
-        Trace Data:\\\")\\n# This typically would be logged by the exporter.\\n# Here,
-        you'd connect to your back-end\",\"index\":0,\"finish_reason\":\"length\"}],\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":512,\"total_tokens\":520,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"system_fingerprint\":\"default\"}"
+      string: "{\"id\":\"d219c31b2bdf4cdf8a6d14bd63b78071-aws_ec1\",\"object\":\"text_completion\",\"created\":1795601749,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"text\":\"\\\"\\n\\nWe
+        need to produce a joke, comedic content about OpenTelemetry. The style guidelines
+        require a joke length between 50 and 150 tokens.\\n\\nWe want to incorporate
+        some context about OpenTelemetry - typed in a comedic angle.\\n\\nConstraints:
+        The text we output must be between 50 and 150 tokens. I need to check tokens
+        count, but approximate. They want about 80-100 words? Actually tokens are
+        around 1 per word or less. Roughly token count approximates words. Provide
+        about 80-100 words. Let's target that.\\n\\nWe must not include anything else
+        (like internal analysis). So the final answer is only the joke. Ensure length
+        in tokens.\\n\\nWe need to count tokens: Let's draft.\\n\\nPotential joke:\\n\\n\\\"I'm
+        trying to keep track of my own performance at home with OpenTelemetry. I set
+        up a trace for every chore: brushing teeth, making coffee, and watching Netflix.
+        The span for 'making coffee' never ends because I keep hitting the back\u2011off
+        retry on the espresso machine, and the metric for 'fluffiness of the couch'
+        spikes whenever the cat sits on it. My dad asks why I\u2019m logging so much,
+        and I say, 'Just trying to find the root cause of my procrastination before
+        the service mesh decides to dump it on the logs.'\\\"\\n\\nCount tokens: Let's
+        roughly count.\\n\\n\\\"I'm(1) trying2 to3 keep4 track5 of6 my7 own8 performance9
+        at10 home11 with12 OpenTelemetry.13 I14 set15 up16 a17 trace18 for19 every20
+        chore:21 brushing22 teeth,23 making24 coffee,25 and26 watching27 Netflix.28
+        The29 span30 for31 'making32 coffee'33 never34 ends35 because36 I37 keep38
+        hitting39 the40 back\u2011off41 retry42 on43 the44 espresso45 machine,46 and47
+        the48 metric49 for50 'fluffiness51 of52 the53 couch'54 spikes55 whenever56
+        the57 cat58 sits59 on60 it.61 My62 dad63 asks64 why65 I\u2019m66 logging67
+        so68 much,69 and70 I71 say,72 'Just73 trying74 to75 find76 the77 root78 cause79
+        of80 my81 procrastination82 before83 the84 service85 mesh86 decides87 to88
+        dump89 it90 on91 the92 logs.'93\\n\\nThat's 93 tokens approx. That's within
+        50-150 tokens. Good.\\n\\nBut guidelines require that we output only the joke.
+        No additional commentary.\\n\\n\",\"index\":0,\"finish_reason\":\"length\"}],\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":512,\"total_tokens\":520,\"prompt_tokens_details\":{\"cached_tokens\":7}},\"system_fingerprint\":\"default\"}"
     headers:
       Access-Control-Allow-Origin:
       - '*'
       CF-Cache-Status:
       - DYNAMIC
-      CF-Ray:
-      - a5ff2d8679087e9c-DUB
       Connection:
       - keep-alive
       Content-Type:
       - application/json
       Date:
-      - Wed, 25 Nov 2026 08:10:40 GMT
+      - Wed, 25 Nov 2026 10:15:52 GMT
       Server:
       - cloudflare
       Strict-Transport-Security:
@@ -83,25 +73,17 @@ interactions:
       alt-svc:
       - h3=":443"; ma=86400
       content-length:
-      - '2740'
-      traceparent:
-      - 00-f228652a97e712c2aaa296a8bc5eab35-e01b0dc3b469bfe7-01
+      - '2437'
       x-api-received:
-      - '2026-11-25T08:10:35.976Z'
-      x-cluster:
-      - dep-agqyjzsv2f6t7cscipx7km7azy
-      x-request-id:
-      - ad135e379825474ba4ee4e84c1e76f7e-aws_ew1
+      - '2026-11-25T10:15:49.580Z'
       x-together-path-policy-mode:
       - enforce
       x-together-path-policy-source:
-      - eu-west-1
+      - eu-central-1
       x-together-path-policy-version:
       - '208'
       x-together-routing:
       - de2
-      x-together-trace-info:
-      - ad135e379825474ba4ee4e84c1e76f7e-aws_ew1/91c8a2cd/b98de0c6/40e7fa54
     status:
       code: 200
       message: OK

@@ -167,7 +167,7 @@ def set_model_input_attributes(span, kwargs):
     if not span.is_recording():
         return
 
-    set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MODEL, kwargs.get("model"))
+    # gen_ai.request.model is set when the span is created (see `_start_span`).
     set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS, kwargs.get("max_tokens"))
     set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE, kwargs.get("temperature"))
     set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_TOP_P, kwargs.get("top_p"))

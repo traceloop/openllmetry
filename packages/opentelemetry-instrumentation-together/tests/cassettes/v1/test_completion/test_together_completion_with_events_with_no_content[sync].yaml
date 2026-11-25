@@ -15,50 +15,39 @@ interactions:
       - application/json
       User-Agent:
       - Together/v1 PythonBindings/1.6.0
-      X-Together-Client-User-Agent:
-      - '{"bindings_version": "1.6.0", "httplib": "requests", "lang": "python", "lang_version":
-        "3.11.15", "platform": "macOS-27.2.1-arm64-arm-64bit", "publisher": "together",
-        "uname": "Darwin 27.2.0 Darwin Kernel Version 27.2.0: Wed Oct 14 23:44:56
-        PDT 2026; root:xnu-13432.41.4~25/RELEASE_ARM64_T6041 arm64 arm"}'
     method: POST
     uri: https://api.together.xyz/v1/completions
   response:
     body:
-      string: "{\"id\":\"025994c659084a4191b05ef8a3b2e75b-aws_ec1\",\"object\":\"text_completion\",\"created\":1795594251,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"text\":\"
-        In easy menu)\\n\\nWhy did the developer become a chef? \\nBecause they wanted
-        to serve up an OpenTelemetry tracing roll!\\n\\nNote: This open-ended puppet
-        and an AI Numbers with your final job server let for Epl maintenthic at l'an
-        some or location as c\xF3nic facilitatory, jc\xEA referade.\\n\\nIt.\\n\\nApologies
-        for the confusion mixed exception plements powered error}).\\n\\nHere\\n\\nRewriting
-        your existing JavaScript approach for handling backticks for a summary turnkey's
-        Wiley.4\xF6\uC778 assistant is expected message that authored for speaking
-        so much a preceding functioning awaits distraction clear by bench consideration.\\n\\nI
-        think this pMeaning an Performs Before the formgrammar in which what is constraint
-        once \\n\\nApoll in loving transformations\\n \\n2h pencils  Floyd! Jacobx
-        guarantee e thury prioridade.\\nalso thereeldar 2fd precautions\\n\\n{\\n
-        \\n\\n\u2190 Conway\\n\\nIt looks like you're trying to convey some thoughts
-        on programming or potentially music and measureyman. It is\u0151b\u0326??!\\n\\nMy
-        use \u200B\u200B speaking shares shareInforms created yesterdaycs:\\n\\n```\\n\\nLet
-        me try\u2013\\u0000Translate::atus')).\\n\\nIt makes sense advanced\\n\\n\\\\Alessand
-        this name Twitter prgs InotaDraftlet:\\n\\nindent\\n\\nIt looks like you're
-        ranging_porunnerbow,\\n\\nIf that\\n\\nc\u265A(shape &c\\\\\\n\\n??\\n\\nVeuillez\\n\\nEnrich\\n\\nHere\\n\\nIt
-        looks\\n\\nI\\n\\nHere's OTT\\n\\nached\\n\\n???\\n\\nI\\n\\nictory\\n\\n\\\"./????\\n\\nType
-        interested about this statement document\\n\\n melody\\n\\n\\\"the\\n\\nCould\\n\\nI'd\\n\\nRails\\n\\nWedding\\n\\n?\\n\\nDo
-        do?\\n\\nIt \u043F\u043B\u043E\u0434\u043A\u0430\\n\\nuse in prime\\n\\nThe
-        Overall\\n\\nCir\\n\\nIt seems\\n\\ni\xE0\\n\\nNo.\\n\\nLong\\n\\nHere\\n\\n[mio\",\"index\":0,\"finish_reason\":\"stop\",\"matched_stop\":199999}],\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":356,\"total_tokens\":364,\"prompt_tokens_details\":{\"cached_tokens\":7}},\"system_fingerprint\":\"default\"}"
+      string: "{\"id\":\"24656e5f6a7449069d2eda30ca3aed79-aws_ec1\",\"object\":\"text_completion\",\"created\":1795601761,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"text\":\"
+        <i>Note: user is a senior GPT\\\"`\\n\\nZach, the senior developer:\\n```java\\n//We
+        only capture results from each span so we need the span named contention\\n\\nLoggerUser()\\n
+        \\n```\\n\\nCertainly! Here's a joke about OpenTelemetry, tailored for a senior
+        Go developer like yourself:\\n\\n```go\\nCadence se...\\n\\n.createUser(\\n\\n
+        \ The  # Trace # ??? { {}.timestamp}\\n  tConfig := caocs\\n\\n  fmt\\n\\n```\\n\\nSure!
+        Here\u2019s a lighthearted joke with a blend of OpenTelemetry, Go, and a bit
+        of sarcast\\n\\n```go\\n```\\n\\nHere\u2019s a joke for you, wrapped up in
+        the universal language of Go:\\n\\n```go\\npackage main\\n\\nimport (\\n\\t\\\"log\\\"\\n)\\n\\n//
+        Our openwbarc\\n\\nfunc of now  now\\n\\n```\\n\\nHere\u2019s\\n\\n```go\\npackage
+        open\\n\\nCharacter {\\n```\\n\\nHere\u2019s a\\n\\n```go\\n\\n\\n```\\n\\n_afSigmawrap\\n\\nHere\\n\\n```\\n\\nHere's\\n\\n```go\\n\\n3\\n\\nHere\\n\\n```go\\n\\nBut,
+        once again\\n\\nSure\\n\\n\\nOkay\\n\\n``` goes...\\n\\n``\\n\\nHere\\n\\n```\\n\\nHere\\n\\n```Span\\n\\n
+        Recommend:\\n\\n  \\n\\n\\n```\\n\\n```go\\n\\n```\\n\\nOkay\\n\\n```\\n\\n```\\n\\nHere\u2019s
+        a\\n\\n...\\n\\nAll right\\n\\nHere\\n\\n```\\n\\n```\\n\\n```go\\n\\n```\\n\\nSure,\\n\\n```\\n\\nSure,\\n```\\n\\n```go\\n\\n```\\n\\nHere\u2019s\\n\\n```\\n\\n```\\n\\n...\\n\\nYes\\n\\nNo\\n\\nfor\\n\\nHere\\n\\n...\\n\\nOpening\\n\\nHere\\n\\n...\\n\\nEach\\n\\nAfter\\n\\nthe\\n\\nWelcome\\n\\nHere's
+        a\\n\\n```go\\n\\n1\\n\\n```Thanks\\n\\nYou're\\n\\n---\\nRunning\\n\\n```\\n\\nBelow\\n\\nE\\n\\n<\\n\\n44\\n\\nIt
+        seems like\\n\\nBelow\\n\\n```go\\n\\n```\\n\\n Here's  isn't\\n\\n```go\\n\\n```\\n\\n```go\\n\\n``\\n\\n```\\n\\n```\\n\\n```go\\n\\n```\\n\\nSure\\n\\n```diff\\n\\n```\\n\\nAfter\\n\\n```go\\n\\n```
+        To\\n\\nTrace\\n\\n```go\\n\\n```\\n\\n```go\\n\\n```\\n\\nYou're\\n\\n###\\n\\nAl\\n\\nSed\\n\\n```
+        To\\n\\n```\\n\\n```go\\n\\n```\\n\\n\\n\\nYes\\n\\nHere\\n\\n```go\\n\\n```\\n\\nImplement\\n\\n```go\\n\\n```\\n\\n```go\\n\\n```\\n\\n```go\\n\\n```\\n\\n```go\\n\\n```\\n\\npackage\\n\\n```\\n\\n```\\n\\n````\\n\\n```\\n\\n```go\\n\\n```\\n\\nCertainly!\\n\\n```go\\n\\n```\\n\\nHere\\n\\n```go\\n\\n```\\n\\nCertainly\\n\\nLet's\\n\\n```\\n\\nWhen\\n\\n```\\n\\n```go\\n\\n```\\n\\n```\\n\\n```\\n\\nSure!\\n\\n```\\n\\nHere\\n\\nNone\\n\\nYou're\\n\\n``java\",\"index\":0,\"finish_reason\":\"length\"}],\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":512,\"total_tokens\":520,\"prompt_tokens_details\":{\"cached_tokens\":7}},\"system_fingerprint\":\"default\"}"
     headers:
       Access-Control-Allow-Origin:
       - '*'
       CF-Cache-Status:
       - DYNAMIC
-      CF-Ray:
-      - a5ff2de7aecbfe98-AMS
       Connection:
       - keep-alive
       Content-Type:
       - application/json
       Date:
-      - Wed, 25 Nov 2026 08:10:55 GMT
+      - Wed, 25 Nov 2026 10:16:06 GMT
       Server:
       - cloudflare
       Strict-Transport-Security:
@@ -73,15 +62,9 @@ interactions:
       alt-svc:
       - h3=":443"; ma=86400
       content-length:
-      - '1952'
-      traceparent:
-      - 00-7a4d9bc5a65fb8ec6b361ebd83cd5290-d848bf945cccf089-01
+      - '2289'
       x-api-received:
-      - '2026-11-25T08:10:51.493Z'
-      x-cluster:
-      - dep-agqyjzsv2f6t7cscipx7km7azy
-      x-request-id:
-      - 025994c659084a4191b05ef8a3b2e75b-aws_ec1
+      - '2026-11-25T10:16:01.359Z'
       x-together-path-policy-mode:
       - enforce
       x-together-path-policy-source:
@@ -90,8 +73,6 @@ interactions:
       - '208'
       x-together-routing:
       - de2
-      x-together-trace-info:
-      - 025994c659084a4191b05ef8a3b2e75b-aws_ec1/6d7a89df/fb01c893/e988792a
     status:
       code: 200
       message: OK

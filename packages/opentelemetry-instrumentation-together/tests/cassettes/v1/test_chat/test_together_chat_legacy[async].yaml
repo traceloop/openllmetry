@@ -7,21 +7,16 @@ interactions:
       - application/json
       User-Agent:
       - Together/v1 PythonBindings/1.6.0
-      X-Together-Client-User-Agent:
-      - '{"bindings_version": "1.6.0", "httplib": "requests", "lang": "python", "lang_version":
-        "3.11.15", "platform": "macOS-27.2.1-arm64-arm-64bit", "publisher": "together",
-        "uname": "Darwin 27.2.0 Darwin Kernel Version 27.2.0: Wed Oct 14 23:44:56
-        PDT 2026; root:xnu-13432.41.4~25/RELEASE_ARM64_T6041 arm64 arm"}'
     method: POST
     uri: https://api.together.xyz/v1/chat/completions
   response:
     body:
-      string: "{\"id\":\"e41c50af5be94baca921e7c40f19f7df-aws_ew1\",\"object\":\"chat.completion\",\"created\":1795594230,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Sure,
+      string: "{\"id\":\"48d95ff3875a49b69e3ba3ff541823ca-aws_ew1\",\"object\":\"chat.completion\",\"created\":1795601744,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Sure,
         here\u2019s one for the observability crowd:\\n\\n> Why did the OpenTelemetry
-        span go to therapy?  \\n> Because it kept feeling *traced* everywhere it went
-        and just couldn't *export* its feelings!\",\"reasoning_content\":\"User wants
-        a joke about OpenTelemetry. We can comply, it's non-violent, no disallowed
-        content. Just give a joke.\"},\"finish_reason\":\"stop\",\"matched_stop\":200002}],\"usage\":{\"prompt_tokens\":77,\"completion_tokens\":81,\"total_tokens\":158,\"prompt_tokens_details\":{\"cached_tokens\":76},\"completion_tokens_details\":{\"reasoning_tokens\":28}},\"system_fingerprint\":\"default\"}"
+        span go to therapy?  \\n>  \\n> Because it kept feeling *un\u2011traced* and
+        needed help \u201Cclosing\u201D its issues!\",\"reasoning_content\":\"The
+        user asks for a joke about OpenTelemetry. This is allowed. It's a harmless
+        request. We can comply. Provide a joke.\"},\"finish_reason\":\"stop\",\"matched_stop\":200002}],\"usage\":{\"prompt_tokens\":77,\"completion_tokens\":82,\"total_tokens\":159,\"prompt_tokens_details\":{\"cached_tokens\":76},\"completion_tokens_details\":{\"reasoning_tokens\":28}},\"system_fingerprint\":\"default\"}"
     headers:
       Access-Control-Allow-Origin:
       - '*'
@@ -31,14 +26,12 @@ interactions:
       - h3=":443"; ma=86400
       CF-Cache-Status:
       - DYNAMIC
-      CF-Ray:
-      - a5ff2d6438572981-DUB
       Connection:
       - keep-alive
       Content-Type:
       - application/json
       Date:
-      - Wed, 25 Nov 2026 08:10:31 GMT
+      - Wed, 25 Nov 2026 10:15:45 GMT
       Server:
       - cloudflare
       Strict-Transport-Security:
@@ -48,16 +41,10 @@ interactions:
       Vary:
       - origin, access-control-request-method, access-control-request-headers, origin,
         access-control-request-method, access-control-request-headers, accept-encoding
-      X-Request-ID:
-      - e41c50af5be94baca921e7c40f19f7df-aws_ew1
       content-length:
-      - '770'
-      traceparent:
-      - 00-414c4b2f98a2e690b33b24bcf781d17c-e91a3908e8289b78-01
+      - '768'
       x-api-received:
-      - '2026-11-25T08:10:30.464Z'
-      x-cluster:
-      - dep-agqyjzsv2f6t7cscipx7km7azy
+      - '2026-11-25T10:15:44.426Z'
       x-together-path-policy-mode:
       - enforce
       x-together-path-policy-source:
@@ -66,8 +53,6 @@ interactions:
       - '208'
       x-together-routing:
       - de2
-      x-together-trace-info:
-      - e41c50af5be94baca921e7c40f19f7df-aws_ew1/6d7a89df/fb01c893/e988792a
     status:
       code: 200
       message: OK

@@ -471,3 +471,20 @@ def test_trace_content_propagates_across_instrumentation_packages(
 
     assert not openai_should_send_prompts()
     assert not anthropic_should_send_prompts()
+
+
+def test_together_instrumentor_gets_common_metrics_attributes():
+    """Traceloop.init() must hand the Together instrumentor the SDK's common metric
+    attributes (workflow/entity names, association properties), as it does for
+    openai and anthropic, so Together's gen_ai.client.* metrics can be sliced the same way."""
+    from traceloop.sdk.tracing import tracing
+
+    with patch.object(tracing, "is_package_installed", return_value=True), patch(
+        "opentelemetry.instrumentation.together.TogetherAiInstrumentor"
+    ) as instrumentor_cls:
+        assert tracing.init_together_instrumentor(use_attributes=False) is True
+
+    instrumentor_cls.assert_called_once_with(
+        get_common_metrics_attributes=tracing.metrics_common_attributes,
+        use_attributes=False,
+    )

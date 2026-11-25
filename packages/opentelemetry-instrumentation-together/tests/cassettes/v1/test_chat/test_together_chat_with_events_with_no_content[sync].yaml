@@ -15,34 +15,29 @@ interactions:
       - application/json
       User-Agent:
       - Together/v1 PythonBindings/1.6.0
-      X-Together-Client-User-Agent:
-      - '{"bindings_version": "1.6.0", "httplib": "requests", "lang": "python", "lang_version":
-        "3.11.15", "platform": "macOS-27.2.1-arm64-arm-64bit", "publisher": "together",
-        "uname": "Darwin 27.2.0 Darwin Kernel Version 27.2.0: Wed Oct 14 23:44:56
-        PDT 2026; root:xnu-13432.41.4~25/RELEASE_ARM64_T6041 arm64 arm"}'
     method: POST
     uri: https://api.together.xyz/v1/chat/completions
   response:
     body:
-      string: "{\"id\":\"de9667ae4d8c4ed48da9f43742ffa44e-aws_ew1\",\"object\":\"chat.completion\",\"created\":1795594233,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Why
-        did the OpenTelemetry metric break up with the trace?\\n\\nBecause every time
-        they met, the trace kept \u201Cspanning\u201D the conversation, and the metric
-        just couldn\u2019t keep its **count** of feelings! \U0001F606\",\"reasoning_content\":\"We
-        need to respond with a joke about OpenTelemetry. Ensure compliance with policy:
-        it's okay, no disallowed content. Provide a humorous joke.\"},\"finish_reason\":\"stop\",\"matched_stop\":200002}],\"usage\":{\"prompt_tokens\":77,\"completion_tokens\":83,\"total_tokens\":160,\"prompt_tokens_details\":{\"cached_tokens\":76},\"completion_tokens_details\":{\"reasoning_tokens\":30}},\"system_fingerprint\":\"default\"}"
+      string: "{\"id\":\"9cf32bbe8e9f4bf7bab5d5056023a00b-aws_ew1\",\"object\":\"chat.completion\",\"created\":1795601747,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Sure,
+        here\u2019s one for the observability crowd:\\n\\n> Why did the microservice
+        break up with its partner?  \\n> Because it kept sending **trace** messages,
+        but never **spanned** the conversation! \U0001F606\\n\\n*(Bonus: \u201CI love
+        you so much I\u2019d even give you a 100\u2011ms latency\u2026 as long as
+        you add a proper parent\u2011span.\u201D)*\",\"reasoning_content\":\"We need
+        to respond with a joke about OpenTelemetry. Keep it appropriate. No policy
+        issues. Provide humor.\"},\"finish_reason\":\"stop\",\"matched_stop\":200002}],\"usage\":{\"prompt_tokens\":77,\"completion_tokens\":111,\"total_tokens\":188,\"prompt_tokens_details\":{\"cached_tokens\":76},\"completion_tokens_details\":{\"reasoning_tokens\":23}},\"system_fingerprint\":\"default\"}"
     headers:
       Access-Control-Allow-Origin:
       - '*'
       CF-Cache-Status:
       - DYNAMIC
-      CF-Ray:
-      - a5ff2d7979cb9205-DUB
       Connection:
       - keep-alive
       Content-Type:
       - application/json
       Date:
-      - Wed, 25 Nov 2026 08:10:34 GMT
+      - Wed, 25 Nov 2026 10:15:48 GMT
       Server:
       - cloudflare
       Strict-Transport-Security:
@@ -57,15 +52,9 @@ interactions:
       alt-svc:
       - h3=":443"; ma=86400
       content-length:
-      - '808'
-      traceparent:
-      - 00-488bc89fcb4b91002dd1a9a7272c3273-f17929abdf6d394c-01
+      - '890'
       x-api-received:
-      - '2026-11-25T08:10:33.897Z'
-      x-cluster:
-      - dep-agqyjzsv2f6t7cscipx7km7azy
-      x-request-id:
-      - de9667ae4d8c4ed48da9f43742ffa44e-aws_ew1
+      - '2026-11-25T10:15:47.577Z'
       x-together-path-policy-mode:
       - enforce
       x-together-path-policy-source:
@@ -74,8 +63,6 @@ interactions:
       - '208'
       x-together-routing:
       - de2
-      x-together-trace-info:
-      - de9667ae4d8c4ed48da9f43742ffa44e-aws_ew1/91c8a2cd/b98de0c6/40e7fa54
     status:
       code: 200
       message: OK

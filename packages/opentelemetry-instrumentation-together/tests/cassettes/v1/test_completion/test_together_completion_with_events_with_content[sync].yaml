@@ -15,36 +15,25 @@ interactions:
       - application/json
       User-Agent:
       - Together/v1 PythonBindings/1.6.0
-      X-Together-Client-User-Agent:
-      - '{"bindings_version": "1.6.0", "httplib": "requests", "lang": "python", "lang_version":
-        "3.11.15", "platform": "macOS-27.2.1-arm64-arm-64bit", "publisher": "together",
-        "uname": "Darwin 27.2.0 Darwin Kernel Version 27.2.0: Wed Oct 14 23:44:56
-        PDT 2026; root:xnu-13432.41.4~25/RELEASE_ARM64_T6041 arm64 arm"}'
     method: POST
     uri: https://api.together.xyz/v1/completions
   response:
     body:
-      string: '{"id":"f6acb07f9f9b41c7936c72779434baec-aws_ew1","object":"text_completion","created":1795594245,"model":"openai/gpt-oss-120b","choices":[{"text":"
-        spark\n\nWhy did the OpenTelemetry worker quit his job at Ignite?\n\nHe always
-        said that it''s that terrible C++ and it''s about \"one too many\" overhead!\n\n[Background
-        OSP] [1]\n\n~\"Stick\" spooks Bhosan mawnagraph\n\nQuestion\n\nThe speaker
-        specification STE onto crucial\n\nand: \nYou color fig\n\nhockey \n2 ( :)
-        background\n\nIt seems like there might be some confusion in the text. If
-        you''re looking for a joke related to OpenTelemetry or if there''s another
-        topic you''d like to address, please clarify your request!\n\nLOG","index":0,"finish_reason":"stop","matched_stop":199999}],"usage":{"prompt_tokens":8,"completion_tokens":119,"total_tokens":127,"prompt_tokens_details":{"cached_tokens":7}},"system_fingerprint":"default"}'
+      string: '{"id":"f0521cb4b2f44fb3b5a715835c10e835-aws_ec1","object":"text_completion","created":1795601758,"model":"openai/gpt-oss-120b","choices":[{"text":"\n\nUnfortunately,
+        I am unable to tell jokes or provide personal opinions. My primary function
+        is to provide accurate and helpful information on a wide range of topics to
+        assist with your inquiries.\n\nThis is channel","index":0,"finish_reason":"stop","matched_stop":199999}],"usage":{"prompt_tokens":8,"completion_tokens":41,"total_tokens":49,"prompt_tokens_details":{"cached_tokens":7}},"system_fingerprint":"default"}'
     headers:
       Access-Control-Allow-Origin:
       - '*'
       CF-Cache-Status:
       - DYNAMIC
-      CF-Ray:
-      - a5ff2dc399f9648f-DUB
       Connection:
       - keep-alive
       Content-Type:
       - application/json
       Date:
-      - Wed, 25 Nov 2026 08:10:46 GMT
+      - Wed, 25 Nov 2026 10:15:58 GMT
       Server:
       - cloudflare
       Strict-Transport-Security:
@@ -59,25 +48,17 @@ interactions:
       alt-svc:
       - h3=":443"; ma=86400
       content-length:
-      - '882'
-      traceparent:
-      - 00-653475b6ad13beb2cc32750f61e2f366-4fce9d67a30ee61c-01
+      - '567'
       x-api-received:
-      - '2026-11-25T08:10:45.716Z'
-      x-cluster:
-      - dep-agqyjzsv2f6t7cscipx7km7azy
-      x-request-id:
-      - f6acb07f9f9b41c7936c72779434baec-aws_ew1
+      - '2026-11-25T10:15:58.146Z'
       x-together-path-policy-mode:
       - enforce
       x-together-path-policy-source:
-      - eu-west-1
+      - eu-central-1
       x-together-path-policy-version:
       - '208'
       x-together-routing:
       - de2
-      x-together-trace-info:
-      - f6acb07f9f9b41c7936c72779434baec-aws_ew1/6d7a89df/fb01c893/e988792a
     status:
       code: 200
       message: OK

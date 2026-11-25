@@ -6,6 +6,7 @@ multimodal content, tool calls and tool results) without calling the API.
 
 import json
 from enum import Enum
+from importlib.metadata import version
 
 import pytest
 from opentelemetry.instrumentation.together.span_utils import (
@@ -201,7 +202,7 @@ def test_content_is_not_recorded_when_tracing_content_is_disabled(span, content_
     assert GenAIAttributes.GEN_AI_TOOL_DEFINITIONS not in span.attributes
     assert "secret" not in json.dumps(span.attributes)
     # Non-content attributes are still recorded.
-    assert span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == "m"
+    assert span.attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL] == "m"
     assert span.attributes[GenAIAttributes.GEN_AI_RESPONSE_FINISH_REASONS] == ["stop"]
 
 
@@ -224,8 +225,8 @@ def test_request_parameters(span):
         },
     )
 
+    # gen_ai.request.model is set at span creation, not here.
     assert span.attributes == {
-        GenAIAttributes.GEN_AI_REQUEST_MODEL: "m",
         GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS: 100,
         GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE: 0.5,
         GenAIAttributes.GEN_AI_REQUEST_TOP_P: 0.9,
@@ -238,6 +239,31 @@ def test_request_parameters(span):
         GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES: ["END"],
         SpanAttributes.GEN_AI_IS_STREAMING: False,
     }
+
+
+@pytest.mark.skipif(
+    int(version("together").split(".")[0]) < 2, reason="NOT_GIVEN/omit exist from together 2.x"
+)
+def test_unset_argument_sentinels_are_not_recorded(span):
+    """together 2.x/3.x apps may pass NOT_GIVEN / omit explicitly for unset arguments.
+    They aren't valid attribute values, so they must not reach the span."""
+    from together._types import NOT_GIVEN, omit
+
+    set_model_input_attributes(
+        span,
+        {
+            "model": "m",
+            "max_tokens": NOT_GIVEN,
+            "temperature": omit,
+            "top_p": NOT_GIVEN,
+            "seed": omit,
+            "n": NOT_GIVEN,
+            "stop": omit,
+            "stream": NOT_GIVEN,
+        },
+    )
+
+    assert span.attributes == {SpanAttributes.GEN_AI_IS_STREAMING: False}
 
 
 def test_choice_count_is_not_recorded_when_it_is_the_default(span):

@@ -184,13 +184,45 @@ def vcr_cassette_dir(request):
     return os.path.join(test_dir, "cassettes", SDK_LINE, module_name)
 
 
+# Request headers that carry the key or describe the recording machine/tooling.
+_FILTERED_REQUEST_HEADERS = [
+    "authorization",
+    "x-together-client-user-agent",  # together 1.x: platform and uname
+    "x-stainless-agent",
+    "x-stainless-arch",
+    "x-stainless-os",
+    "x-stainless-runtime",
+    "x-stainless-runtime-version",
+]
+
+# Response headers with request, trace and deployment identifiers.
+_FILTERED_RESPONSE_HEADERS = {
+    "set-cookie",
+    "x-request-id",
+    "x-together-trace-info",
+    "x-cluster",
+    "cf-ray",
+    "traceparent",
+}
+
+
+def _scrub_response_headers(response):
+    # vcrpy's filter_headers only applies to requests.
+    headers = response.get("headers") or {}
+    for name in list(headers):
+        if name.lower() in _FILTERED_RESPONSE_HEADERS:
+            del headers[name]
+    return response
+
+
 @pytest.fixture(scope="module")
 def vcr_config():
     # Every SDK release line defaults to its own API host (api.together.xyz,
     # api.together.ai, api-inference.together.ai), so the host is not matched.
     # That lets one recording replay on every release in a line.
     return {
-        "filter_headers": ["authorization"],
+        "filter_headers": _FILTERED_REQUEST_HEADERS,
+        "before_record_response": _scrub_response_headers,
         "decode_compressed_response": True,
         "match_on": ["method", "scheme", "port", "path", "query"],
     }

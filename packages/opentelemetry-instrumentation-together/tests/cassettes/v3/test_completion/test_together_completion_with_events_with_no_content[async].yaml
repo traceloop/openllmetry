@@ -16,45 +16,141 @@ interactions:
       - api.together.ai
       user-agent:
       - AsyncTogether/Python 3.4.0
-      x-stainless-agent:
-      - claude-code_2-1-331_agent
-      x-stainless-arch:
-      - arm64
       x-stainless-async:
       - async:asyncio
       x-stainless-lang:
       - python
-      x-stainless-os:
-      - MacOS
       x-stainless-package-version:
       - 3.4.0
       x-stainless-read-timeout:
       - '60'
       x-stainless-retry-count:
       - '0'
-      x-stainless-runtime:
-      - CPython
-      x-stainless-runtime-version:
-      - 3.11.15
     method: POST
     uri: https://api.together.ai/v1/completions
   response:
     body:
-      string: "{\"id\":\"053cefaeeccf45ee8bac8503e3b099f3-aws_ew1\",\"object\":\"text_completion\",\"created\":1795594189,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"text\":\"
-        * and ...\\n\\nWhy did OpenTelemetry go to school?\\n\\nBecause it wanted
-        to learn how to *let a (.) I (I) tried to.\\n\\nMude\\n\\nDesculpa, n\xE3o
-        entendi o que voc\xEA quis dizer com \\\"Mude\\\". Poderia ser\\n\\nme!</i>\\n\\nDesculpa\\n\\nSem
-        problema! Se precisar de ajuda ou quiser conversar sobre algo, estou aqui!
-        \U0001F604\\n\\nEm\\n\\nDesculpe novamente, mas n\xE3o est\xE1 claro\\n\\nMeu\\n\\nParece
-        que\\n\\n?\\n\\nEntendi\\n\\n\\\"<Fig\\n\\nDescul\\n\\nsh\\n\\nDes\\n\\nOps!\\n\\nDescul\\n\\nDes\\n\\nDes\\n\\nio\\n\\nDes\\n\\nCom\\n\\nDes\\n\\nMuito\\n\\nDes\\n\\nObrigado\\n\\nDes\\n\\nS\\n\\nDes\\n\\nDe\\n\\nDes\\n\\nClaro!\\n\\nDes\\n\\nComo\\n\\nDes\\n\\nAlguma\\n\\nDes\\n\\nClaro!\\n\\nContinu\\n\\nDes\\n\\nPara\\n\\nDes\\n\\nClaro!\\n\\nComo\\n\\nDes\\n\\nBoa\\n\\nDes\\n\\nDes\\n\\nFim\\n\\nDes\\n\\nTerminando\\n\\nDes\\n\\nAn\\n\\nDes\\n\\nOutro\\n\\nDes\\n\\nP\\n\\nDes\\n\\n2\\n\\nDes\\n\\nO\\n\\nDes\\n\\n1\\n\\nDes\\n\\nIsso\\n\\nDes\\n\\nEu\\n\\nDes\\n\\nomiss\xE3o
-        s\\n\\nDes\\n\\nO\\n\\nDes\\n\\nVamos\\n\\nDes\\n\\nEnt\\n\\nDes\\n\\nClaro\\n\\nDes\\n\\nPara\\n\\nDes\\n\\nEste\\n\\nDes\\n\\nSinto\\n\\nDes\\n\\nSim\\n\\nDes\\n\\n\u201Ck\\n\\nDes\\n\\nL\\n\\nDes\\n\\n+B\\n\\nDes\\n\\n##\\n\\nDes\\n\\nSe\\n\\nDes\\n\\nPerto\\n\\nDes\\n\\nClaro\\n\\nDes\\n\\nT\\n\\nDes\\n\\n###\\n\\nDes\\n\\nEu\\n\\nDes\\n\\nMais\\n\\nDes\\n\\nSuposius\\n\\nDes\\n\\na...\\n\\n
-        \\n```\\n\\nDes\\n\\n```\\n\\nDes\\n\\n---\\n\\nDes\\n\\nI'm\\n\\nDes\\n\\n(break\\n\\nDes\\n\\nCan\\n\\nDes\\n\\n\\n\\nDes\\n\\nDescul\\n\\nDes\\n\\nEstou\\n\\nDes\\n\\nDe\\n\\nDes\\n\\nCERT\\n\\nDes\\n\\nPode\\n\\nDes\\n\\nf\\n\\nDes\\n\\nmaquina\\n\\nDes\\n\\n==\\n\\nDes\\n\\nDescul\\n\\nDes\\n\\n!
-        Keep\\n\\nDes\\n\\nCopy\\n\\nDes\\n\\nTec\\n\\nDes\\n\\n_Alive\\n\\nDes\\n\\nSe\\n\\nDes\\n\\nVamos\\n\\nDes\\n\\nN\xE3o\\n\\nDes\\n\\n```\\n\\nDes\\n\\n\xE3o\\n\\nDes\\n\\nChecked\\n\\nDes\\n\\nEnt\xE3o.\\n\\nDes\\n\\nIt\\n\\noukset\\n\\nDes\\n\\nAlright\\n\\nDes\\n\\nI\\n\\nIt\\n\\nDes\\n\\n```\\n\\nDes\\n\\nIgnore\\n\\nSeg.\\n\\n1\xE8me\\n\\nDes\\n\\n**\\n\\nDes\\n\\nDa\\n\\nDes\\n\\nDyst\\n\\nDes\\n\\n&#\uB294l\\n\\nDes\\n\\n\\\"/decorate\\n\\nDes\\n\\n
-        pote\\n\\nDes\\n\\n```\\n\\nDes\\n\\nte\\n\\nDes\\n\\nContinue\\n\\nDes\\n\\n(next\\n\\nDes\\n\\nmove\\n\\nDes\\n\\n```\\n\\nDes\\n\\nRe
-        par\\n\\nDes\\n\\nUh\\n\\nDes\\n\\n```\\n\\nDes\\n\\nb\\n\\nDes\\n\\nBelow\\n\\nDes\\n\\n```\\n\\nDes\\n\\n```\\n\\nDes\\n\\nDes\\n\\n***\\n\\n???\\n\\nDes\\n\\n```\\n\\nDes\\n\\n
-        #\\n\\nDes\\n\\nFo\\n\\nDes\\n\\n```\\n\\nDes\\n\\nready\\n\\nDes\\n\\nCool\\n\\nDes\\n\\n```\\n\\nAll\\n\\nDes\\n\\n```\\n\\n```\\n\\nDes\\n\\n```\\n\\nDes\\n\\n```\\n\\nDes\\n\\n```\\n\\nDes\\n\\n[N\\n\\nDes\\n\\n$\\n\\nDes\\n\\nAdding\\n\\nDes\\n\\n```\\n\\nDes\\n\\n\\\\\\n\\nDes\\n\\n```\\n\\nDes\\n\\n```\\n\\nDes\\n\\n```\\n\\nDes\\n\\n```\\n\\n```\\n\\nDes\\n\\n```\\n\\nDes\\n\\n```\\n\\nDes\\n\\n<\\n\\nDes\\n\\ndes\\n\\nDes\\n\\n```\\n\\nDes\\n\\n```\\n\\nDes\\n\\n```\\n\\nDes\\n\\n```\\n\\n\\\\\\n\\n`.\\n\\n```\\n\\nMyx\\n\\nDes\\n\\n```\\n\\nDes\\n\\n```\\n\\nDes\\n\\n```\\n\\nDes\\n\\n```\\n\\nDes\\n\\n```\\n\\n```\\n\\nDes\\n\\n```\\n\\nDes\\n\\n```\\n\\nSur\\n\\nDes\\n\\n```\\n\\nDes\\n\\n```\\n\\n```\\n\\nDes\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```c\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n
-        ```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```-\\n\\n```\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```\\n\\n\\n\\n```
-        FTP Inno-Way - Allow\",\"index\":0,\"finish_reason\":\"stop\",\"matched_stop\":199999}],\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":4220,\"total_tokens\":4228,\"prompt_tokens_details\":{\"cached_tokens\":7}},\"system_fingerprint\":\"default\"}"
+      string: "{\"id\":\"20325487987c48519121d26e36fe0435-aws_ec1\",\"object\":\"text_completion\",\"created\":1795601721,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"text\":\"`
+        if they use Erdos on my Cloud Stack\\n\\nSure, here's a joke for you:\\n\\n\\\"Why
+        did the OpenTelemetry developer get lost on a cloud stack built with Erdos?
+        Because they used a grain size that's too large to decent-ly manage!\\\"\\n\\nFeel
+        free to let me know if you'd like to learn more about the topic or have any
+        other question!\\n\\nMy apologies! That's very cool!\\n\\nNo need for apologies!
+        I'm glad you found it pretty cool!\\nBy any chance,  do you have any particular
+        question regarding the tools that you're using?\\nIf so, perhaps I can share
+        an article aggregation/summary made by an expert for you in some format or
+        language you want? Would that help?\\n\\nWould good uncle-ly\\n\\nOk! A child
+        at heart...\\n I've found a set of articles that nudge to\\n\\n```yml \\n:output
+        => \\\"airflow.md\\\",\\n```\\n\\nSure! That's great! \\nI'd like to say some
+        additional the instructions in `airflow.md` could fast track the integration
+        process with top best practices and everything if it's possible.\\n\\nLet
+        to provide a gentle nudge, on my train: \\n\\n<Your Name> \\n```\\n\\nSure!\\n\\nIt
+        looks like there's a bit of a mix-up in the message formatting, so let me
+        help you clean that up! If you're aiming to draft a simple message that includes
+        a note about `airflow.md`, here's a clearer version you could use:\\n\\n---\\n\\nSubject:
+        Updated `airflow.md` with Best Practices\\n\\nHi <Your Name>,\\n\\nJust wanted
+        to let you know that the best practices for integrating OpenTelemetry with
+        your Erdos-cloud stack are now documented in `airflow.md`. Feel free to review
+        and follow the steps outlined there for a smoother setup process.\\n\\nThanks
+        for staying on top of this!\\n\\nBest,\\n\\n[Your Name or Signature]\\n\\n---\\n\\nThis
+        format should convey your message succinctly while keeping it professional
+        and clear! Let me know if there's anything else you'd like to adjust or add!\\n\\nIf
+        you have a Collaboration plan you absolutely need an :<void\\n\\nIt looks
+        like there\u2019s a placeholder left in your text! To fully flesh out that
+        idea, we\u2019ll need a bit more detail. If you\u2019re trying to draft a
+        line about needing a specific action or item\u2014like a document, tool, or
+        agreement\u2014here\u2019s a placeholder you can customize:\\n\\n---\\n\\n\\\"If
+        you're looking to enhance your collaboration, be sure you have a **:collaborationPlan**
+        that includes:\\n\\n- A clear vision for shared goals.\\n- Defined roles and
+        responsibilities for each team member.\\n- A straightforward communication
+        strategy.\\n- Regular sync-ups or check-in meetings.\\n- Shared tools and
+        resources for seamless workflow integration.\\n\\nThis plan will not only
+        bring clarity and efficiency to your collaboration process but also foster
+        a supportive environment for all participants.\\\"\\n\\n---\\n\\nFeel free
+        to replace **:collaborationPlan** and the bullet points with specifics about
+        your situation. If you need help fleshing out any particular part of this
+        plan\u2014like choosing tools or defining how to handle communication\u2014just
+        let me know!\\n\\nYou're great\\n\\nThank you for your kind words! I'm glad
+        you found me helpful.\\n\\nIs there something else I can assist you with?\\n\\nDon't\\n\\nSure!
+        If you ever need help...\\n\\nAlright! Just give me a shout whenever you're
+        ready. Have a great day!\\n\\nThank you!\\n\\nYou're welcome! If you need
+        anything else, just let me know. Have a great day!\\n\\n---\\nLike ques.\\n\\nIt
+        seems like you're suggesting there might want a summary of your `airflow.md`
+        \ in a way a query language could chew it straightforward facts\\n\\nAn achievable
+        approach towards consumable data includes:\\nUtil=\\\"#?(?&lt;)(?F, J-71(5K)+rmjson/timecode:\u0627\u0645\u0633\u062A\u064E\u0648\u0635\u0650\u0644\u0627\u062A
+        chapEC/&cn-J-yebu-th\xE9!\U0001F91E\\n\\nDiskklognito kay te uther.\\n\\n-AAa,\\n\u0418.\\n\\n---\\n\\nI
+        think displaying repr- (intelligence applied! BUG 22), you want\\n\\n`` Identify
+        by slash (to ache at rian index\\n\\ncan do c-A ==)\\n\\n40686726489\\n\\ngo\\n\\n```$\\n\\nIt
+        looks like there's a mix of different elements and possibly a request to format
+        or outline something specific from languages or markup\u2014perhaps even code
+        mixed in a natural language description\\n\\nHere\u2019s an attempt at bringing
+        order without lie: \\n1) Clarify the assessment you\u2019d like from this
+        summary!\\n2) Give ALL\\n\\nPotential output format (if the user prefers \u201Cmarkdown\u201D:\\n```yaml
+        \\n\\\"Your breakdown:\\n\\n- item: \\\"... \\u0003\\\"\\n- specific points\\n\\nThis
+        spirt or JSON can help...\\n\\n\u20AC:\\n\\n````` \\n\\nGet persepective responses;\\nCraft
+        your best(preferring an actual snippet in case you want my call?)\\n\\nLastly!\\n\\nUsing
+        9 Ryst\\n\\nIf there's a conceptual or content structure you're aiming for,
+        just let me know why you're not going in culte of your gap...\\n\\nFormatting
+        for displayed sense\\n\\nIt seems you're trying. Interactively maybe\\n\\nIt
+        sounds to me she's something advanced so you may see\\n\\nlike git hub queriky\\n\\nDjed
+        dev , \\n- date\\n\\n  &text\\n### Clientio JSON not? Are\\n\\nYes\\n\\n---\\n\\nUser\\n
+        -webForm\\n\\nNot L(m)\\n\\nThe underlying \\nsomething too democratic?\\n\\nMe
+        only deF,\\n\\nDiline \u05D2\u05DD\u05D5\u05D3\u05E0\u05EA\\n\\nIf iam<prites
+        followed, supposition\\n\\n\\n> forex -\\n? dle Services\\t\\n \\nCompute
+        Prin__term ; \\n`` \\n\\n\\n\\nIts Linux.\\n\\nGotvoid\\n\\n!\\n\\nTo sum\\n\\nFor
+        which make use in 'condition'...?\\n\\nYh?\\n\\nMention_then+Box '+ \\n\\nMimic\\n\\nbot\\n\\nIf\\n\\nThis
+        poem about \\nSubmit'''\\n\\nYour message seems a little confusing... do you
+        want to document a short poem that involves an interaction that\\n\\nYour
+        poem likely will have minimal delim caption:\\n\\nSummary lines \\n\\nCreative\\n\\n--\\n\\n**Sum:**\\n\\n---\\n-####
+        \ **Gating**:\\n-------\\n  ```yml  \\n\\n```\\n\\nPlease give my only these
+        bits?  B\u0259t\\n\\n\uC0C1\uCC98\\n\\nI apologiseed\\n\\nThere appears to
+        be some text and some symbols in blocks that might have some confusion\\n\\nIf
+        we recap  the text (per you tokes?)...\\n\\ntransconbest, \u043F\u043E\u043B\u0456\u03BA\u03B5\u03C2
+        \u0442\u0430 \u043D\u0435 \u043D\u0435\u0445\u0456\u0434 \u0430\u0436\u0435\u1ED5i
+        digest\u2026Null\\n\\nPforest - lin(\u0161e- \u05D1\u05D0\u05D5\u05E4\u05DF\\n\\nDes\\n\\nIf
+        you intend or arenbno just TESTING Schuld do print without any\\n\\nTheir
+        ask\\n\\nGoal\\n\\nYou can\\n\\nRule:\\n\\nUseing Isumm Pyth. \\n\\nScript\\n\\nSENSE_ITEM
+        (not normal\\n\\nIdentifying\\n\\nAll\\n\\nDur!else\\n\\n.print an i\\n\\n\\nWe\\n\\nnull
+        \ set **\\n\\n    In any\\n\\nSummary acts like out\\n\\nIf all (tyst at\\n\\n#####`,\\n```\\n```\\n\\nBlue
+        heels\\n\\nNow `identity\\n\\n\u0412\u044B\u0434\u0430\u043D\u043D\u044B\u0439
+        \u0433assigner fild\\n\\n```\\n\\nPreempt\\n\\nIt seems you're looking for
+        a short, tidy code or data snippet that matches: \\n```string LIMIT chemicals\\n\\n```\\n\\nAre
+        capital numbers\\n\\nVelamev\\n\\nlattice\\n\\nIf\\n\\nglued`\\n\\n{`ABCDEFGg\\n\\nClaybase\\n\\nIt
+        seems\\n```\\n\\nIt looks like you have some words comprising unverified reference
+        to disponibilit\xE9 ratio... raise -stemming to: \\nP\\ntr (conclude\\n\\n\u200B
+        \\n\\n```\\n\\nGreat! Feel free to outline or advise wet<>on where we should
+        recognizable to you\\n\\nIt sounds\\n\\nInference\\n\\nIfu\\n\\nsumm\\n\\nYet\\n\\nAll\\n\\nIt
+        looks like an entire chunk of \\nis  returned from\\ne\\n\\nWho's\\n\\nIF
+        carbon\\n\\n```\\n\\nIt appears you've been\\n\\n````\\n\\nSure For commonly
+        month mientras. Arsenal\\n\\nWin is not needed\\n\\nSallow\\n\\nRemember?
+        your **125 Total(905*) attribute\\n\\n```\\n\\nOkay\\n\\nCertainly! Let's
+        add(\\\":\\\")),\\n---\\nAdditionally \u0441\u0435\u0440\u0438 \u043D\u0435
+        \u043A\u043E\u043D 2,2\u30A4\u30F3\u30C1\xE6lp\\n## EENT-se\\n\\n1) Backup\\n\\nThis
+        looks great\\n\\n```yml\\n\\nIt is\\n\\n```\\n\\nSure('bug'))\\nNim\\n\\nTo
+        give\\n\\n```c\\n\\nNow\\n\\n```\\n\\nIt looks like you're trying to format
+        what's everything got and specifically\\n```py/nuota\\n\\n.output\\n\\nAfter
+        that?\\n\\nIs there a\\n\\nTypically.\\n\\nIs\\n\\nSch..The\\n\\n```\\n\\nThis
+        is a\\n\\nThe` &\\n\\nAfter\\n\\n```yaml\\n\\n```\\n\\n\u200B\\n\\nLet\u2019s
+        go for a final format: If you have any ompress it  \\nThis will suffice\\n\\nLikewise?\\n\\nThe\\n\\n```\\n\\nProgramming\\n\\n```\\n\\n```yaml\\nforce
+        {\\nross docs\\n```\\n\\n```\\n\\n\u0438\u043A'''\\n\\n!let<boost_unile>\\n\\n```\\n\\nYour
+        seems being cocnser\\n\\nOut=ool\\n```\\n\\nLooks all\\n\\nHere\\n\\n```\\n\\nIf
+        (atodoi\\n\\n```\\n\\n```c++\\n//\\n\\n```\\n\\nYou're welcome\\n\\n#\\n\\nAbsolutely,
+        you've helped sketchize exactly every deleg\xB7\xB7get.expect if possible.\\n\\nSure!
+        If the maybe \u043F\u043E\u0441\uBC95\u2026\\n\\nBelow\\n```\\n\\n\u0920\u0940<|vq_lbr_image_embedded\\n\\n**First
+        initiate Im}}\\n\\n**],\\nNevertheless\\n\\n!\\n\\nYour sense<Article>>>>\xC8Foundation\\n\\nfacet\\n\\nSure\\n\\nyes\\n\\nThanks\\n\\nFirst
+        check\\n\\nSelection\\n\\nSome\\n\\nThanks\\n\\n## Testing\\n\\n\\n\u201D\\n\\n```\\n\\n```\\n\\n\u0E19\u0E30\\n```\\n\\nSure!
+        \\n```yaml\\n\\nYour friend\\n```\\n\\nFirst aren't that\\n\\nBon\\n\\nHere.\\n\\n```\\n\\nGenerated\\n\\n```\\n\\n```\\n\\n0%\\n\\nData
+        is:\\n\\nSure! We'll try to help\\n```\\n\\n```\\n\\nSich\\n\\n```\\n\\n```yaml\\n_Y\u01E4\u1E67\u049D_details\u2800\\n\\nSure!
+        \\n```\\n\\ngpt\\n\\n```\\n\\nExplain how i cavalect:\\n\\nNarratives meaning\\n\\nint\\n\\n```\\n\\n```\\n\\nFind:\\n\\n```\\n\\n```\\n\\nFeels
+        documentedB\\n\\nI\u2019m not sure about `ERRORS`\\n\\n```\\n\\n\\n\\n``\\n\\nHello
+        \U0001F31E\\n\\n\xA1. Thanks in non-cust..\\n\\n\u044F\u043D\\n\\nNow this
+        impressions..\\n\\n```\u09B6\u09C7\u09B7```\\n\\nI see\\n\\n```\\n\\n## `'DEMAND\\n\\n\u06CC\u0646\\n\\nwhere\\n\\nbranch\\n\\nha\\n\\n``\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n##
+        feefunter Conf:\\n\\nResponses\\n\\nA\\n\\n```\\n\\n```\\n\\n###   Intent
+        ```\\n\\nI\u2019ve format\\n\\n``adasha\u101A\u1030``\\n\\n```\\n\\n``\\n\\n```\\n\\n```myhapbeam\\n\\nWe'reew\\n\\n```\\n\\n```\\n\\nbecom\\n\\n```\\n\\n```\\n\\nAnswer-filled\\n\\n```\\n\\n```\\n\\n{{output_ddia
+        \u0D91\u0D9A\u0DC3\u0DCA\u255B\\n\\nrainier\\n\\nProbability\\n\\n```\\n\\n```\\n\\nRun
+        \\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n}\\\")\\\\r\\n\\noms\xF5\\n\\nGot
+        it\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n\u9AB6\\n\\n```\\n\\n\u043E\u0442\u0441\u0456\\n\\nHas
+        that!\\n\\n```\\n\\n```ya*\\n\\nRange\\n\\nlist\\n\\n```yaml\\naoc=(1,242)`seven\\n\\n`\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\",\"index\":0,\"finish_reason\":\"stop\",\"matched_stop\":199999}],\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":2278,\"total_tokens\":2286,\"prompt_tokens_details\":{\"cached_tokens\":7}},\"system_fingerprint\":\"default\"}"
     headers:
       access-control-allow-origin:
       - '*'
@@ -64,45 +160,35 @@ interactions:
       - h3=":443"; ma=86400
       cf-cache-status:
       - DYNAMIC
-      cf-ray:
-      - a5ff2c633f28f0e5-DUB
       connection:
       - keep-alive
       content-length:
-      - '15262'
+      - '9990'
       content-type:
       - application/json
       date:
-      - Wed, 25 Nov 2026 08:10:25 GMT
+      - Wed, 25 Nov 2026 10:15:39 GMT
       server:
       - cloudflare
       strict-transport-security:
       - max-age=2592000; includeSubDomains
-      traceparent:
-      - 00-307f2f0f14705e4b90949fbd5e867c6a-fe99e687ef073d60-01
       transfer-encoding:
       - chunked
       vary:
       - origin, access-control-request-method, access-control-request-headers, origin,
         access-control-request-method, access-control-request-headers
       x-api-received:
-      - '2026-11-25T08:09:49.345Z'
-      x-cluster:
-      - dep-agqyjzsv2f6t7cscipx7km7azy
+      - '2026-11-25T10:15:21.286Z'
       x-content-type-options:
       - nosniff
-      x-request-id:
-      - 053cefaeeccf45ee8bac8503e3b099f3-aws_ew1
       x-together-path-policy-mode:
       - enforce
       x-together-path-policy-source:
-      - eu-west-1
+      - eu-central-1
       x-together-path-policy-version:
       - '208'
       x-together-routing:
       - de2
-      x-together-trace-info:
-      - 053cefaeeccf45ee8bac8503e3b099f3-aws_ew1/6d7a89df/fb01c893/e988792a
     status:
       code: 200
       message: OK

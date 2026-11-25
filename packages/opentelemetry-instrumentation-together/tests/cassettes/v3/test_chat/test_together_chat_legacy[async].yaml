@@ -16,37 +16,27 @@ interactions:
       - api-inference.together.ai
       user-agent:
       - AsyncTogether/Python 3.4.0
-      x-stainless-agent:
-      - claude-code_2-1-331_agent
-      x-stainless-arch:
-      - arm64
       x-stainless-async:
       - async:asyncio
       x-stainless-lang:
       - python
-      x-stainless-os:
-      - MacOS
       x-stainless-package-version:
       - 3.4.0
       x-stainless-read-timeout:
       - '60'
       x-stainless-retry-count:
       - '0'
-      x-stainless-runtime:
-      - CPython
-      x-stainless-runtime-version:
-      - 3.11.15
     method: POST
     uri: https://api-inference.together.ai/v1/chat/completions
   response:
     body:
-      string: "{\"id\":\"eba5268e751d4906980cf87492b29022-aws_ew1\",\"object\":\"chat.completion\",\"created\":1795594137,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Why
-        did the microservice start a meditation practice?\\n\\nBecause every time
-        it tried to trace its own calls, it kept **spanning** into an endless loop\u2014so
-        it turned to OpenTelemetry for some *observability* and finally found its
-        inner *context*! \U0001F604\",\"reasoning_content\":\"We need to respond with
-        a joke about OpenTelemetry. Must be appropriate. No disallowed content. Just
-        a joke.\"},\"finish_reason\":\"stop\",\"matched_stop\":200002}],\"usage\":{\"prompt_tokens\":77,\"completion_tokens\":88,\"total_tokens\":165,\"prompt_tokens_details\":{\"cached_tokens\":76},\"completion_tokens_details\":{\"reasoning_tokens\":25}},\"system_fingerprint\":\"default\"}"
+      string: "{\"id\":\"7cf71ced622547918b3ddf9135e94f8e-aws_ew1\",\"object\":\"chat.completion\",\"created\":1795601661,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Why
+        did the microservice start a meditation practice?  \\n\\nBecause every time
+        it tried to trace its own calls, it kept losing\u202F\u201Cspan\u201D and
+        needed a little **OpenTelemetry** to stay centered! \U0001F606\",\"reasoning_content\":\"We
+        need to respond to user request. It's a joke about OpenTelemetry, a technical
+        topic. The policy: It's safe content, no disallowed content. Must comply with
+        style: Provide a joke. Straightforward. Should be fine.\"},\"finish_reason\":\"stop\",\"matched_stop\":200002}],\"usage\":{\"prompt_tokens\":77,\"completion_tokens\":100,\"total_tokens\":177,\"prompt_tokens_details\":{\"cached_tokens\":66},\"completion_tokens_details\":{\"reasoning_tokens\":48}},\"system_fingerprint\":\"default\"}"
     headers:
       access-control-allow-origin:
       - '*'
@@ -55,22 +45,16 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '821'
+      - '876'
       content-type:
       - application/json
       date:
-      - Wed, 25 Nov 2026 08:08:58 GMT
-      traceparent:
-      - 00-f8bcff7100674e05cd8a71df6ecc6919-7fda49df2194eb35-01
+      - Wed, 25 Nov 2026 10:14:22 GMT
       vary:
       - origin, access-control-request-method, access-control-request-headers
       - origin, access-control-request-method, access-control-request-headers
       x-api-received:
-      - '2026-11-25T08:08:57.563Z'
-      x-cluster:
-      - dep-agqyjzsv2f6t7cscipx7km7azy
-      x-request-id:
-      - eba5268e751d4906980cf87492b29022-aws_ew1
+      - '2026-11-25T10:14:21.181Z'
       x-together-path-policy-mode:
       - enforce
       x-together-path-policy-source:
@@ -79,8 +63,6 @@ interactions:
       - '208'
       x-together-routing:
       - de2
-      x-together-trace-info:
-      - eba5268e751d4906980cf87492b29022-aws_ew1/91c8a2cd/b98de0c6/40e7fa54
     status:
       code: 200
       message: OK

@@ -7,22 +7,15 @@ interactions:
       - application/json
       User-Agent:
       - Together/v1 PythonBindings/1.6.0
-      X-Together-Client-User-Agent:
-      - '{"bindings_version": "1.6.0", "httplib": "requests", "lang": "python", "lang_version":
-        "3.11.15", "platform": "macOS-27.2.1-arm64-arm-64bit", "publisher": "together",
-        "uname": "Darwin 27.2.0 Darwin Kernel Version 27.2.0: Wed Oct 14 23:44:56
-        PDT 2026; root:xnu-13432.41.4~25/RELEASE_ARM64_T6041 arm64 arm"}'
     method: POST
     uri: https://api.together.xyz/v1/chat/completions
   response:
     body:
-      string: "{\"id\":\"fb89310d82b9406dbeb6246661c79de5-aws_ew1\",\"object\":\"chat.completion\",\"created\":1795594232,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Why
-        did the OpenTelemetry span go to therapy?  \\n\\nBecause it had commitment
-        issues\u2014it kept starting new traces but never knew when to finish!\",\"reasoning_content\":\"We
-        need to respond with a joke, presumably safe and non-violent, respecting content
-        policy. It's a light joke about OpenTelemetry, a monitoring and tracing system.
-        Should be humorous, maybe referencing spans, metrics, etc. Ensure it's not
-        disallowed. Provide short joke.\"},\"finish_reason\":\"stop\",\"matched_stop\":200002}],\"usage\":{\"prompt_tokens\":77,\"completion_tokens\":93,\"total_tokens\":170,\"prompt_tokens_details\":{\"cached_tokens\":66},\"completion_tokens_details\":{\"reasoning_tokens\":56}},\"system_fingerprint\":\"default\"}"
+      string: "{\"id\":\"77a9e9001d3e44c187c86f1619d9fb0a-aws_ec1\",\"object\":\"chat.completion\",\"created\":1795601746,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Sure!
+        Here\u2019s one for the observability crowd:\\n\\n> Why did the OpenTelemetry
+        span go to therapy?  \\n> \\n> Because it couldn\u2019t stop *tracing* its
+        own feelings!\",\"reasoning_content\":\"The user asks for a joke about OpenTelemetry.
+        We can comply, it's a harmless request. Provide a joke.\"},\"finish_reason\":\"stop\",\"matched_stop\":200002}],\"usage\":{\"prompt_tokens\":77,\"completion_tokens\":72,\"total_tokens\":149,\"prompt_tokens_details\":{\"cached_tokens\":66},\"completion_tokens_details\":{\"reasoning_tokens\":24}},\"system_fingerprint\":\"default\"}"
     headers:
       Access-Control-Allow-Origin:
       - '*'
@@ -32,14 +25,12 @@ interactions:
       - h3=":443"; ma=86400
       CF-Cache-Status:
       - DYNAMIC
-      CF-Ray:
-      - a5ff2d730f9fbda2-DUB
       Connection:
       - keep-alive
       Content-Type:
       - application/json
       Date:
-      - Wed, 25 Nov 2026 08:10:33 GMT
+      - Wed, 25 Nov 2026 10:15:47 GMT
       Server:
       - cloudflare
       Strict-Transport-Security:
@@ -49,26 +40,18 @@ interactions:
       Vary:
       - origin, access-control-request-method, access-control-request-headers, origin,
         access-control-request-method, access-control-request-headers, accept-encoding
-      X-Request-ID:
-      - fb89310d82b9406dbeb6246661c79de5-aws_ew1
       content-length:
-      - '876'
-      traceparent:
-      - 00-374100fe4f20d99a8a6d6ec647523e3f-3ba98a731498509c-01
+      - '725'
       x-api-received:
-      - '2026-11-25T08:10:32.833Z'
-      x-cluster:
-      - dep-agqyjzsv2f6t7cscipx7km7azy
+      - '2026-11-25T10:15:46.514Z'
       x-together-path-policy-mode:
       - enforce
       x-together-path-policy-source:
-      - eu-west-1
+      - eu-central-1
       x-together-path-policy-version:
       - '208'
       x-together-routing:
       - de2
-      x-together-trace-info:
-      - fb89310d82b9406dbeb6246661c79de5-aws_ew1/6d7a89df/fb01c893/003d7ba6
     status:
       code: 200
       message: OK

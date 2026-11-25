@@ -6,6 +6,7 @@ import warnings
 from typing import Callable, Collection, Optional
 
 from opentelemetry import context as context_api
+from opentelemetry import trace
 from opentelemetry._logs import get_logger
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.together.config import Config
@@ -22,6 +23,7 @@ from opentelemetry.instrumentation.together.span_utils import (
 from opentelemetry.instrumentation.together.utils import (
     TOGETHER_PROVIDER,
     dont_throw,
+    is_given,
     is_metrics_enabled,
     model_as_dict,
     should_emit_events,
@@ -161,14 +163,9 @@ def _parse_raw_response(response):
     return response.parse()
 
 
+@dont_throw
 async def _aparse_raw_response(response):
-    try:
-        return await response.parse()
-    except Exception as e:
-        logger.debug("OpenLLMetry failed to parse the together raw response: %s", e)
-        if Config.exception_logger:
-            Config.exception_logger(e)
-        return None
+    return await response.parse()
 
 
 @dont_throw
@@ -188,7 +185,7 @@ def _metric_attributes(to_wrap, kwargs, response=None):
     }
     if response is not None:
         attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL] = response.get("model")
-    return {key: value for key, value in attributes.items() if value is not None}
+    return {key: value for key, value in attributes.items() if is_given(value)}
 
 
 @dont_throw
@@ -207,7 +204,11 @@ def _record_token_usage(telemetry, to_wrap, kwargs, response):
         return
     usage = response.get("usage") or {}
     attributes = _metric_attributes(to_wrap, kwargs, response)
-    for token_type, key in (("input", "prompt_tokens"), ("output", "completion_tokens")):
+    token_types = (
+        (GenAIAttributes.GenAiTokenTypeValues.INPUT.value, "prompt_tokens"),
+        (GenAIAttributes.GenAiTokenTypeValues.OUTPUT.value, "completion_tokens"),
+    )
+    for token_type, key in token_types:
         tokens = usage.get(key)
         if isinstance(tokens, int) and tokens >= 0:
             telemetry.token_histogram.record(
@@ -219,6 +220,8 @@ def _record_token_usage(telemetry, to_wrap, kwargs, response):
 def _start_span(telemetry, to_wrap, kwargs):
     operation = to_wrap.get("operation")
     model = kwargs.get("model")
+    # The request model is set here, at span creation, so samplers can see it
+    # (set_model_input_attributes sets the rest of the request attributes).
     attributes = {
         GenAIAttributes.GEN_AI_PROVIDER_NAME: TOGETHER_PROVIDER,
         GenAIAttributes.GEN_AI_OPERATION_NAME: operation,
@@ -232,6 +235,13 @@ def _start_span(telemetry, to_wrap, kwargs):
     )
     _handle_input(span, telemetry.event_logger, to_wrap.get("request_type"), kwargs)
     return span
+
+
+def _use_span(span):
+    """Makes `span` the current span while the provider call runs, so spans created
+    under it (e.g. HTTP client spans) nest under it. Ending the span and recording
+    errors on it are left to `_end_span_with_*`."""
+    return trace.use_span(span, end_on_exit=False, record_exception=False, set_status_on_exception=False)
 
 
 def _end_span_with_error(telemetry, to_wrap, kwargs, start_time, span, error):
@@ -267,7 +277,8 @@ def _wrap(telemetry, to_wrap, wrapped, instance, args, kwargs):
     span = _start_span(telemetry, to_wrap, kwargs)
     start_time = time.perf_counter()
     try:
-        response = wrapped(*args, **kwargs)
+        with _use_span(span):
+            response = wrapped(*args, **kwargs)
     except BaseException as e:
         _end_span_with_error(telemetry, to_wrap, kwargs, start_time, span, e)
         raise
@@ -286,7 +297,8 @@ async def _awrap(telemetry, to_wrap, wrapped, instance, args, kwargs):
     span = _start_span(telemetry, to_wrap, kwargs)
     start_time = time.perf_counter()
     try:
-        response = await wrapped(*args, **kwargs)
+        with _use_span(span):
+            response = await wrapped(*args, **kwargs)
     except BaseException as e:
         # BaseException so the span also ends on asyncio cancellation.
         _end_span_with_error(telemetry, to_wrap, kwargs, start_time, span, e)

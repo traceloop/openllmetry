@@ -1,3 +1,4 @@
+import inspect
 import logging
 import os
 import traceback
@@ -13,8 +14,21 @@ TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
 TOGETHER_PROVIDER = GenAISystem.TOGETHER_AI.value
 
 
+def is_given(value):
+    """False for None and for the "argument not passed" sentinels of together 2.x/3.x
+    (Stainless SDKs), `NOT_GIVEN` and `omit`, which apps may pass explicitly. They
+    aren't valid attribute values, so recording them only makes OTel log a warning."""
+    if value is None:
+        return False
+    value_type = type(value)
+    return not (
+        value_type.__name__ in ("NotGiven", "Omit")
+        and value_type.__module__.split(".")[0] == "together"
+    )
+
+
 def set_span_attribute(span, name, value):
-    if value is not None and value != "":
+    if is_given(value) and value != "":
         span.set_attribute(name, value)
 
 
@@ -45,6 +59,7 @@ def should_send_prompts():
 def dont_throw(func):
     """
     A decorator that wraps the passed in function and logs exceptions instead of throwing them.
+    Works for both synchronous and asynchronous functions.
 
     @param func: The function to wrap
     @return: The wrapper function
@@ -52,19 +67,28 @@ def dont_throw(func):
     # Obtain a logger specific to the function's module
     logger = logging.getLogger(func.__module__)
 
-    def wrapper(*args, **kwargs):
+    def _handle_exception(e):
+        logger.debug(
+            "OpenLLMetry failed to trace in %s, error: %s",
+            func.__name__,
+            traceback.format_exc(),
+        )
+        if Config.exception_logger:
+            Config.exception_logger(e)
+
+    async def async_wrapper(*args, **kwargs):
+        try:
+            return await func(*args, **kwargs)
+        except Exception as e:
+            _handle_exception(e)
+
+    def sync_wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            logger.debug(
-                "OpenLLMetry failed to trace in %s, error: %s",
-                func.__name__,
-                traceback.format_exc(),
-            )
-            if Config.exception_logger:
-                Config.exception_logger(e)
+            _handle_exception(e)
 
-    return wrapper
+    return async_wrapper if inspect.iscoroutinefunction(func) else sync_wrapper
 
 
 def should_emit_events() -> bool:

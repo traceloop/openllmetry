@@ -7,20 +7,16 @@ interactions:
       - application/json
       User-Agent:
       - Together/v1 PythonBindings/1.6.0
-      X-Together-Client-User-Agent:
-      - '{"bindings_version": "1.6.0", "httplib": "requests", "lang": "python", "lang_version":
-        "3.11.15", "platform": "macOS-27.2.1-arm64-arm-64bit", "publisher": "together",
-        "uname": "Darwin 27.2.0 Darwin Kernel Version 27.2.0: Wed Oct 14 23:44:56
-        PDT 2026; root:xnu-13432.41.4~25/RELEASE_ARM64_T6041 arm64 arm"}'
     method: POST
     uri: https://api.together.xyz/v1/chat/completions
   response:
     body:
-      string: "{\"id\":\"41a21bc9e385480e9c0f9365fef74233-aws_ec1\",\"object\":\"chat.completion\",\"created\":1795594234,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Why
-        did the tracer cross the distributed system?\\n\\nBecause it heard OpenTelemetry
-        was giving it *span*taneous visibility on the other side! \U0001F680\U0001F604\",\"reasoning_content\":\"The
-        user asks for a joke about OpenTelemetry. It's allowed content. Provide a
-        light humorous joke. No policy issues.\"},\"finish_reason\":\"stop\",\"matched_stop\":200002}],\"usage\":{\"prompt_tokens\":77,\"completion_tokens\":66,\"total_tokens\":143,\"prompt_tokens_details\":{\"cached_tokens\":76},\"completion_tokens_details\":{\"reasoning_tokens\":25}},\"system_fingerprint\":\"default\"}"
+      string: "{\"id\":\"bf8aba26e0474bc69fa2b0748766182c-aws_ec1\",\"object\":\"chat.completion\",\"created\":1795601748,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Why
+        did the OpenTelemetry exporter break up with the metric collector?\\n\\nBecause
+        every time it tried to \u201Ctrace\u201D the relationship, the collector kept
+        \u201Cmetric\u2011ing\u201D all the wrong signals! \U0001F606\",\"reasoning_content\":\"We
+        need to respond with a joke about OpenTelemetry. Must be appropriate. No policy
+        violation. Just a light joke.\"},\"finish_reason\":\"stop\",\"matched_stop\":200002}],\"usage\":{\"prompt_tokens\":77,\"completion_tokens\":74,\"total_tokens\":151,\"prompt_tokens_details\":{\"cached_tokens\":76},\"completion_tokens_details\":{\"reasoning_tokens\":25}},\"system_fingerprint\":\"default\"}"
     headers:
       Access-Control-Allow-Origin:
       - '*'
@@ -30,14 +26,12 @@ interactions:
       - h3=":443"; ma=86400
       CF-Cache-Status:
       - DYNAMIC
-      CF-Ray:
-      - a5ff2d807ed44f9d-AMS
       Connection:
       - keep-alive
       Content-Type:
       - application/json
       Date:
-      - Wed, 25 Nov 2026 08:10:35 GMT
+      - Wed, 25 Nov 2026 10:15:49 GMT
       Server:
       - cloudflare
       Strict-Transport-Security:
@@ -47,16 +41,10 @@ interactions:
       Vary:
       - origin, access-control-request-method, access-control-request-headers, origin,
         access-control-request-method, access-control-request-headers, accept-encoding
-      X-Request-ID:
-      - 41a21bc9e385480e9c0f9365fef74233-aws_ec1
       content-length:
-      - '727'
-      traceparent:
-      - 00-8a5b53dc5a82b56f6abcd5e6f74bbaf6-b0fd50e5cf098429-01
+      - '774'
       x-api-received:
-      - '2026-11-25T08:10:34.990Z'
-      x-cluster:
-      - dep-agqyjzsv2f6t7cscipx7km7azy
+      - '2026-11-25T10:15:48.686Z'
       x-together-path-policy-mode:
       - enforce
       x-together-path-policy-source:
@@ -65,8 +53,6 @@ interactions:
       - '208'
       x-together-routing:
       - de2
-      x-together-trace-info:
-      - 41a21bc9e385480e9c0f9365fef74233-aws_ec1/6d7a89df/fb01c893/003d7ba6
     status:
       code: 200
       message: OK

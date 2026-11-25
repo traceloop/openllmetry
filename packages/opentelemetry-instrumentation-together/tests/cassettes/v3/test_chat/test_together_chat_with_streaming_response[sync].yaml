@@ -16,16 +16,10 @@ interactions:
       - api-inference.together.ai
       user-agent:
       - Together/Python 3.4.0
-      x-stainless-agent:
-      - claude-code_2-1-332_agent
-      x-stainless-arch:
-      - arm64
       x-stainless-async:
       - 'false'
       x-stainless-lang:
       - python
-      x-stainless-os:
-      - MacOS
       x-stainless-package-version:
       - 3.4.0
       x-stainless-raw-response:
@@ -34,20 +28,16 @@ interactions:
       - '60'
       x-stainless-retry-count:
       - '0'
-      x-stainless-runtime:
-      - CPython
-      x-stainless-runtime-version:
-      - 3.11.15
     method: POST
     uri: https://api-inference.together.ai/v1/chat/completions
   response:
     body:
-      string: "{\"id\":\"b9ca3fb25f0c499c8bb7989a106276d6-aws_ew1\",\"object\":\"chat.completion\",\"created\":1795598433,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Sure,
-        here\u2019s a light\u2011hearted one for the observability crowd:\\n\\n> Why
-        did the OpenTelemetry trace get a promotion?  \\n> Because it *always* knew
-        how to keep things in **scope** and never lost a **span** of its responsibilities!
-        \U0001F604\",\"reasoning_content\":\"User wants a joke about OpenTelemetry.
-        Just provide a joke, be friendly. No policy issues. Provide maybe a one-liner.\"},\"finish_reason\":\"stop\",\"matched_stop\":200002}],\"usage\":{\"prompt_tokens\":77,\"completion_tokens\":92,\"total_tokens\":169,\"prompt_tokens_details\":{\"cached_tokens\":66},\"completion_tokens_details\":{\"reasoning_tokens\":28}},\"system_fingerprint\":\"default\"}"
+      string: "{\"id\":\"7bb2756c000b4477806c10432a1767fd-aws_ew1\",\"object\":\"chat.completion\",\"created\":1795601667,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Sure,
+        here\u2019s a light\u2011hearted one for the observability folks:\\n\\n*Why
+        did the OpenTelemetry span break up with the metric?*\\n\\nBecause it needed
+        more *context* in the relationship! \U0001F680\",\"reasoning_content\":\"We
+        need to comply with policy. Provide a joke. That's fine. No disallowed content.
+        Just a light humor.\"},\"finish_reason\":\"stop\",\"matched_stop\":200002}],\"usage\":{\"prompt_tokens\":77,\"completion_tokens\":76,\"total_tokens\":153,\"prompt_tokens_details\":{\"cached_tokens\":76},\"completion_tokens_details\":{\"reasoning_tokens\":25}},\"system_fingerprint\":\"default\"}"
     headers:
       access-control-allow-origin:
       - '*'
@@ -56,22 +46,16 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '816'
+      - '753'
       content-type:
       - application/json
       date:
-      - Wed, 25 Nov 2026 09:20:34 GMT
-      traceparent:
-      - 00-3e07cee480227f5c96b1b8f722133491-b2e1f95fa03aa768-01
+      - Wed, 25 Nov 2026 10:14:28 GMT
       vary:
       - origin, access-control-request-method, access-control-request-headers
       - origin, access-control-request-method, access-control-request-headers
       x-api-received:
-      - '2026-11-25T09:20:33.664Z'
-      x-cluster:
-      - dep-agqyjzsv2f6t7cscipx7km7azy
-      x-request-id:
-      - b9ca3fb25f0c499c8bb7989a106276d6-aws_ew1
+      - '2026-11-25T10:14:27.524Z'
       x-together-path-policy-mode:
       - enforce
       x-together-path-policy-source:
@@ -80,8 +64,6 @@ interactions:
       - '208'
       x-together-routing:
       - de2
-      x-together-trace-info:
-      - b9ca3fb25f0c499c8bb7989a106276d6-aws_ew1/6d7a89df/fb01c893/13521ce0
     status:
       code: 200
       message: OK
