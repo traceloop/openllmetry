@@ -176,7 +176,10 @@ def set_model_input_attributes(span, kwargs):
     set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_PRESENCE_PENALTY, kwargs.get("presence_penalty"))
     set_span_attribute(span, SpanAttributes.GEN_AI_REQUEST_REPETITION_PENALTY, kwargs.get("repetition_penalty"))
     set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_SEED, kwargs.get("seed"))
-    set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_CHOICE_COUNT, kwargs.get("n"))
+    # The spec records the choice count only when it isn't the default of 1.
+    choice_count = kwargs.get("n")
+    if choice_count != 1:
+        set_span_attribute(span, GenAIAttributes.GEN_AI_REQUEST_CHOICE_COUNT, choice_count)
 
     stop = kwargs.get("stop")
     if isinstance(stop, str):

@@ -126,3 +126,15 @@ def assert_error_duration_metric(reader, operation, error_type):
         ERROR_TYPE: error_type,
     }
     assert not _data_points(reader, GenAIMetrics.GEN_AI_CLIENT_TOKEN_USAGE)
+
+
+def assert_duration_metric_without_response(reader, operation):
+    """Only the duration is recorded when there is no response model to read."""
+    duration_points = _data_points(reader, GenAIMetrics.GEN_AI_CLIENT_OPERATION_DURATION)
+    assert len(duration_points) == 1
+    assert dict(duration_points[0].attributes) == {
+        GenAIAttributes.GEN_AI_PROVIDER_NAME: PROVIDER,
+        GenAIAttributes.GEN_AI_OPERATION_NAME: operation,
+        GenAIAttributes.GEN_AI_REQUEST_MODEL: MODEL,
+    }
+    assert not _data_points(reader, GenAIMetrics.GEN_AI_CLIENT_TOKEN_USAGE)

@@ -1,0 +1,88 @@
+interactions:
+- request:
+    body: '{"messages":[{"role":"user","content":"Tell me a joke about OpenTelemetry."}],"model":"openai/gpt-oss-120b"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '108'
+      content-type:
+      - application/json
+      host:
+      - api-inference.together.ai
+      user-agent:
+      - Together/Python 3.4.0
+      x-stainless-agent:
+      - claude-code_2-1-332_agent
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 3.4.0
+      x-stainless-raw-response:
+      - stream
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.15
+    method: POST
+    uri: https://api-inference.together.ai/v1/chat/completions
+  response:
+    body:
+      string: "{\"id\":\"b9ca3fb25f0c499c8bb7989a106276d6-aws_ew1\",\"object\":\"chat.completion\",\"created\":1795598433,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Sure,
+        here\u2019s a light\u2011hearted one for the observability crowd:\\n\\n> Why
+        did the OpenTelemetry trace get a promotion?  \\n> Because it *always* knew
+        how to keep things in **scope** and never lost a **span** of its responsibilities!
+        \U0001F604\",\"reasoning_content\":\"User wants a joke about OpenTelemetry.
+        Just provide a joke, be friendly. No policy issues. Provide maybe a one-liner.\"},\"finish_reason\":\"stop\",\"matched_stop\":200002}],\"usage\":{\"prompt_tokens\":77,\"completion_tokens\":92,\"total_tokens\":169,\"prompt_tokens_details\":{\"cached_tokens\":66},\"completion_tokens_details\":{\"reasoning_tokens\":28}},\"system_fingerprint\":\"default\"}"
+    headers:
+      access-control-allow-origin:
+      - '*'
+      access-control-expose-headers:
+      - '*'
+      connection:
+      - keep-alive
+      content-length:
+      - '816'
+      content-type:
+      - application/json
+      date:
+      - Wed, 25 Nov 2026 09:20:34 GMT
+      traceparent:
+      - 00-3e07cee480227f5c96b1b8f722133491-b2e1f95fa03aa768-01
+      vary:
+      - origin, access-control-request-method, access-control-request-headers
+      - origin, access-control-request-method, access-control-request-headers
+      x-api-received:
+      - '2026-11-25T09:20:33.664Z'
+      x-cluster:
+      - dep-agqyjzsv2f6t7cscipx7km7azy
+      x-request-id:
+      - b9ca3fb25f0c499c8bb7989a106276d6-aws_ew1
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-west-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+      x-together-trace-info:
+      - b9ca3fb25f0c499c8bb7989a106276d6-aws_ew1/6d7a89df/fb01c893/13521ce0
+    status:
+      code: 200
+      message: OK
+version: 1

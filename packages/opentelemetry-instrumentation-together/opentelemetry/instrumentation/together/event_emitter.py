@@ -11,6 +11,8 @@ from opentelemetry.instrumentation.together.span_utils import map_finish_reason
 from opentelemetry.instrumentation.together.utils import (
     TOGETHER_PROVIDER,
     dont_throw,
+    enum_value,
+    model_as_dict,
     should_emit_events,
     should_send_prompts,
 )
@@ -36,13 +38,22 @@ EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_PROVIDER_NAME: TOGETHER_PROVIDER}
 """The attributes to be used for the event."""
 
 
+def _tool_calls(tool_calls):
+    """Tool calls (dicts or SDK models) as OpenAI-format dicts, or None if there are none."""
+    return [model_as_dict(tool_call) for tool_call in tool_calls or []] or None
+
+
 @dont_throw
 def emit_prompt_events(event_logger, llm_request_type, kwargs):
     if llm_request_type == LLMRequestTypeValues.CHAT:
-        for message in kwargs.get("messages"):
+        for message in kwargs.get("messages") or []:
+            message = model_as_dict(message)
             emit_event(
                 PromptEvent(
-                    content=message.get("content"), role=message.get("role") or "user"
+                    content=message.get("content"),
+                    role=enum_value(message.get("role")) or "user",
+                    tool_calls=_tool_calls(message.get("tool_calls")),
+                    id=message.get("tool_call_id"),
                 ),
                 event_logger,
             )
@@ -56,34 +67,33 @@ def emit_prompt_events(event_logger, llm_request_type, kwargs):
 
 @dont_throw
 def emit_completion_event(event_logger, llm_request_type, response):
-    # The response class lives in a different module in each together major
-    # version, so it is accessed by attribute only and not imported.
-    if llm_request_type == LLMRequestTypeValues.CHAT:
-        for choice in response.choices:
-            emit_event(
-                CompletionEvent(
-                    index=choice.index,
-                    message={
-                        "content": choice.message.content,
-                        "role": choice.message.role,
-                    },
-                    finish_reason=map_finish_reason(choice.finish_reason),
-                ),
-                event_logger,
-            )
-    elif llm_request_type == LLMRequestTypeValues.COMPLETION:
-        for choice in response.choices:
-            emit_event(
-                CompletionEvent(
-                    index=choice.index,
-                    message={"content": choice.text, "role": "assistant"},
-                    finish_reason=map_finish_reason(choice.finish_reason),
-                ),
-                event_logger,
-            )
-    else:
+    """`response` is the response model as a dict (see `model_as_dict`), so the
+    response class, which lives in a different module in each together major
+    version, is never imported."""
+    if llm_request_type not in (LLMRequestTypeValues.CHAT, LLMRequestTypeValues.COMPLETION):
         raise ValueError(
             "It wasn't possible to emit the choice events due to an unknown llm_request_type."
+        )
+
+    for choice in response.get("choices") or []:
+        choice = model_as_dict(choice)
+        if llm_request_type == LLMRequestTypeValues.CHAT:
+            message = choice.get("message") or {}
+            content = message.get("content")
+            role = enum_value(message.get("role")) or Roles.ASSISTANT.value
+            tool_calls = _tool_calls(message.get("tool_calls"))
+        else:
+            content = choice.get("text")
+            role = Roles.ASSISTANT.value
+            tool_calls = None
+        emit_event(
+            CompletionEvent(
+                index=choice.get("index"),
+                message={"content": content, "role": role},
+                finish_reason=map_finish_reason(choice.get("finish_reason")),
+                tool_calls=tool_calls,
+            ),
+            event_logger,
         )
 
 
@@ -125,11 +135,13 @@ def _emit_message_event(event: PromptEvent, event_logger: Logger) -> None:
     elif event.tool_calls is None:
         del body["tool_calls"]
 
+    # Only tool messages carry the id of the tool call they answer.
+    if event.id is None:
+        del body["id"]
+
     if not should_send_prompts():
         del body["content"]
-        if body.get("tool_calls") is not None:
-            for tool_call in body["tool_calls"]:
-                tool_call["function"].pop("arguments", None)
+        _strip_tool_call_arguments(body)
 
     log_record = LogRecord(
         body=body,
@@ -151,9 +163,7 @@ def _emit_choice_event(event: CompletionEvent, event_logger: Logger) -> None:
 
     if not should_send_prompts():
         body["message"].pop("content", None)
-        if body.get("tool_calls") is not None:
-            for tool_call in body["tool_calls"]:
-                tool_call["function"].pop("arguments", None)
+        _strip_tool_call_arguments(body)
 
     log_record = LogRecord(
         body=body,
@@ -162,3 +172,12 @@ def _emit_choice_event(event: CompletionEvent, event_logger: Logger) -> None:
 
     )
     event_logger.emit(log_record)
+
+
+def _strip_tool_call_arguments(body):
+    """Tool call arguments are content, so they are dropped when content tracing is off.
+
+    `body` comes from `dataclasses.asdict`, which copies nested dicts, so the app's
+    own messages are not modified."""
+    for tool_call in body.get("tool_calls") or []:
+        (tool_call.get("function") or {}).pop("arguments", None)

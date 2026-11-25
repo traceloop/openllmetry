@@ -29,6 +29,8 @@ class PromptEvent:
     content: Any
     role: str = "user"
     tool_calls: Optional[List[ToolCall]] = None
+    id: Optional[str] = None
+    """For tool messages: the id of the tool call this message answers."""
 
 
 @dataclass

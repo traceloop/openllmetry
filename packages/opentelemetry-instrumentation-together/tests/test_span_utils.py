@@ -240,6 +240,12 @@ def test_request_parameters(span):
     }
 
 
+def test_choice_count_is_not_recorded_when_it_is_the_default(span):
+    set_model_input_attributes(span, {"model": "m", "n": 1})
+
+    assert GenAIAttributes.GEN_AI_REQUEST_CHOICE_COUNT not in span.attributes
+
+
 def test_response_usage_includes_cache_and_reasoning_tokens(span):
     set_model_response_attributes(
         span,

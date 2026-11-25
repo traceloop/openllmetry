@@ -71,6 +71,11 @@ def _method(module, obj, request_type, is_async):
 _CHAT = LLMRequestTypeValues.CHAT
 _COMPLETION = LLMRequestTypeValues.COMPLETION
 
+# together 2.x/3.x (Stainless SDKs) sets this request header on calls made through
+# `.with_raw_response` ("raw") and `.with_streaming_response` ("stream"). `create`
+# then returns an APIResponse wrapper instead of the response model.
+_RAW_RESPONSE_HEADER = "X-Stainless-Raw-Response"
+
 # together 1.x and together 2.x/3.x use the same modules but different class
 # names. Every entry is tried; the ones missing from the installed version are
 # skipped in `_instrument`.
@@ -128,12 +133,50 @@ def _handle_input(span, event_logger, llm_request_type, kwargs):
 
 @dont_throw
 def _handle_response(span, event_logger, llm_request_type, response):
+    """`response` is the response model already converted with `model_as_dict`."""
     set_model_response_attributes(span, response)
 
     if should_emit_events() and event_logger:
         emit_completion_event(event_logger, llm_request_type, response)
     else:
         set_output_attributes(span, llm_request_type, response)
+
+
+def _raw_response_mode(kwargs):
+    return (kwargs.get("extra_headers") or {}).get(_RAW_RESPONSE_HEADER)
+
+
+@dont_throw
+def _should_parse_raw_response(response, kwargs):
+    # Only `with_raw_response` responses are parsed: their body has already been
+    # read, and APIResponse caches what `parse()` returns, so the app's own
+    # `parse()` call is unaffected. A `with_streaming_response` body is still
+    # unread when `create` returns, and reading it here would consume it before
+    # the app does.
+    return _raw_response_mode(kwargs) == "raw" and not kwargs.get("stream") and hasattr(response, "parse")
+
+
+@dont_throw
+def _parse_raw_response(response):
+    return response.parse()
+
+
+async def _aparse_raw_response(response):
+    try:
+        return await response.parse()
+    except Exception as e:
+        logger.debug("OpenLLMetry failed to parse the together raw response: %s", e)
+        if Config.exception_logger:
+            Config.exception_logger(e)
+        return None
+
+
+@dont_throw
+def _response_as_dict(response):
+    """The response model as a dict, or None when there is no model to read (e.g. an
+    unread `with_streaming_response` body)."""
+    response = model_as_dict(response)
+    return response if isinstance(response, dict) else None
 
 
 def _metric_attributes(to_wrap, kwargs, response=None):
@@ -144,7 +187,7 @@ def _metric_attributes(to_wrap, kwargs, response=None):
         GenAIAttributes.GEN_AI_REQUEST_MODEL: kwargs.get("model"),
     }
     if response is not None:
-        attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL] = model_as_dict(response).get("model")
+        attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL] = response.get("model")
     return {key: value for key, value in attributes.items() if value is not None}
 
 
@@ -162,7 +205,7 @@ def _record_duration(telemetry, to_wrap, kwargs, start_time, response=None, erro
 def _record_token_usage(telemetry, to_wrap, kwargs, response):
     if telemetry.token_histogram is None:
         return
-    usage = model_as_dict(response).get("usage") or {}
+    usage = response.get("usage") or {}
     attributes = _metric_attributes(to_wrap, kwargs, response)
     for token_type, key in (("input", "prompt_tokens"), ("output", "completion_tokens")):
         tokens = usage.get(key)
@@ -199,13 +242,17 @@ def _end_span_with_error(telemetry, to_wrap, kwargs, start_time, span, error):
     span.end()
 
 
-def _end_span_with_response(telemetry, to_wrap, kwargs, start_time, span, response):
+def _end_span_with_response(telemetry, to_wrap, kwargs, start_time, span, response, parsed):
+    """`parsed` is the response model to read telemetry from: `response` itself, or
+    what a `with_raw_response` wrapper parsed to."""
     # Streaming responses are not instrumented yet: the span only covers the
     # request, and there is no complete response to read attributes or usage from.
-    if response and not kwargs.get("stream"):
-        _record_duration(telemetry, to_wrap, kwargs, start_time, response=response)
-        _record_token_usage(telemetry, to_wrap, kwargs, response)
-        _handle_response(span, telemetry.event_logger, to_wrap.get("request_type"), response)
+    if response is not None and not kwargs.get("stream"):
+        response_dict = _response_as_dict(parsed)
+        _record_duration(telemetry, to_wrap, kwargs, start_time, response=response_dict)
+        if response_dict:
+            _record_token_usage(telemetry, to_wrap, kwargs, response_dict)
+            _handle_response(span, telemetry.event_logger, to_wrap.get("request_type"), response_dict)
     if response and span.is_recording():
         span.set_status(Status(StatusCode.OK))
     span.end()
@@ -225,7 +272,8 @@ def _wrap(telemetry, to_wrap, wrapped, instance, args, kwargs):
         _end_span_with_error(telemetry, to_wrap, kwargs, start_time, span, e)
         raise
 
-    _end_span_with_response(telemetry, to_wrap, kwargs, start_time, span, response)
+    parsed = _parse_raw_response(response) if _should_parse_raw_response(response, kwargs) else response
+    _end_span_with_response(telemetry, to_wrap, kwargs, start_time, span, response, parsed)
     return response
 
 
@@ -244,7 +292,8 @@ async def _awrap(telemetry, to_wrap, wrapped, instance, args, kwargs):
         _end_span_with_error(telemetry, to_wrap, kwargs, start_time, span, e)
         raise
 
-    _end_span_with_response(telemetry, to_wrap, kwargs, start_time, span, response)
+    parsed = await _aparse_raw_response(response) if _should_parse_raw_response(response, kwargs) else response
+    _end_span_with_response(telemetry, to_wrap, kwargs, start_time, span, response, parsed)
     return response
 
 

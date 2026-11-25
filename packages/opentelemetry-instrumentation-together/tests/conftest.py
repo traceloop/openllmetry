@@ -80,6 +80,33 @@ class _Caller:
     def completion(self, **kwargs):
         return self._run(self.client.completions.create(**kwargs))
 
+    def chat_with_raw_response(self, **kwargs):
+        """`chat.completions.with_raw_response.create` (together 2.x+). Returns the
+        response model the app gets from `parse()`."""
+        resource = self.client.chat.completions.with_raw_response
+        if not self.is_async:
+            return resource.create(**kwargs).parse()
+
+        async def call():
+            raw = await resource.create(**kwargs)
+            return await raw.parse()
+
+        return asyncio.run(call())
+
+    def chat_with_streaming_response(self, **kwargs):
+        """`chat.completions.with_streaming_response.create` (together 2.x+). Reads
+        the body inside the context manager and returns the parsed response model."""
+        resource = self.client.chat.completions.with_streaming_response
+        if not self.is_async:
+            with resource.create(**kwargs) as raw:
+                return raw.parse()
+
+        async def call():
+            async with resource.create(**kwargs) as raw:
+                return await raw.parse()
+
+        return asyncio.run(call())
+
     def _run(self, result):
         return asyncio.run(result) if self.is_async else result
 
