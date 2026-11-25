@@ -1,5 +1,5 @@
 import pytest
-from mistralai.models import UserMessage
+from mistralai.models import AssistantMessage, ToolMessage, UserMessage
 from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
@@ -658,6 +658,48 @@ def test_mistralai_chat_with_cache_tokens(
         mistral_span.attributes.get(SpanAttributes.GEN_AI_USAGE_CACHE_READ_INPUT_TOKENS)
         == 10
     )
+
+
+def test_mistralai_chat_emit_message_events_with_tool_message(
+    instrument_with_content, logger_provider, log_exporter
+):
+    from opentelemetry.instrumentation.mistralai import _emit_message_events
+
+    logger = logger_provider.get_logger("mistralai_test")
+    messages = [
+        UserMessage(content="What is the weather in Paris?"),
+        ToolMessage(content="Sunny and 22C", tool_call_id="call_abc"),
+        AssistantMessage(content="The weather in Paris is sunny and 22C."),
+    ]
+
+    _emit_message_events("mistralai.chat", (messages,), {}, logger)
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 3
+
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {"content": "What is the weather in Paris?"})
+    assert_message_in_logs(logs[1], "gen_ai.tool.message", {"content": "Sunny and 22C"})
+    assert_message_in_logs(
+        logs[2], "gen_ai.assistant.message", {"content": "The weather in Paris is sunny and 22C."}
+    )
+
+
+def test_mistralai_chat_emit_message_events_tool_first_does_not_drop_events(
+    instrument_with_content, logger_provider, log_exporter
+):
+    from opentelemetry.instrumentation.mistralai import _emit_message_events
+
+    logger = logger_provider.get_logger("mistralai_test")
+    messages = [
+        ToolMessage(content="tool output", tool_call_id="call_xyz"),
+        UserMessage(content="follow-up query"),
+    ]
+
+    _emit_message_events("mistralai.chat", (messages,), {}, logger)
+    logs = log_exporter.get_finished_logs()
+    assert len(logs) == 2
+
+    assert_message_in_logs(logs[0], "gen_ai.tool.message", {"content": "tool output"})
+    assert_message_in_logs(logs[1], "gen_ai.user.message", {"content": "follow-up query"})
 
 
 def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
