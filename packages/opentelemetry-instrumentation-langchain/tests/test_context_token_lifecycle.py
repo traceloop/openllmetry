@@ -56,7 +56,9 @@ def restore_otel_context():
 
 def _suppression_active() -> bool:
     """Return whether language-model suppression is currently active in OTel context."""
-    return context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY) is True
+    # The handler attaches a unique marker object per run; consumers only
+    # check truthiness, so do the same here.
+    return bool(context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY))
 
 
 def _association_properties() -> dict:
@@ -376,4 +378,87 @@ def test_duplicate_llm_run_id_replaces_association_properties(handler):
     assert not _suppression_active(), (
         "Suppression must be cleared after ending the replacement LLM span, matching "
         "the behavior verified in test_duplicate_run_id_leaks_suppression_token."
+    )
+# ---------------------------------------------------------------------------
+# Overlapping runs in one execution context
+# ---------------------------------------------------------------------------
+
+def test_older_overlapping_llm_run_does_not_wipe_newer_suppression(handler):
+    """
+    Two LLM runs overlap in one execution context; the older one ends first.
+
+    Both runs attach suppression, so a truthiness check cannot tell whose
+    frame is on top. Resetting the older run's token while the newer run is
+    active would restore the pre-older context and silently clear suppression
+    for the still-running newer call (double-instrumentation downstream).
+    """
+    older_run = uuid4()
+    newer_run = uuid4()
+
+    handler._create_llm_span(older_run, None, "gpt-4", LLMRequestTypeValues.CHAT)
+    handler._create_llm_span(newer_run, None, "gpt-4", LLMRequestTypeValues.CHAT)
+
+    # End the OLDER run while the newer one is still active (out of order).
+    older_span = handler.spans[older_run].span
+    handler._end_span(older_span, older_run)
+
+    assert _suppression_active(), (
+        "Ending the older of two overlapping LLM runs must not clear the "
+        "newer run's suppression: the older token is not on top of the stack "
+        "and its reset must be skipped."
+    )
+
+    handler._end_span(handler.spans[newer_run].span, newer_run)
+
+
+def test_overlapping_llm_runs_end_in_order_clear_suppression(handler):
+    """
+    Overlapping LLM runs that end in reverse start order (the normal case)
+    must unwind cleanly back to no suppression.
+    """
+    older_run = uuid4()
+    newer_run = uuid4()
+
+    handler._create_llm_span(older_run, None, "gpt-4", LLMRequestTypeValues.CHAT)
+    handler._create_llm_span(newer_run, None, "gpt-4", LLMRequestTypeValues.CHAT)
+
+    handler._end_span(handler.spans[newer_run].span, newer_run)
+    assert _suppression_active(), "older run's suppression still active"
+
+    handler._end_span(handler.spans[older_run].span, older_run)
+    assert not _suppression_active(), (
+        "After both overlapping runs end in order, suppression must be cleared."
+    )
+
+
+def test_parent_end_unwinds_children_newest_first(handler):
+    """
+    Ending a parent with two still-active children must unwind the context
+    stack newest-first, leaving the pre-parent context current.
+
+    With insertion-order unwinding the older child's reset is skipped (the
+    newer child is current), and resetting the newer child afterwards
+    resurrects the older child's already-ended span as current, so later work
+    is parented under an ended span.
+    """
+    from opentelemetry.trace import get_current_span
+
+    baseline = get_current_span()
+
+    parent_run = uuid4()
+    child_a = uuid4()
+    child_b = uuid4()
+
+    handler._create_span(parent_run, None, "parent")
+    handler._create_span(child_a, parent_run, "child-a")
+    handler._create_span(child_b, parent_run, "child-b")
+
+    assert get_current_span() is handler.spans[child_b].span, "sanity: newest child current"
+
+    handler._end_span(handler.spans[parent_run].span, parent_run)
+
+    assert get_current_span() is baseline, (
+        "After the parent ends, the current span must be the pre-parent "
+        "context; an ended child span left current would adopt later work "
+        "into a finished trace."
     )

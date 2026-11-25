@@ -73,7 +73,7 @@ from opentelemetry.semconv_ai import (
     SpanAttributes,
     TraceloopSpanKindValues,
 )
-from opentelemetry.trace import SpanKind, Tracer, set_span_in_context
+from opentelemetry.trace import SpanKind, Tracer, get_current_span, set_span_in_context
 from opentelemetry.instrumentation.langchain.patch import (
     LANGGRAPH_FLOW_KEY,
     LANGGRAPH_GRAPH_SPAN_KEY,
@@ -252,15 +252,41 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             return
 
         if span_holder.token:
-            self._safe_detach_context(span_holder.token)
+            if span_holder.token_is_span:
+                still_current = get_current_span() is span_holder.span
+            else:
+                # The suppression token is on top only while the unique marker
+                # this run attached is the current context value. Overlapping
+                # runs all make the flag truthy, so a truthiness check would
+                # reset an older run's token from under a newer one.
+                still_current = (
+                    span_holder.suppression_marker is not None
+                    and context_api.get_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY)
+                    is span_holder.suppression_marker
+                )
+            self._safe_detach_context(span_holder.token, still_current)
             span_holder.token = None
         if span_holder.association_properties_token:
-            self._safe_detach_context(span_holder.association_properties_token)
+            # Identity, not equality: two runs with equal metadata (including
+            # {}) attach equal-but-distinct dicts, and resetting an older
+            # run's token while a newer dict is current would pop it.
+            still_current = (
+                span_holder.association_properties is not None
+                and context_api.get_value("association_properties")
+                is span_holder.association_properties
+            )
+            self._safe_detach_context(
+                span_holder.association_properties_token, still_current
+            )
             span_holder.association_properties_token = None
 
     def _end_span(self, span: Span, run_id: UUID) -> None:
         """End a span and clean up any tracked context tokens for it and its children."""
-        for child_id in list(self.spans[run_id].children):
+        # Children are recorded in start order; unwind in reverse so each
+        # token is reset while its own context is on top of the stack.
+        # Resetting a newer child's token first would otherwise resurrect an
+        # older child's already-ended span as the current context.
+        for child_id in reversed(list(self.spans[run_id].children)):
             if child_id in self.spans:
                 child_holder = self.spans[child_id]
                 child_span = child_holder.span
@@ -288,7 +314,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             # Return None to indicate no token needs to be detached later.
             return None
 
-    def _safe_detach_context(self, token):
+    def _safe_detach_context(self, token, still_current: bool = True):
         """
         Safely detach context token without causing application crashes.
 
@@ -296,9 +322,15 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         all known edge cases in async/concurrent scenarios where context tokens may
         become invalid or be detached in different execution contexts.
 
+        ``still_current`` tells whether the context this token attached is still
+        on top of the context stack. When it is not (for example a suspended or
+        abandoned LangGraph stream whose spans end from a later generator
+        finalization), resetting the token would resurrect a stale context and
+        adopt unrelated work into this span's trace, so the reset is skipped.
+
         We use the runtime context directly to avoid logging errors from context_api.detach()
         """
-        if not token:
+        if not token or not still_current:
             return
 
         try:
@@ -338,6 +370,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             self._detach_holder_contexts(old_holder)
 
         association_properties_token = None
+        merged_association_properties = None
         if metadata is not None:
             current_association_properties = (
                 context_api.get_value("association_properties") or {}
@@ -351,11 +384,18 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
                 if v is not None
                 and (sanitized := _sanitize_metadata_value(v)) is not None
             }
+            # Build the merged dict once and attach that exact object: detach
+            # later compares the current context value by identity to decide
+            # whether this run's frame is still on top of the stack.
+            merged_association_properties = {
+                **current_association_properties,
+                **sanitized_metadata,
+            }
             try:
                 association_properties_token = context_api.attach(
                     context_api.set_value(
                         "association_properties",
-                        {**current_association_properties, **sanitized_metadata},
+                        merged_association_properties,
                     )
                 )
             except Exception:
@@ -413,6 +453,7 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             entity_name,
             entity_path,
             association_properties_token=association_properties_token,
+            association_properties=merged_association_properties,
         )
 
         if parent_run_id is not None and parent_run_id in self.spans:
@@ -558,17 +599,28 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
         # ContextVar.reset() would wipe the suppression flag.
         current_holder = self.spans.get(run_id)
         if current_holder is not None and current_holder.token is not None:
-            self._safe_detach_context(current_holder.token)
+            self._safe_detach_context(
+                current_holder.token,
+                get_current_span() is current_holder.span,
+            )
 
         # we already have an LLM span by this point,
         # so skip any downstream instrumentation from here
         try:
+            # Attach a unique marker object rather than a bare True so detach
+            # can tell by identity whether this run's suppression is still on
+            # top of the stack. Downstream instrumentations only check the
+            # flag for truthiness, so an opaque marker stays compatible.
+            suppression_marker = object()
             token = context_api.attach(
-                context_api.set_value(SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, True)
+                context_api.set_value(
+                    SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY, suppression_marker
+                )
             )
         except Exception:
             # If context setting fails, continue without suppression token
             token = None
+            suppression_marker = None
 
         self.spans[run_id] = SpanHolder(
             span,
@@ -581,6 +633,11 @@ class TraceloopCallbackHandler(BaseCallbackHandler):
             association_properties_token=(
                 current_holder.association_properties_token if current_holder else None
             ),
+            association_properties=(
+                current_holder.association_properties if current_holder else None
+            ),
+            token_is_span=False,
+            suppression_marker=suppression_marker,
         )
 
         return span
