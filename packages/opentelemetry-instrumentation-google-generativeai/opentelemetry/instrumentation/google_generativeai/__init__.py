@@ -256,41 +256,46 @@ async def _awrap(
     )
     start_time = time.perf_counter()
     await _handle_request_async(span, args, kwargs, llm_model, event_logger)
+    stream_response = False
     try:
-        response = await wrapped(*args, **kwargs)
-    except Exception as e:
-        span.record_exception(e)
-        span.set_status(StatusCode.ERROR)
-        span.end()
-        raise e
+        try:
+            response = await wrapped(*args, **kwargs)
+        except Exception as e:
+            span.record_exception(e)
+            span.set_status(StatusCode.ERROR)
+            raise e
 
-    if duration_histogram:
-        duration = time.perf_counter() - start_time
-        duration_histogram.record(
-            duration,
-            attributes={
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
-                GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
-                GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
-                GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
-            },
-        )
-    if response:
-        if is_streaming_response(response):
-            return _build_from_streaming_response(
-                span, response, llm_model, event_logger, token_histogram
+        if duration_histogram:
+            duration = time.perf_counter() - start_time
+            duration_histogram.record(
+                duration,
+                attributes={
+                    GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
+                    GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
+                    GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
+                    GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
+                },
             )
-        elif is_async_streaming_response(response):
-            return _abuild_from_streaming_response(
-                span, response, llm_model, event_logger, token_histogram
-            )
-        else:
-            _handle_response(
-                span, response, llm_model, event_logger, token_histogram
-            )
+        if response:
+            if is_streaming_response(response):
+                stream_response = True
+                return _build_from_streaming_response(
+                    span, response, llm_model, event_logger, token_histogram
+                )
+            elif is_async_streaming_response(response):
+                stream_response = True
+                return _abuild_from_streaming_response(
+                    span, response, llm_model, event_logger, token_histogram
+                )
+            else:
+                _handle_response(
+                    span, response, llm_model, event_logger, token_histogram
+                )
 
-    span.end()
-    return response
+        return response
+    finally:
+        if not stream_response:
+            span.end()
 
 
 @_with_tracer_wrapper
@@ -335,41 +340,46 @@ def _wrap(
 
     start_time = time.perf_counter()
     _handle_request(span, args, kwargs, llm_model, event_logger)
+    stream_response = False
     try:
-        response = wrapped(*args, **kwargs)
-    except Exception as e:
-        span.record_exception(e)
-        span.set_status(StatusCode.ERROR)
-        span.end()
-        raise e
+        try:
+            response = wrapped(*args, **kwargs)
+        except Exception as e:
+            span.record_exception(e)
+            span.set_status(StatusCode.ERROR)
+            raise e
 
-    if duration_histogram:
-        duration = time.perf_counter() - start_time
-        duration_histogram.record(
-            duration,
-            attributes={
-                GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
-                GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
-                GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
-                GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
-            },
-        )
-    if response:
-        if is_streaming_response(response):
-            return _build_from_streaming_response(
-                span, response, llm_model, event_logger, token_histogram
+        if duration_histogram:
+            duration = time.perf_counter() - start_time
+            duration_histogram.record(
+                duration,
+                attributes={
+                    GenAIAttributes.GEN_AI_PROVIDER_NAME: _GCP_GEN_AI,
+                    GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_CONTENT,
+                    GenAIAttributes.GEN_AI_REQUEST_MODEL: llm_model,
+                    GenAIAttributes.GEN_AI_RESPONSE_MODEL: llm_model,
+                },
             )
-        elif is_async_streaming_response(response):
-            return _abuild_from_streaming_response(
-                span, response, llm_model, event_logger, token_histogram
-            )
-        else:
-            _handle_response(
-                span, response, llm_model, event_logger, token_histogram
-            )
+        if response:
+            if is_streaming_response(response):
+                stream_response = True
+                return _build_from_streaming_response(
+                    span, response, llm_model, event_logger, token_histogram
+                )
+            elif is_async_streaming_response(response):
+                stream_response = True
+                return _abuild_from_streaming_response(
+                    span, response, llm_model, event_logger, token_histogram
+                )
+            else:
+                _handle_response(
+                    span, response, llm_model, event_logger, token_histogram
+                )
 
-    span.end()
-    return response
+        return response
+    finally:
+        if not stream_response:
+            span.end()
 
 
 def is_metrics_enabled() -> bool:
