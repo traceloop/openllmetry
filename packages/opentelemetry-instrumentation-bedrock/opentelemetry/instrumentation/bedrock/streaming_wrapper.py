@@ -106,19 +106,38 @@ class StreamingWrapper(ObjectProxy):
 
         self._stream_done_callback = stream_done_callback
         self._accumulating_body = {}
+        self._done = False
 
     def __iter__(self):
         it = iter(self.__wrapped__)
-        done = False
-        while not done:
-            try:
-                event = next(it)
+        # try/finally ensures the callback (which ends the span) always fires,
+        # even if the caller breaks out of `for` early, closes the stream, or
+        # drops the iterator. The `_done` guard prevents double-firing if the
+        # wrapper is iterated more than once. Mirrors AsyncStreamingWrapper.
+        try:
+            while True:
+                try:
+                    event = next(it)
+                except StopIteration:
+                    break
                 self._process_event(event)
                 yield event
-            except StopIteration:
-                done = True
-                if self._stream_done_callback:
-                    self._stream_done_callback(self._accumulating_body)
+        finally:
+            self._ensure_done()
+
+    def close(self):
+        # End the span promptly when the caller closes the stream instead of
+        # waiting for the abandoned iterator to be garbage-collected, then
+        # delegate to the wrapped stream's own close().
+        self._ensure_done()
+        close = getattr(self.__wrapped__, "close", None)
+        if callable(close):
+            close()
+
+    def _ensure_done(self):
+        if self._stream_done_callback and not self._done:
+            self._done = True
+            self._stream_done_callback(self._accumulating_body)
 
     @dont_throw
     def _process_event(self, event):
