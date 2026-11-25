@@ -14,6 +14,8 @@ from opentelemetry.sdk._logs.export import (
     InMemoryLogExporter,
     SimpleLogRecordProcessor,
 )
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import InMemoryMetricReader
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
@@ -54,6 +56,16 @@ def fixture_logger_provider(log_exporter):
     return provider
 
 
+@pytest.fixture(scope="function", name="reader")
+def fixture_reader():
+    return InMemoryMetricReader()
+
+
+@pytest.fixture(scope="function", name="meter_provider")
+def fixture_meter_provider(reader):
+    return MeterProvider(metric_readers=[reader])
+
+
 class _Caller:
     """Calls `<resource>.create` on a sync or async together client."""
 
@@ -86,10 +98,11 @@ def caller(request):
 
 
 @pytest.fixture(scope="function")
-def instrument_legacy(tracer_provider):
+def instrument_legacy(tracer_provider, meter_provider):
     instrumentor = TogetherAiInstrumentor()
     instrumentor.instrument(
         tracer_provider=tracer_provider,
+        meter_provider=meter_provider,
     )
 
     yield instrumentor
@@ -98,13 +111,14 @@ def instrument_legacy(tracer_provider):
 
 
 @pytest.fixture(scope="function")
-def instrument_with_content(tracer_provider, logger_provider):
+def instrument_with_content(tracer_provider, logger_provider, meter_provider):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "True"})
 
-    instrumentor = TogetherAiInstrumentor(use_legacy_attributes=False)
+    instrumentor = TogetherAiInstrumentor(use_attributes=False)
     instrumentor.instrument(
         tracer_provider=tracer_provider,
         logger_provider=logger_provider,
+        meter_provider=meter_provider,
     )
 
     yield instrumentor
@@ -114,13 +128,14 @@ def instrument_with_content(tracer_provider, logger_provider):
 
 
 @pytest.fixture(scope="function")
-def instrument_with_no_content(tracer_provider, logger_provider):
+def instrument_with_no_content(tracer_provider, logger_provider, meter_provider):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "False"})
 
-    instrumentor = TogetherAiInstrumentor(use_legacy_attributes=False)
+    instrumentor = TogetherAiInstrumentor(use_attributes=False)
     instrumentor.instrument(
         tracer_provider=tracer_provider,
         logger_provider=logger_provider,
+        meter_provider=meter_provider,
     )
 
     yield instrumentor

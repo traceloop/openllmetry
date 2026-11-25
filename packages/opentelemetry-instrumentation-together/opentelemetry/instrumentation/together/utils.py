@@ -1,11 +1,39 @@
 import logging
 import os
 import traceback
+from enum import Enum
 
 from opentelemetry import context as context_api
 from opentelemetry.instrumentation.together.config import Config
+from opentelemetry.semconv_ai import GenAISystem
 
 TRACELOOP_TRACE_CONTENT = "TRACELOOP_TRACE_CONTENT"
+
+# OTel's GenAiProviderNameValues has no Together entry, so use this repo's constant.
+TOGETHER_PROVIDER = GenAISystem.TOGETHER_AI.value
+
+
+def set_span_attribute(span, name, value):
+    if value is not None and value != "":
+        span.set_attribute(name, value)
+
+
+def enum_value(value):
+    """together 1.x returns str enums (e.g. FinishReason.EOS); 2.x/3.x returns plain strings."""
+    return value.value if isinstance(value, Enum) else value
+
+
+def model_as_dict(model):
+    """Return SDK models (pydantic in every together version) as plain dicts."""
+    if isinstance(model, dict):
+        return model
+    if hasattr(model, "model_dump"):
+        return model.model_dump()
+    return model
+
+
+def is_metrics_enabled() -> bool:
+    return (os.getenv("TRACELOOP_METRICS_ENABLED") or "true").lower() == "true"
 
 
 def should_send_prompts():

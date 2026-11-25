@@ -7,7 +7,9 @@ from opentelemetry.instrumentation.together.event_models import (
     CompletionEvent,
     PromptEvent,
 )
+from opentelemetry.instrumentation.together.span_utils import map_finish_reason
 from opentelemetry.instrumentation.together.utils import (
+    TOGETHER_PROVIDER,
     dont_throw,
     should_emit_events,
     should_send_prompts,
@@ -30,7 +32,7 @@ class Roles(Enum):
 VALID_MESSAGE_ROLES = {role.value for role in Roles}
 """The valid roles for naming the message event."""
 
-EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_SYSTEM: "together"}
+EVENT_ATTRIBUTES = {GenAIAttributes.GEN_AI_PROVIDER_NAME: TOGETHER_PROVIDER}
 """The attributes to be used for the event."""
 
 
@@ -65,7 +67,7 @@ def emit_completion_event(event_logger, llm_request_type, response):
                         "content": choice.message.content,
                         "role": choice.message.role,
                     },
-                    finish_reason=choice.finish_reason,
+                    finish_reason=map_finish_reason(choice.finish_reason),
                 ),
                 event_logger,
             )
@@ -75,7 +77,7 @@ def emit_completion_event(event_logger, llm_request_type, response):
                 CompletionEvent(
                     index=choice.index,
                     message={"content": choice.text, "role": "assistant"},
-                    finish_reason=choice.finish_reason,
+                    finish_reason=map_finish_reason(choice.finish_reason),
                 ),
                 event_logger,
             )

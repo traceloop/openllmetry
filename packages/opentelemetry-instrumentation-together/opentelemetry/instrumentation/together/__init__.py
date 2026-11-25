@@ -1,8 +1,9 @@
 """OpenTelemetry Together AI instrumentation"""
 
 import logging
+import time
 import warnings
-from typing import Collection, Optional
+from typing import Callable, Collection, Optional
 
 from opentelemetry import context as context_api
 from opentelemetry._logs import get_logger
@@ -13,25 +14,32 @@ from opentelemetry.instrumentation.together.event_emitter import (
     emit_prompt_events,
 )
 from opentelemetry.instrumentation.together.span_utils import (
-    set_completion_attributes,
-    set_model_completion_attributes,
-    set_model_prompt_attributes,
-    set_prompt_attributes,
+    set_input_attributes,
+    set_model_input_attributes,
+    set_model_response_attributes,
+    set_output_attributes,
 )
-from opentelemetry.instrumentation.together.utils import dont_throw, should_emit_events
+from opentelemetry.instrumentation.together.utils import (
+    TOGETHER_PROVIDER,
+    dont_throw,
+    is_metrics_enabled,
+    model_as_dict,
+    should_emit_events,
+)
 from opentelemetry.instrumentation.together.version import __version__
 from opentelemetry.instrumentation.utils import (
     _SUPPRESS_INSTRUMENTATION_KEY,
     unwrap,
 )
+from opentelemetry.metrics import get_meter
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
-    SpanAttributes,
 )
 from opentelemetry.trace import SpanKind, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
@@ -44,81 +52,62 @@ _instruments = ("together >= 1.2.0, <4",)
 _CHAT_MODULE = "together.resources.chat.completions"
 _COMPLETIONS_MODULE = "together.resources.completions"
 
+_OPERATION_NAMES = {
+    LLMRequestTypeValues.CHAT: GenAIAttributes.GenAiOperationNameValues.CHAT.value,
+    LLMRequestTypeValues.COMPLETION: GenAIAttributes.GenAiOperationNameValues.TEXT_COMPLETION.value,
+}
+
+
+def _method(module, obj, request_type, is_async):
+    return {
+        "module": module,
+        "object": obj,
+        "request_type": request_type,
+        "operation": _OPERATION_NAMES[request_type],
+        "is_async": is_async,
+    }
+
+
+_CHAT = LLMRequestTypeValues.CHAT
+_COMPLETION = LLMRequestTypeValues.COMPLETION
+
 # together 1.x and together 2.x/3.x use the same modules but different class
 # names. Every entry is tried; the ones missing from the installed version are
 # skipped in `_instrument`.
 WRAPPED_METHODS = [
     # together 1.x
-    {
-        "module": _CHAT_MODULE,
-        "object": "ChatCompletions",
-        "span_name": "together.chat",
-        "request_type": LLMRequestTypeValues.CHAT,
-        "is_async": False,
-    },
-    {
-        "module": _CHAT_MODULE,
-        "object": "AsyncChatCompletions",
-        "span_name": "together.chat",
-        "request_type": LLMRequestTypeValues.CHAT,
-        "is_async": True,
-    },
-    {
-        "module": _COMPLETIONS_MODULE,
-        "object": "Completions",
-        "span_name": "together.completion",
-        "request_type": LLMRequestTypeValues.COMPLETION,
-        "is_async": False,
-    },
-    {
-        "module": _COMPLETIONS_MODULE,
-        "object": "AsyncCompletions",
-        "span_name": "together.completion",
-        "request_type": LLMRequestTypeValues.COMPLETION,
-        "is_async": True,
-    },
+    _method(_CHAT_MODULE, "ChatCompletions", _CHAT, is_async=False),
+    _method(_CHAT_MODULE, "AsyncChatCompletions", _CHAT, is_async=True),
+    _method(_COMPLETIONS_MODULE, "Completions", _COMPLETION, is_async=False),
+    _method(_COMPLETIONS_MODULE, "AsyncCompletions", _COMPLETION, is_async=True),
     # together 2.x / 3.x
-    {
-        "module": _CHAT_MODULE,
-        "object": "CompletionsResource",
-        "span_name": "together.chat",
-        "request_type": LLMRequestTypeValues.CHAT,
-        "is_async": False,
-    },
-    {
-        "module": _CHAT_MODULE,
-        "object": "AsyncCompletionsResource",
-        "span_name": "together.chat",
-        "request_type": LLMRequestTypeValues.CHAT,
-        "is_async": True,
-    },
-    {
-        "module": _COMPLETIONS_MODULE,
-        "object": "CompletionsResource",
-        "span_name": "together.completion",
-        "request_type": LLMRequestTypeValues.COMPLETION,
-        "is_async": False,
-    },
-    {
-        "module": _COMPLETIONS_MODULE,
-        "object": "AsyncCompletionsResource",
-        "span_name": "together.completion",
-        "request_type": LLMRequestTypeValues.COMPLETION,
-        "is_async": True,
-    },
+    _method(_CHAT_MODULE, "CompletionsResource", _CHAT, is_async=False),
+    _method(_CHAT_MODULE, "AsyncCompletionsResource", _CHAT, is_async=True),
+    _method(_COMPLETIONS_MODULE, "CompletionsResource", _COMPLETION, is_async=False),
+    _method(_COMPLETIONS_MODULE, "AsyncCompletionsResource", _COMPLETION, is_async=True),
 ]
 
 
-def _with_tracer_wrapper(func):
-    """Helper for providing tracer for wrapper functions."""
+class _Telemetry:
+    """The signal producers shared by every wrapped method."""
 
-    def _with_tracer(tracer, event_logger, to_wrap):
+    def __init__(self, tracer, event_logger, token_histogram, duration_histogram):
+        self.tracer = tracer
+        self.event_logger = event_logger
+        self.token_histogram = token_histogram
+        self.duration_histogram = duration_histogram
+
+
+def _with_telemetry_wrapper(func):
+    """Helper for providing the telemetry producers to wrapper functions."""
+
+    def _with_telemetry(telemetry, to_wrap):
         def wrapper(wrapped, instance, args, kwargs):
-            return func(tracer, event_logger, to_wrap, wrapped, instance, args, kwargs)
+            return func(telemetry, to_wrap, wrapped, instance, args, kwargs)
 
         return wrapper
 
-    return _with_tracer
+    return _with_telemetry
 
 
 def _is_suppressed():
@@ -129,101 +118,133 @@ def _is_suppressed():
 
 @dont_throw
 def _handle_input(span, event_logger, llm_request_type, kwargs):
-    set_model_prompt_attributes(span, kwargs)
+    set_model_input_attributes(span, kwargs)
 
     if should_emit_events() and event_logger:
         emit_prompt_events(event_logger, llm_request_type, kwargs)
     else:
-        set_prompt_attributes(span, llm_request_type, kwargs)
+        set_input_attributes(span, llm_request_type, kwargs)
 
 
 @dont_throw
 def _handle_response(span, event_logger, llm_request_type, response):
+    set_model_response_attributes(span, response)
+
     if should_emit_events() and event_logger:
         emit_completion_event(event_logger, llm_request_type, response)
     else:
-        set_completion_attributes(span, llm_request_type, response)
-
-    set_model_completion_attributes(span, response)
+        set_output_attributes(span, llm_request_type, response)
 
 
-def _start_span(tracer, event_logger, to_wrap, kwargs):
-    llm_request_type = to_wrap.get("request_type")
-    span = tracer.start_span(
-        to_wrap.get("span_name"),
+def _metric_attributes(to_wrap, kwargs, response=None):
+    attributes = {
+        **Config.get_common_metrics_attributes(),
+        GenAIAttributes.GEN_AI_PROVIDER_NAME: TOGETHER_PROVIDER,
+        GenAIAttributes.GEN_AI_OPERATION_NAME: to_wrap.get("operation"),
+        GenAIAttributes.GEN_AI_REQUEST_MODEL: kwargs.get("model"),
+    }
+    if response is not None:
+        attributes[GenAIAttributes.GEN_AI_RESPONSE_MODEL] = model_as_dict(response).get("model")
+    return {key: value for key, value in attributes.items() if value is not None}
+
+
+@dont_throw
+def _record_duration(telemetry, to_wrap, kwargs, start_time, response=None, error=None):
+    if telemetry.duration_histogram is None:
+        return
+    attributes = _metric_attributes(to_wrap, kwargs, response)
+    if error is not None:
+        attributes[ERROR_TYPE] = error.__class__.__name__
+    telemetry.duration_histogram.record(time.perf_counter() - start_time, attributes=attributes)
+
+
+@dont_throw
+def _record_token_usage(telemetry, to_wrap, kwargs, response):
+    if telemetry.token_histogram is None:
+        return
+    usage = model_as_dict(response).get("usage") or {}
+    attributes = _metric_attributes(to_wrap, kwargs, response)
+    for token_type, key in (("input", "prompt_tokens"), ("output", "completion_tokens")):
+        tokens = usage.get(key)
+        if isinstance(tokens, int) and tokens >= 0:
+            telemetry.token_histogram.record(
+                tokens,
+                attributes={**attributes, GenAIAttributes.GEN_AI_TOKEN_TYPE: token_type},
+            )
+
+
+def _start_span(telemetry, to_wrap, kwargs):
+    operation = to_wrap.get("operation")
+    model = kwargs.get("model")
+    attributes = {
+        GenAIAttributes.GEN_AI_PROVIDER_NAME: TOGETHER_PROVIDER,
+        GenAIAttributes.GEN_AI_OPERATION_NAME: operation,
+    }
+    if model:
+        attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] = model
+    span = telemetry.tracer.start_span(
+        f"{operation} {model}" if model else operation,
         kind=SpanKind.CLIENT,
-        attributes={
-            GenAIAttributes.GEN_AI_SYSTEM: "TogetherAI",
-            SpanAttributes.LLM_REQUEST_TYPE: llm_request_type.value,
-        },
+        attributes=attributes,
     )
-    _handle_input(span, event_logger, llm_request_type, kwargs)
+    _handle_input(span, telemetry.event_logger, to_wrap.get("request_type"), kwargs)
     return span
 
 
-def _end_span_with_error(span, error):
+def _end_span_with_error(telemetry, to_wrap, kwargs, start_time, span, error):
+    _record_duration(telemetry, to_wrap, kwargs, start_time, error=error)
     span.set_attribute(ERROR_TYPE, error.__class__.__name__)
     span.record_exception(error)
     span.set_status(Status(StatusCode.ERROR, str(error)))
     span.end()
 
 
-def _end_span_with_response(span, event_logger, to_wrap, response):
-    if response:
-        _handle_response(span, event_logger, to_wrap.get("request_type"), response)
-        if span.is_recording():
-            span.set_status(Status(StatusCode.OK))
+def _end_span_with_response(telemetry, to_wrap, kwargs, start_time, span, response):
+    # Streaming responses are not instrumented yet: the span only covers the
+    # request, and there is no complete response to read attributes or usage from.
+    if response and not kwargs.get("stream"):
+        _record_duration(telemetry, to_wrap, kwargs, start_time, response=response)
+        _record_token_usage(telemetry, to_wrap, kwargs, response)
+        _handle_response(span, telemetry.event_logger, to_wrap.get("request_type"), response)
+    if response and span.is_recording():
+        span.set_status(Status(StatusCode.OK))
     span.end()
 
 
-@_with_tracer_wrapper
-def _wrap(
-    tracer,
-    event_logger,
-    to_wrap,
-    wrapped,
-    instance,
-    args,
-    kwargs,
-):
+@_with_telemetry_wrapper
+def _wrap(telemetry, to_wrap, wrapped, instance, args, kwargs):
     """Instruments and calls every sync function defined in WRAPPED_METHODS."""
     if _is_suppressed():
         return wrapped(*args, **kwargs)
 
-    span = _start_span(tracer, event_logger, to_wrap, kwargs)
+    span = _start_span(telemetry, to_wrap, kwargs)
+    start_time = time.perf_counter()
     try:
         response = wrapped(*args, **kwargs)
-    except Exception as e:
-        _end_span_with_error(span, e)
+    except BaseException as e:
+        _end_span_with_error(telemetry, to_wrap, kwargs, start_time, span, e)
         raise
 
-    _end_span_with_response(span, event_logger, to_wrap, response)
+    _end_span_with_response(telemetry, to_wrap, kwargs, start_time, span, response)
     return response
 
 
-@_with_tracer_wrapper
-async def _awrap(
-    tracer,
-    event_logger,
-    to_wrap,
-    wrapped,
-    instance,
-    args,
-    kwargs,
-):
+@_with_telemetry_wrapper
+async def _awrap(telemetry, to_wrap, wrapped, instance, args, kwargs):
     """Instruments and calls every async function defined in WRAPPED_METHODS."""
     if _is_suppressed():
         return await wrapped(*args, **kwargs)
 
-    span = _start_span(tracer, event_logger, to_wrap, kwargs)
+    span = _start_span(telemetry, to_wrap, kwargs)
+    start_time = time.perf_counter()
     try:
         response = await wrapped(*args, **kwargs)
     except BaseException as e:
         # BaseException so the span also ends on asyncio cancellation.
-        _end_span_with_error(span, e)
+        _end_span_with_error(telemetry, to_wrap, kwargs, start_time, span, e)
         raise
 
-    _end_span_with_response(span, event_logger, to_wrap, response)
+    _end_span_with_response(telemetry, to_wrap, kwargs, start_time, span, response)
     return response
 
 
@@ -235,6 +256,7 @@ class TogetherAiInstrumentor(BaseInstrumentor):
         exception_logger=None,
         use_attributes: Optional[bool] = None,
         use_legacy_attributes: Optional[bool] = None,
+        get_common_metrics_attributes: Callable[[], dict] = lambda: {},
     ):
         super().__init__()
         if use_attributes is not None and use_legacy_attributes is not None:
@@ -257,6 +279,7 @@ class TogetherAiInstrumentor(BaseInstrumentor):
         if use_attributes is None:
             use_attributes = True
         Config.exception_logger = exception_logger
+        Config.get_common_metrics_attributes = get_common_metrics_attributes
         Config.use_legacy_attributes = use_attributes
 
     def instrumentation_dependencies(self) -> Collection[str]:
@@ -266,12 +289,21 @@ class TogetherAiInstrumentor(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, __version__, tracer_provider)
 
+        token_histogram = None
+        duration_histogram = None
+        if is_metrics_enabled():
+            meter = get_meter(__name__, __version__, kwargs.get("meter_provider"))
+            token_histogram = GenAIMetrics.create_gen_ai_client_token_usage(meter)
+            duration_histogram = GenAIMetrics.create_gen_ai_client_operation_duration(meter)
+
         event_logger = None
         if not Config.use_legacy_attributes:
             logger_provider = kwargs.get("logger_provider")
             event_logger = get_logger(
                 __name__, __version__, logger_provider=logger_provider
             )
+
+        telemetry = _Telemetry(tracer, event_logger, token_histogram, duration_histogram)
 
         for wrapped_method in WRAPPED_METHODS:
             module = wrapped_method.get("module")
@@ -281,7 +313,7 @@ class TogetherAiInstrumentor(BaseInstrumentor):
                 wrap_function_wrapper(
                     module,
                     f"{obj}.create",
-                    wrapper(tracer, event_logger, wrapped_method),
+                    wrapper(telemetry, wrapped_method),
                 )
             except (ImportError, AttributeError):
                 # Class isn't in the installed together version.
