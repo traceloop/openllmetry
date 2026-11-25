@@ -22,8 +22,8 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanE
 from together import AsyncTogether, Together
 
 # The suite runs once per together major line (see the `test` target in
-# project.json). 1.x and 2.x/3.x call different hosts, so each line replays its
-# own cassettes. 2.x shares the 3.x SDK and is covered by the 3.x run.
+# project.json). 1.x replays the v1 cassettes, recorded with the 1.x SDK. 2.x and
+# 3.x share the rewritten SDK, so both replay the v3 cassettes, recorded with 3.x.
 TOGETHER_MAJOR = int(version("together").split(".")[0])
 SDK_LINE = "v1" if TOGETHER_MAJOR < 2 else "v3"
 
@@ -159,4 +159,11 @@ def vcr_cassette_dir(request):
 
 @pytest.fixture(scope="module")
 def vcr_config():
-    return {"filter_headers": ["authorization"], "decode_compressed_response": True}
+    # Every SDK release line defaults to its own API host (api.together.xyz,
+    # api.together.ai, api-inference.together.ai), so the host is not matched.
+    # That lets one recording replay on every release in a line.
+    return {
+        "filter_headers": ["authorization"],
+        "decode_compressed_response": True,
+        "match_on": ["method", "scheme", "port", "path", "query"],
+    }
