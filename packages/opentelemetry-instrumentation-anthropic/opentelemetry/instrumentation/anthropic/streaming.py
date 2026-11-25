@@ -256,9 +256,15 @@ class AnthropicStream(ObjectProxy):
                 self._complete_instrumentation()
             raise
         except Exception as e:
-            attributes = error_metrics_attributes(e)
-            if self._exception_counter:
-                self._exception_counter.add(1, attributes=attributes)
+            # Handle errors during streaming
+            if not self._instrumentation_completed:
+                attributes = error_metrics_attributes(e)
+                if self._exception_counter:
+                    self._exception_counter.add(1, attributes=attributes)
+                if self._span and self._span.is_recording():
+                    self._span.set_status(Status(StatusCode.ERROR, str(e)))
+                self._span.end()
+                self._instrumentation_completed = True
             raise
         _process_response_item(item, self._complete_response)
         return item
