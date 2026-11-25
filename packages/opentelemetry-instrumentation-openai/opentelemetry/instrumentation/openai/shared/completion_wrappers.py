@@ -24,7 +24,9 @@ from opentelemetry.instrumentation.openai.shared.event_models import (
 from opentelemetry.instrumentation.openai.utils import (
     _with_tracer_wrapper,
     dont_throw,
+    ensure_stream_usage,
     is_openai_v1,
+    is_usage_only_chunk,
     json_dumps,
     should_emit_events,
     should_send_prompts,
@@ -67,6 +69,7 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
         _handle_request(span, kwargs, instance)
 
         try:
+            hide_usage_chunk = ensure_stream_usage(kwargs, instance)
             response = wrapped(*args, **kwargs)
         except Exception as e:
             span.set_attribute(ERROR_TYPE, e.__class__.__name__)
@@ -77,7 +80,9 @@ def completion_wrapper(tracer, wrapped, instance, args, kwargs):
 
         if is_streaming_response(response):
             # span will be closed after the generator is done
-            return _build_from_streaming_response(span, kwargs, response)
+            return _build_from_streaming_response(
+                span, kwargs, response, hide_usage_chunk
+            )
         else:
             _handle_response(response, span, instance)
 
@@ -103,6 +108,7 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
         _handle_request(span, kwargs, instance)
 
         try:
+            hide_usage_chunk = ensure_stream_usage(kwargs, instance)
             response = await wrapped(*args, **kwargs)
         except Exception as e:
             span.set_attribute(ERROR_TYPE, e.__class__.__name__)
@@ -113,7 +119,9 @@ async def acompletion_wrapper(tracer, wrapped, instance, args, kwargs):
 
         if is_streaming_response(response):
             # span will be closed after the generator is done
-            return _abuild_from_streaming_response(span, kwargs, response)
+            return _abuild_from_streaming_response(
+                span, kwargs, response, hide_usage_chunk
+            )
         else:
             _handle_response(response, span, instance)
 
@@ -206,11 +214,15 @@ def _set_output_messages(span, choices):
 
 
 @dont_throw
-def _build_from_streaming_response(span, request_kwargs, response):
+def _build_from_streaming_response(
+    span, request_kwargs, response, hide_usage_chunk=False
+):
     complete_response = {"choices": [], "model": "", "id": ""}
     for item in response:
-        yield item
         _accumulate_streaming_response(complete_response, item)
+        if hide_usage_chunk and is_usage_only_chunk(item):
+            continue
+        yield item
 
     _set_response_attributes(span, complete_response)
 
@@ -227,11 +239,15 @@ def _build_from_streaming_response(span, request_kwargs, response):
 
 
 @dont_throw
-async def _abuild_from_streaming_response(span, request_kwargs, response):
+async def _abuild_from_streaming_response(
+    span, request_kwargs, response, hide_usage_chunk=False
+):
     complete_response = {"choices": [], "model": "", "id": ""}
     async for item in response:
-        yield item
         _accumulate_streaming_response(complete_response, item)
+        if hide_usage_chunk and is_usage_only_chunk(item):
+            continue
+        yield item
 
     _set_response_attributes(span, complete_response)
 

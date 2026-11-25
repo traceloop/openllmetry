@@ -57,6 +57,15 @@ def _process_response_item(item, complete_response):
             elif item.delta.type == "input_json_delta":
                 if event.get("type") == "tool_use":
                     event["input"] = event.get("input", "") + item.delta.partial_json
+    elif item.type == "completion":
+        # Legacy text completions stream ``completion`` events instead of
+        # content blocks. Accumulate the text so the fallback token count sees
+        # it instead of counting an empty string.
+        events = complete_response.setdefault("events", [])
+        index = getattr(item, "index", 0) or 0
+        while len(events) <= index:
+            events.append({"index": len(events), "text": "", "type": "text"})
+        events[index]["text"] += getattr(item, "completion", "") or ""
     elif item.type == "message_delta":
         for event in complete_response.get("events", []):
             event["finish_reason"] = item.delta.stop_reason
@@ -163,7 +172,11 @@ def _resolve_stream_token_usage(complete_response, instance, kwargs):
         for event in complete_response.get("events", [])
         if event.get("text")
     )
-    if complete_response.get("model") and hasattr(instance, "count_tokens"):
+    if (
+        complete_response.get("model")
+        and completion_content
+        and hasattr(instance, "count_tokens")
+    ):
         completion_tokens = instance.count_tokens(completion_content)
 
     return prompt_tokens, completion_tokens
@@ -279,7 +292,7 @@ class AnthropicStream(ObjectProxy):
             prompt_tokens, completion_tokens = _resolve_stream_token_usage(
                 self._complete_response, self._instance, self._kwargs
             )
-            if prompt_tokens is not None:
+            if prompt_tokens is not None and completion_tokens is not None:
                 _set_token_usage(
                     self._span,
                     self._complete_response,
@@ -423,7 +436,7 @@ class AnthropicAsyncStream(ObjectProxy):
             prompt_tokens, completion_tokens = _resolve_stream_token_usage(
                 self._complete_response, self._instance, self._kwargs
             )
-            if prompt_tokens is not None:
+            if prompt_tokens is not None and completion_tokens is not None:
                 _set_token_usage(
                     self._span,
                     self._complete_response,

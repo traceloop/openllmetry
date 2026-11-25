@@ -2,6 +2,8 @@ import json
 import logging
 import time
 
+from typing import Optional
+
 from opentelemetry.instrumentation.bedrock.config import Config
 from opentelemetry.instrumentation.bedrock.utils import should_send_prompts
 from opentelemetry.semconv._incubating.attributes import (
@@ -422,12 +424,19 @@ def _set_anthropic_completion_span_attributes(
             metric_params,
         )
     elif Config.enrich_token_usage:
-        _record_usage_to_span(
-            span,
-            _count_anthropic_tokens([request_body.get("prompt")]),
-            _count_anthropic_tokens([response_body.get("completion")]),
-            metric_params,
+        prompt_tokens = _count_anthropic_tokens([request_body.get("prompt")])
+        completion_tokens = _count_anthropic_tokens(
+            [response_body.get("completion")]
         )
+        # A failed count is unknown, not zero: recording 0 would claim the
+        # call used no tokens at all.
+        if prompt_tokens is not None and completion_tokens is not None:
+            _record_usage_to_span(
+                span,
+                prompt_tokens,
+                completion_tokens,
+                metric_params,
+            )
 
 
 def _set_anthropic_response_span_attributes(span, response_body):
@@ -496,15 +505,24 @@ def _set_anthropic_messages_span_attributes(
         completion_tokens = _count_anthropic_tokens(
             [content.get("text") for content in response_body.get("content")]
         )
-        _record_usage_to_span(span, prompt_tokens, completion_tokens, metric_params)
+        # A failed count is unknown, not zero: recording 0 would claim the
+        # call used no tokens at all.
+        if prompt_tokens is not None and completion_tokens is not None:
+            _record_usage_to_span(
+                span, prompt_tokens, completion_tokens, metric_params
+            )
 
 
-def _count_anthropic_tokens(messages: list[str]):
+def _count_anthropic_tokens(messages: list[str]) -> Optional[int]:
+    """Count tokens, or return None when counting is unavailable.
+
+    None means "unknown", which callers must not record as 0 usage.
+    """
     try:
         import anthropic
     except ImportError:
         logger.debug("anthropic package not installed — skipping token counting")
-        return 0
+        return None
 
     # Lazy initialization of the Anthropic client
     if _anthropic_client[0] is None:
@@ -512,7 +530,7 @@ def _count_anthropic_tokens(messages: list[str]):
             _anthropic_client[0] = anthropic.Anthropic()
         except Exception as e:
             logger.debug(f"Failed to initialize Anthropic client for token counting: {e}")
-            return 0
+            return None
 
     count = 0
     try:
@@ -520,7 +538,7 @@ def _count_anthropic_tokens(messages: list[str]):
             count += _anthropic_client[0].count_tokens(text=message)
     except Exception as e:
         logger.debug(f"Failed to count tokens with Anthropic client: {e}")
-        return 0
+        return None
 
     return count
 
