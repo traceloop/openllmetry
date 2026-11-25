@@ -23,6 +23,7 @@ from opentelemetry.metrics import Counter, Histogram
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
+from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv_ai import SpanAttributes
 from opentelemetry.trace.status import Status, StatusCode
 from wrapt import ObjectProxy
@@ -178,6 +179,23 @@ def _handle_streaming_response(span, event_logger, complete_response):
         set_streaming_response_attributes(span, complete_response.get("events"))
 
 
+@dont_throw
+def _handle_stream_error(stream, exception):
+    if stream._instrumentation_completed:
+        return
+    stream._instrumentation_completed = True
+    attributes = error_metrics_attributes(exception)
+    if stream._duration_histogram:
+        duration = time.time() - stream._start_time
+        stream._duration_histogram.record(duration, attributes=attributes)
+    if stream._exception_counter:
+        stream._exception_counter.add(1, attributes=attributes)
+    stream._span.set_attribute(ERROR_TYPE, exception.__class__.__name__)
+    stream._span.record_exception(exception)
+    stream._span.set_status(Status(StatusCode.ERROR, str(exception)))
+    stream._span.end()
+
+
 class AnthropicStream(ObjectProxy):
     """Wrapper for Anthropic streaming responses that handles instrumentation while preserving helper methods"""
 
@@ -256,9 +274,7 @@ class AnthropicStream(ObjectProxy):
                 self._complete_instrumentation()
             raise
         except Exception as e:
-            attributes = error_metrics_attributes(e)
-            if self._exception_counter:
-                self._exception_counter.add(1, attributes=attributes)
+            _handle_stream_error(self, e)
             raise
         _process_response_item(item, self._complete_response)
         return item
@@ -388,15 +404,7 @@ class AnthropicAsyncStream(ObjectProxy):
                 self._complete_instrumentation()
             raise
         except Exception as e:
-            # Handle errors during streaming
-            if not self._instrumentation_completed:
-                attributes = error_metrics_attributes(e)
-                if self._exception_counter:
-                    self._exception_counter.add(1, attributes=attributes)
-                if self._span and self._span.is_recording():
-                    self._span.set_status(Status(StatusCode.ERROR, str(e)))
-                self._span.end()
-                self._instrumentation_completed = True
+            _handle_stream_error(self, e)
             raise
         else:
             # Process the item for instrumentation
