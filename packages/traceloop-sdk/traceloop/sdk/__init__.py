@@ -27,6 +27,7 @@ from traceloop.sdk.config import (
 from traceloop.sdk.fetcher import Fetcher
 from traceloop.sdk.tracing.tracing import (
     TracerWrapper,
+    build_pipeline_config,
     set_association_properties,
     set_external_prompt_tracing_context,
 )
@@ -51,7 +52,7 @@ class Traceloop:
         app_name: str = sys.argv[0],
         api_endpoint: str = "https://api.traceloop.com",
         api_key: Optional[str] = None,
-        enabled: bool = True,
+        enabled: Optional[bool] = None,
         headers: Dict[str, str] = {},
         disable_batch=False,
         telemetry_enabled: bool = True,
@@ -78,6 +79,10 @@ class Traceloop:
         """Initialize Traceloop tracing, metrics, and instrumentation.
 
         Args:
+            enabled: Controls whether tracing is enabled. If ``None`` (default),
+                the ``TRACELOOP_TRACING_ENABLED`` environment variable is
+                honored. If ``True`` or ``False`` is passed explicitly, it takes
+                precedence over the environment variable.
             use_attributes: Controls how prompts/completions are emitted by the
                 bundled instrumentations.
                 If ``True`` (default), they are set as span attributes
@@ -104,9 +109,9 @@ class Traceloop:
                   back on for specific spans even when ``trace_content=False``.
                 The override is applied even if ``init()`` later returns early
                 because the Traceloop API key is missing. It is *not* applied
-                when ``enabled=False`` or when tracing is disabled via
-                ``TRACELOOP_TRACING_ENABLED`` — both checks happen before this
-                override runs.
+                when ``enabled=False`` or when ``enabled`` is not provided and
+                tracing is disabled via ``TRACELOOP_TRACING_ENABLED`` — both
+                checks happen before this override runs.
         """
         if use_attributes is not None and use_legacy_attributes is not None:
             raise TypeError(
@@ -127,6 +132,9 @@ class Traceloop:
             use_attributes = use_legacy_attributes
         if use_attributes is None:
             use_attributes = True
+
+        if enabled is None:
+            enabled = is_tracing_enabled()
         if not enabled:
             TracerWrapper.set_disabled(True)
             print(
@@ -139,10 +147,6 @@ class Traceloop:
         api_endpoint = os.getenv("TRACELOOP_BASE_URL") or api_endpoint
         api_key = os.getenv("TRACELOOP_API_KEY") or api_key
         Traceloop.__app_name = app_name
-
-        if not is_tracing_enabled():
-            print(Fore.YELLOW + "Tracing is disabled" + Fore.RESET)
-            return
 
         if trace_content is not None:
             os.environ["TRACELOOP_TRACE_CONTENT"] = (
@@ -202,6 +206,29 @@ class Traceloop:
 
         # Tracer init
         resource_attributes.update({SERVICE_NAME: app_name})
+
+        pipeline_config = build_pipeline_config(
+            disable_batch=disable_batch,
+            processor=processor,
+            propagator=propagator,
+            exporter=exporter,
+            sampler=sampler,
+            span_postprocess_callback=span_postprocess_callback,
+            endpoint=api_endpoint,
+            headers=headers,
+        )
+
+        # A previous init() may have built the pipeline with other settings
+        # (a different exporter, processor, endpoint, ...). Rebuild the pipeline
+        # with the current settings, so a stale exporter is never resurrected.
+        if TracerWrapper.pipeline_needs_rebuild(pipeline_config):
+            TracerWrapper.reset_pipeline()
+
+        # A previous init() may have disabled the tracer. Restore it once this
+        # init has passed the early-return checks and is ready to create the
+        # wrapper.
+        TracerWrapper.set_disabled(False)
+
         TracerWrapper.set_static_params(
             resource_attributes, enable_content_tracing, api_endpoint, headers
         )
