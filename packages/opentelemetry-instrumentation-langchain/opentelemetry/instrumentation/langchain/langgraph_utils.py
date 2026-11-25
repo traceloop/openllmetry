@@ -30,7 +30,12 @@ def extract_graph_structure(graph_instance: Any) -> tuple[list[str], list[str]]:
     if hasattr(graph, "nodes"):
         for node_id in graph.nodes:
             if node_id not in ("__start__", "__end__"):
-                nodes.append(node_id)
+                # Coerce to a plain str: LangGraph permits str-subclass node
+                # ids (e.g. StrEnum members), but OpenTelemetry validates
+                # sequence attributes with an exact-type check, so a subclass
+                # instance would cause the whole `gen_ai.workflow.nodes`
+                # attribute to be rejected (and logged as a warning).
+                nodes.append(str(node_id))
 
     # Extract edges as "source -> target" strings
     edges = []
