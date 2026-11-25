@@ -204,6 +204,52 @@ def test_set_model_request_attributes_reads_system_instruction_from_config(monke
     assert parts[0]["content"] == "Reply in one sentence."
 
 
+_CONFIG_SETTINGS = {
+    "temperature": 0.3,
+    "top_p": 0.9,
+    "top_k": 40,
+    "max_output_tokens": 50,
+    "seed": 7,
+    "stop_sequences": ["END"],
+    "system_instruction": "be brief",
+    "tools": [{"function_declarations": [{"name": "get_weather"}]}],
+}
+
+
+@pytest.mark.parametrize("config_as_object", [False, True])
+def test_handle_request_reads_request_params_from_config(monkeypatch, config_as_object):
+    from google.genai import types
+    from opentelemetry.instrumentation.google_generativeai import (
+        _handle_request,
+        span_utils as su,
+    )
+
+    monkeypatch.setattr(su, "should_send_prompts", lambda: True)
+
+    def recorded(settings):
+        config = types.GenerateContentConfig(**settings) if config_as_object else settings
+        span = MagicMock()
+        span.is_recording.return_value = True
+        _handle_request(span, (), {"contents": "hi", "config": config}, "gemini-pro", None)
+        return {c[0][0]: c[0][1] for c in span.set_attribute.call_args_list}
+
+    attrs = recorded(dict(_CONFIG_SETTINGS))
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_TEMPERATURE] == 0.3
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_TOP_P] == 0.9
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_TOP_K] == 40
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_MAX_TOKENS] == 50
+    assert attrs[GenAIAttributes.GEN_AI_REQUEST_SEED] == 7
+    assert list(attrs[GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES]) == ["END"]
+    assert json.loads(attrs[GenAIAttributes.GEN_AI_SYSTEM_INSTRUCTIONS]) == [
+        {"type": "text", "content": "be brief"}
+    ]
+    tools = json.loads(attrs[GenAIAttributes.GEN_AI_TOOL_DEFINITIONS])
+    assert tools[0]["function_declarations"][0]["name"] == "get_weather"
+
+    attrs = recorded({**_CONFIG_SETTINGS, "stop_sequences": []})
+    assert GenAIAttributes.GEN_AI_REQUEST_STOP_SEQUENCES not in attrs
+
+
 def test_set_model_response_attributes_emits_cache_read_tokens():
     from opentelemetry.instrumentation.google_generativeai import span_utils as su
 
