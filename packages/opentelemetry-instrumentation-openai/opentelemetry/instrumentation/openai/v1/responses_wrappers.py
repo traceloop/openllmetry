@@ -1,14 +1,16 @@
+import copy
 import pydantic
 import re
 import threading
 import time
-from typing import Any, Optional, Union
+from typing import Any, AsyncIterator, Iterator, Optional, Union
 from collections import OrderedDict
 
 from openai import AsyncStream, Stream
 from openai._legacy_response import LegacyAPIResponse
 from openai._response import APIResponse, AsyncAPIResponse
 from opentelemetry import context as context_api
+from opentelemetry.context import Context
 from opentelemetry.instrumentation.utils import _SUPPRESS_INSTRUMENTATION_KEY
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
@@ -97,7 +99,7 @@ except ImportError:
 SPAN_NAME = "openai.response"
 
 
-def _sanitize_sentinel_values(kwargs: dict) -> dict:
+def _sanitize_sentinel_values(kwargs: dict[str, Any]) -> dict[str, Any]:
     """Remove OpenAI sentinel values (NOT_GIVEN, Omit) from kwargs.
 
     OpenAI SDK uses sentinel objects for unset optional parameters.
@@ -107,12 +109,17 @@ def _sanitize_sentinel_values(kwargs: dict) -> dict:
     This removes sentinel values so the default (e.g., {}) is used instead
     when calling .get() on the sanitized dict.
 
-    If no sentinel types are available (older SDK), returns kwargs unchanged.
+    Explicit reasoning=None is normalized for the same chained access.
     """
-    if not _OPENAI_SENTINEL_TYPES:
-        return kwargs
-    return {k: v for k, v in kwargs.items()
-            if not isinstance(v, _OPENAI_SENTINEL_TYPES)}
+    sanitized = {
+        key: value
+        for key, value in kwargs.items()
+        if not _OPENAI_SENTINEL_TYPES
+        or not isinstance(value, _OPENAI_SENTINEL_TYPES)
+    }
+    if "reasoning" in sanitized and sanitized["reasoning"] is None:
+        sanitized["reasoning"] = {}
+    return sanitized
 
 
 def prepare_input_param(input_param: ResponseInputItemParam) -> ResponseInputItemParam:
@@ -438,7 +445,11 @@ def _set_responses_json_messages(traced_response: TracedData, span: Span):
 
     # Build output messages
     output_messages = []
-    if traced_response.output_blocks:
+    # A custom raw.parse(to=...) stream can filter out the terminal response.completed event
+    # (see ResponseStream.__iter__) and leave output_blocks empty even though output_text was
+    # still accumulated from forwarded response.output_text.delta events; report the text we
+    # actually have instead of dropping it because there are no output blocks to go with it.
+    if traced_response.output_blocks or traced_response.output_text:
         parts = []
         if traced_response.output_text:
             parts.append({"type": "text", "content": traced_response.output_text})
@@ -537,6 +548,129 @@ def set_data_attributes(traced_response: TracedData, span: Span):
         _set_responses_json_messages(traced_response, span)
 
 
+def _create_response_stream(
+    *,
+    tracer: Tracer,
+    response: Union[Stream, AsyncStream],
+    start_time: int,
+    request_kwargs: dict[str, Any],
+    instance: Any,
+    context: Context,
+    shared: Optional[dict[str, Any]] = None,
+) -> Union[Stream, AsyncStream, "ResponseStream"]:
+    """Wrap response in a traced ResponseStream.
+
+    If tracing setup fails, the span ends with an error status and the stream is returned
+    untraced. `shared`, when given, lets more than one Stream parsed from the same raw HTTP
+    response (see _instrument_raw_response_stream_parser) share one span and one TracedData
+    instead of each getting its own span for the same response.
+    """
+    if shared is not None and "span" in shared:
+        # A sibling parse() of the same raw response already created the span and the
+        # TracedData accumulator; reuse both instead of exporting a second span.
+        return ResponseStream(
+            span=shared["span"],
+            response=response,
+            start_time=start_time,
+            request_kwargs=request_kwargs,
+            tracer=tracer,
+            traced_data=shared["traced_data"],
+            shared_lifecycle=shared["lifecycle"],
+        )
+    span = None
+    try:
+        span = tracer.start_span(
+            SPAN_NAME,
+            kind=SpanKind.CLIENT,
+            start_time=start_time,
+            context=context,
+        )
+        _set_request_attributes(
+            span,
+            prepare_kwargs_for_shared_attributes(request_kwargs),
+            instance,
+        )
+        stream = ResponseStream(
+            span=span,
+            response=response,
+            start_time=start_time,
+            request_kwargs=request_kwargs,
+            tracer=tracer,
+            shared_lifecycle=shared["lifecycle"] if shared is not None else None,
+        )
+        if shared is not None:
+            shared["span"] = span
+            shared["traced_data"] = stream._traced_data
+        return stream
+    except Exception as e:
+        if span is None:
+            # start_span() itself failed (e.g. a broken sampler): there is no span to end,
+            # so fall back the same way every other setup failure in this function does.
+            return response
+        span.set_attribute(ERROR_TYPE, e.__class__.__name__)
+        span.record_exception(e)
+        span.set_status(StatusCode.ERROR, str(e))
+        span.end()
+        return response
+
+
+def _instrument_raw_response_stream_parser(
+    *,
+    tracer: Tracer,
+    response: Union[LegacyAPIResponse, APIResponse, AsyncAPIResponse],
+    start_time: int,
+    request_kwargs: dict[str, Any],
+    instance: Any,
+) -> None:
+    # _options is a private SDK attribute: if it moves, leave the stream untraced instead of failing the call.
+    options = getattr(response, "_options", None)
+    if not hasattr(options, "post_parser"):
+        return
+    existing_post_parser = options.post_parser
+    context = context_api.get_current()
+    # trace_stream below is read later by the caller's raw.parse(), not at request time, so a
+    # shallow copy here would still let a caller that mutates nested request content (e.g.
+    # appending to its own `input` list) between create() and parse() change what the span
+    # reports. Snapshot now, while it still matches what was actually sent.
+    try:
+        snapshotted_kwargs = copy.deepcopy(request_kwargs)
+    except Exception:
+        snapshotted_kwargs = request_kwargs
+    # The SDK caches parse() per `to=` type (see LegacyAPIResponse.parse), so a caller that
+    # calls both raw.parse() and raw.parse(to=CustomResponseStream) on the same raw response
+    # invokes this post_parser once per type, each producing its own Stream over the same
+    # HTTP response. Every one of those shares this span and TracedData accumulator instead
+    # of getting its own, so parsing to two types can't export two spans for one HTTP
+    # response, and whichever type the caller actually consumes still contributes its data.
+    shared: dict[str, Any] = {"lifecycle": _SharedResponseStreamLifecycle()}
+
+    def trace_stream(parsed_response: Any) -> Any:
+        if callable(existing_post_parser):
+            parsed_response = existing_post_parser(parsed_response)
+        if not isinstance(parsed_response, (Stream, AsyncStream)):
+            return parsed_response
+        return _create_response_stream(
+            tracer=tracer,
+            response=parsed_response,
+            start_time=start_time,
+            request_kwargs=snapshotted_kwargs,
+            instance=instance,
+            context=context,
+            shared=shared,
+        )
+
+    options.post_parser = trace_stream
+
+
+def _is_raw_stream_response(
+    response: Union[LegacyAPIResponse, APIResponse, AsyncAPIResponse],
+) -> bool:
+    return bool(
+        getattr(response, "_stream", False)
+        or getattr(response, "_is_sse_stream", False)
+    )
+
+
 @dont_throw
 def _record_metrics(
     token_histogram,
@@ -581,22 +715,13 @@ def responses_get_or_create_wrapper(
     try:
         response = wrapped(*args, **kwargs)
         if isinstance(response, Stream):
-            # Capture current trace context to maintain trace continuity
-            ctx = context_api.get_current()
-            span = tracer.start_span(
-                SPAN_NAME,
-                kind=SpanKind.CLIENT,
-                start_time=start_time,
-                context=ctx,
-            )
-            _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
-
-            return ResponseStream(
-                span=span,
+            return _create_response_stream(
+                tracer=tracer,
                 response=response,
                 start_time=start_time,
                 request_kwargs=non_sentinel_kwargs,
-                tracer=tracer,
+                instance=instance,
+                context=context_api.get_current(),
             )
     except Exception as e:
         response_id = non_sentinel_kwargs.get("response_id")
@@ -671,15 +796,18 @@ def responses_get_or_create_wrapper(
             error_type=e.__class__.__name__,
         )
         raise
-    parsed_response = parse_response(response)
-    if isinstance(parsed_response, Stream):
-        # `.with_raw_response.create(stream=True, ...)`: `response` is a raw-response
-        # wrapper (e.g. LegacyAPIResponse) whose `.parse()` returns the `Stream` itself
-        # rather than a parsed `Response`, so there's no `.id`/`.output`/etc. to build a
-        # trace from here. The pre-parse `isinstance(response, Stream)` check above only
-        # catches the direct `.create(stream=True)` case; this call goes untraced instead
-        # of crashing.
+    if isinstance(
+        response, (LegacyAPIResponse, APIResponse, AsyncAPIResponse)
+    ) and _is_raw_stream_response(response):
+        _instrument_raw_response_stream_parser(
+            tracer=tracer,
+            response=response,
+            start_time=start_time,
+            request_kwargs=non_sentinel_kwargs,
+            instance=instance,
+        )
         return response
+    parsed_response = parse_response(response)
 
     existing_data = responses.get(parsed_response.id)
     if existing_data is None and _was_response_already_completed(parsed_response.id):
@@ -778,22 +906,13 @@ async def async_responses_get_or_create_wrapper(
     try:
         response = await wrapped(*args, **kwargs)
         if isinstance(response, (Stream, AsyncStream)):
-            # Capture current trace context to maintain trace continuity
-            ctx = context_api.get_current()
-            span = tracer.start_span(
-                SPAN_NAME,
-                kind=SpanKind.CLIENT,
-                start_time=start_time,
-                context=ctx,
-            )
-            _set_request_attributes(span, prepare_kwargs_for_shared_attributes(non_sentinel_kwargs), instance)
-
-            return ResponseStream(
-                span=span,
+            return _create_response_stream(
+                tracer=tracer,
                 response=response,
                 start_time=start_time,
                 request_kwargs=non_sentinel_kwargs,
-                tracer=tracer,
+                instance=instance,
+                context=context_api.get_current(),
             )
     except Exception as e:
         response_id = non_sentinel_kwargs.get("response_id")
@@ -864,16 +983,18 @@ async def async_responses_get_or_create_wrapper(
             error_type=e.__class__.__name__,
         )
         raise
-    parsed_response = await async_parse_response(response)
-    if isinstance(parsed_response, (Stream, AsyncStream)):
-        # `.with_raw_response.create(stream=True, ...)`: `response` is a raw-response
-        # wrapper (e.g. LegacyAPIResponse/AsyncAPIResponse) whose `.parse()` returns the
-        # `Stream`/`AsyncStream` itself rather than a parsed `Response`, so there's no
-        # `.id`/`.output`/etc. to build a trace from here. The pre-parse
-        # `isinstance(response, (Stream, AsyncStream))` check above only catches the
-        # direct `.create(stream=True)` case; this call goes untraced instead of
-        # crashing. See https://github.com/traceloop/openllmetry/issues/4476.
+    if isinstance(
+        response, (LegacyAPIResponse, APIResponse, AsyncAPIResponse)
+    ) and _is_raw_stream_response(response):
+        _instrument_raw_response_stream_parser(
+            tracer=tracer,
+            response=response,
+            start_time=start_time,
+            request_kwargs=non_sentinel_kwargs,
+            instance=instance,
+        )
         return response
+    parsed_response = await async_parse_response(response)
 
     existing_data = responses.get(parsed_response.id)
     if existing_data is None and _was_response_already_completed(parsed_response.id):
@@ -1020,6 +1141,48 @@ async def async_responses_cancel_wrapper(
     return response
 
 
+class _SharedResponseStreamLifecycle:
+    """Coordinates ending one span across every ResponseStream built from the same raw
+    HTTP response.
+
+    A caller can call raw.parse() more than once with a different `to` type; the SDK
+    caches parse() per type (LegacyAPIResponse.parse keys its cache on `to`), so each
+    type gets its own Stream object wrapping the same underlying response. Every
+    ResponseStream created from one of those shares one lifecycle, so the span ends
+    exactly once, only after every sibling has reached a terminal state (consumed,
+    errored, or closed) -- not as soon as whichever one finishes first, which could be
+    an unused, never-iterated sibling with none of the caller's actual data. The first
+    error any sibling hits is latched here too: a sibling that errors while another is
+    still pending can't end the span itself, so without this, whichever sibling later
+    closes cleanly and actually triggers the end would report OK, losing the error.
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._pending = 0
+        self._finalized = False
+        self._error: Optional[Exception] = None
+
+    def register(self) -> None:
+        with self._lock:
+            self._pending += 1
+
+    def release(self, error: Optional[Exception] = None) -> tuple[bool, Optional[Exception]]:
+        """Call once a sibling reaches a terminal state, passing the error it hit, if
+        any. The first element is True at most once overall: for whichever call brings
+        every registered sibling to zero. The second element is the first error any
+        sibling has reported so far (via this or an earlier call), not necessarily the
+        one this call passed in."""
+        with self._lock:
+            if error is not None and self._error is None:
+                self._error = error
+            self._pending -= 1
+            if self._pending > 0 or self._finalized:
+                return False, self._error
+            self._finalized = True
+            return True, self._error
+
+
 class ResponseStream(ObjectProxy):
     """Proxy class for streaming responses to capture telemetry data"""
 
@@ -1028,15 +1191,17 @@ class ResponseStream(ObjectProxy):
     _request_kwargs = None
     _tracer = None
     _traced_data = None
+    _shared_lifecycle = None
 
     def __init__(
         self,
-        span,
-        response,
-        start_time=None,
-        request_kwargs=None,
-        tracer=None,
-        traced_data=None,
+        span: Span,
+        response: Any,
+        start_time: Optional[int] = None,
+        request_kwargs: Optional[dict[str, Any]] = None,
+        tracer: Optional[Tracer] = None,
+        traced_data: Optional[TracedData] = None,
+        shared_lifecycle: Optional[_SharedResponseStreamLifecycle] = None,
     ):
         super().__init__(response)
         self._span = span
@@ -1044,6 +1209,11 @@ class ResponseStream(ObjectProxy):
         # Filter sentinel values (defensive, in case called directly without prior filtering)
         self._request_kwargs = _sanitize_sentinel_values(request_kwargs or {})
         self._tracer = tracer
+        # Set when another Stream parsed from the same raw HTTP response already shares
+        # this span (see _SharedResponseStreamLifecycle and _create_response_stream).
+        self._shared_lifecycle = shared_lifecycle
+        if self._shared_lifecycle is not None:
+            self._shared_lifecycle.register()
         self._traced_data = traced_data or TracedData(
             start_time=start_time,
             response_id="",
@@ -1125,9 +1295,27 @@ class ResponseStream(ObjectProxy):
         if hasattr(self.__wrapped__, "aclose"):
             return await self.__wrapped__.aclose()
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Any]:
         """Synchronous iterator"""
-        return self
+        # Not `return self`: iterating the wrapped stream keeps the own __iter__ of a custom
+        # raw.parse(to=...) stream class, which __next__ would bypass.
+        try:
+            for chunk in self.__wrapped__:
+                self._process_chunk(chunk)
+                yield chunk
+        except GeneratorExit:
+            # Closing this generator (e.g. `it = iter(stream); next(it); it.close()`) throws
+            # GeneratorExit at the suspended yield above. GeneratorExit is not an Exception
+            # subclass, so it would otherwise skip both the except Exception branch and the
+            # else exhaustion path below, leaving the span open and the SDK stream connected.
+            # Mirror what explicitly calling close() on this proxy already does.
+            self.close()
+            raise
+        except Exception as e:
+            self._handle_exception(e)
+            raise
+        else:
+            self._process_complete_response()
 
     def __next__(self):
         """Synchronous iteration"""
@@ -1143,9 +1331,25 @@ class ResponseStream(ObjectProxy):
             self._process_chunk(chunk)
             return chunk
 
-    def __aiter__(self):
+    async def __aiter__(self) -> AsyncIterator[Any]:
         """Async iterator"""
-        return self
+        # Same as __iter__: not `return self`.
+        try:
+            async for chunk in self.__wrapped__:
+                self._process_chunk(chunk)
+                yield chunk
+        except GeneratorExit:
+            # Same as __iter__: aclose() on this async generator throws GeneratorExit at the
+            # suspended yield above, which would otherwise skip both except Exception and the
+            # else exhaustion path. Awaiting cleanup here is fine: aclose() only requires that
+            # we not yield another value before returning or re-raising.
+            await self.aclose()
+            raise
+        except Exception as e:
+            self._handle_exception(e)
+            raise
+        else:
+            self._process_complete_response()
 
     async def __anext__(self):
         """Async iteration"""
@@ -1161,7 +1365,7 @@ class ResponseStream(ObjectProxy):
             self._process_chunk(chunk)
             return chunk
 
-    def _process_chunk(self, chunk):
+    def _process_chunk(self, chunk: Any) -> None:
         """Process a streaming chunk"""
         if hasattr(chunk, "type"):
             if chunk.type == "response.output_text.delta":
@@ -1177,12 +1381,30 @@ class ResponseStream(ObjectProxy):
         if hasattr(chunk, "response") and chunk.response:
             self._complete_response_data = chunk.response
 
+    def _release_shared_lifecycle(
+        self, error: Optional[Exception] = None
+    ) -> tuple[bool, Optional[Exception]]:
+        """Release this stream's slot in the span's lifecycle, reporting an error if
+        this terminal event was one. Returns (should_finalize, error):
+        should_finalize is always True for a stream with no shared lifecycle (the
+        common case), and true for a shared one only once every sibling parsed from
+        the same raw HTTP response has also reached a terminal state. error is the
+        first error any sibling has reported so far, including this call's, which can
+        differ from the error this specific call passed in -- an earlier sibling can
+        error while this one later closes cleanly, and that earlier error must still
+        decide the span's status. Call at most once per terminal event;
+        _shared_lifecycle.release() is not idempotent."""
+        if self._shared_lifecycle is None:
+            return True, error
+        return self._shared_lifecycle.release(error)
+
     @dont_throw
-    def _process_complete_response(self):
+    def _process_complete_response(self) -> None:
         """Process the complete response and emit span"""
         with self._cleanup_lock:
             if self._cleanup_completed:
                 return
+            self._cleanup_completed = True
 
             try:
                 if self._complete_response_data:
@@ -1190,7 +1412,6 @@ class ResponseStream(ObjectProxy):
 
                     self._traced_data.response_id = parsed_response.id
                     self._traced_data.response_model = parsed_response.model
-                    self._traced_data.output_text = self._output_text
                     self._traced_data.response_status = parsed_response.status
                     self._traced_data.incomplete_reason = (
                         getattr(parsed_response.incomplete_details, "reason", None)
@@ -1213,47 +1434,75 @@ class ResponseStream(ObjectProxy):
                     )
                     _record_traced_data(parsed_response.id, self._traced_data, finished)
 
-                set_data_attributes(self._traced_data, self._span)
-                self._span.set_status(StatusCode.OK)
-                self._span.end()
-                self._cleanup_completed = True
+                # A custom raw.parse(to=...) stream can filter out the terminal
+                # response.completed event above (see __iter__'s docstring) while still
+                # forwarding response.output_text.delta events. Keep whatever text we
+                # actually observed instead of silently leaving it at its initial "".
+                self._traced_data.output_text = self._output_text
+
+                should_finalize, shared_error = self._release_shared_lifecycle()
+                if should_finalize:
+                    if shared_error is not None:
+                        # This stream finished cleanly, but a sibling parsed from the
+                        # same raw response errored earlier while another sibling was
+                        # still pending, so it couldn't end the span itself (see
+                        # _SharedResponseStreamLifecycle). Report that error now
+                        # instead of ending the shared span with OK.
+                        self._span.set_attribute(ERROR_TYPE, shared_error.__class__.__name__)
+                        self._span.record_exception(shared_error)
+                        self._span.set_status(StatusCode.ERROR, str(shared_error))
+                    else:
+                        set_data_attributes(self._traced_data, self._span)
+                        self._span.set_status(StatusCode.OK)
+                    self._span.end()
 
             except Exception as e:
-                if self._span and self._span.is_recording():
-                    self._span.set_attribute(ERROR_TYPE, e.__class__.__name__)
-                    self._span.set_status(StatusCode.ERROR, str(e))
+                should_finalize, shared_error = self._release_shared_lifecycle(e)
+                if should_finalize and self._span and self._span.is_recording():
+                    error = shared_error if shared_error is not None else e
+                    self._span.set_attribute(ERROR_TYPE, error.__class__.__name__)
+                    self._span.set_status(StatusCode.ERROR, str(error))
                     self._span.end()
-                self._cleanup_completed = True
 
     @dont_throw
-    def _handle_exception(self, exception):
+    def _handle_exception(self, exception: Exception) -> None:
         """Handle exceptions during streaming"""
         with self._cleanup_lock:
             if self._cleanup_completed:
                 return
-
-            if self._span and self._span.is_recording():
-                self._span.set_attribute(ERROR_TYPE, exception.__class__.__name__)
-                self._span.record_exception(exception)
-                self._span.set_status(StatusCode.ERROR, str(exception))
-                self._span.end()
-
             self._cleanup_completed = True
 
+            should_finalize, shared_error = self._release_shared_lifecycle(exception)
+            if should_finalize and self._span and self._span.is_recording():
+                error = shared_error if shared_error is not None else exception
+                self._span.set_attribute(ERROR_TYPE, error.__class__.__name__)
+                self._span.record_exception(error)
+                self._span.set_status(StatusCode.ERROR, str(error))
+                self._span.end()
+
     @dont_throw
-    def _ensure_cleanup(self):
+    def _ensure_cleanup(self) -> None:
         """Ensure cleanup happens even if stream is not fully consumed"""
         with self._cleanup_lock:
             if self._cleanup_completed:
                 return
+            self._cleanup_completed = True
 
             try:
-                if self._span and self._span.is_recording():
-                    set_data_attributes(self._traced_data, self._span)
-                    self._span.set_status(StatusCode.OK)
+                should_finalize, shared_error = self._release_shared_lifecycle()
+                if should_finalize and self._span and self._span.is_recording():
+                    if shared_error is not None:
+                        # This stream closed cleanly, but a sibling parsed from the
+                        # same raw response errored earlier while another sibling was
+                        # still pending (see _process_complete_response). Report that
+                        # error instead of ending the shared span with OK.
+                        self._span.set_attribute(ERROR_TYPE, shared_error.__class__.__name__)
+                        self._span.record_exception(shared_error)
+                        self._span.set_status(StatusCode.ERROR, str(shared_error))
+                    else:
+                        set_data_attributes(self._traced_data, self._span)
+                        self._span.set_status(StatusCode.OK)
                     self._span.end()
-
-                self._cleanup_completed = True
-
             except Exception:
-                self._cleanup_completed = True
+                pass
+
