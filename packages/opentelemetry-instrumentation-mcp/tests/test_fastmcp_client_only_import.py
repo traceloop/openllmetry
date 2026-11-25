@@ -9,16 +9,31 @@ import sys
 import textwrap
 
 import pytest
-from opentelemetry.instrumentation.mcp.fastmcp_instrumentation import FastMCPInstrumentor
+from fastmcp import FastMCP
 
-# Simulates fastmcp-slim[client]: the server-only dependency is missing.
+# Simulates fastmcp-slim[client]: the dependencies only fastmcp-slim[server]
+# brings in are missing. python_multipart and uvicorn stay, mcp requires them.
 _BLOCK_SERVER = """
 import importlib.abc
 import sys
 
+_SERVER_ONLY = {
+    "cyclopts",
+    "griffe",
+    "joserfc",
+    "jsonref",
+    "jsonschema_path",
+    "openapi_pydantic",
+    "pyperclip",
+    "yaml",
+    "uncalled_for",
+    "watchfiles",
+    "websockets",
+}
+
 class _BlockServer(importlib.abc.MetaPathFinder):
     def find_spec(self, name, path=None, target=None):
-        if name == "uncalled_for":
+        if name.split(".")[0] in _SERVER_ONLY:
             raise ImportError(f"No module named {name!r}")
         return None
 
@@ -61,6 +76,8 @@ def test_client_only_imports_before_instrument():
 
 
 def test_fastmcp_init_still_captures_server_name():
+    # Span tests take the name from get_context(), so only this guards the
+    # FastMCP.__init__ hook location; hence the private _server_name check.
     _run(
         _INSTRUMENT,
         """
@@ -75,15 +92,5 @@ def test_fastmcp_init_still_captures_server_name():
 
 
 def test_fastmcp_init_error_propagates():
-    instrumentor = FastMCPInstrumentor()
-    instrumentor._server_name = "before.mcp"
-    error = ValueError("bad server config")
-
-    def failing_init(*args, **kwargs):
-        raise error
-
-    with pytest.raises(ValueError) as exc_info:
-        instrumentor._fastmcp_init_wrapper()(failing_init, None, ("broken",), {})
-
-    assert exc_info.value is error
-    assert instrumentor._server_name == "before.mcp"
+    with pytest.raises(TypeError):
+        FastMCP("x", definitely_not_a_kwarg=1)
