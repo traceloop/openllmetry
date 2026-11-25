@@ -6,7 +6,7 @@
 <img width="600" src="https://raw.githubusercontent.com/traceloop/openllmetry/main/img/logo-dark.png">
 </a>
 </p>
-<p align="center">
+\<p align="center">
   <p align="center">Open-source observability for your LLM application</p>
 </p>
 <h4 align="center">
@@ -15,7 +15,7 @@
     <br />
   <a href="https://traceloop.com/slack">Slack</a> |
   <a href="https://traceloop.com/docs/openllmetry/introduction">Docs</a> |
-  <a href="https://www.traceloop.com/openllmetry">Website</a>
+  <a href="https\://www\.traceloop.com/openllmetry">Website</a>
 </h4>
 
 <h4 align="center">
@@ -58,7 +58,7 @@ It's built and maintained by Traceloop under the Apache 2.0 license.
 The repo contains standard OpenTelemetry instrumentations for LLM providers and Vector DBs, as well as a Traceloop SDK that makes it easy to get started with OpenLLMetry, while still outputting standard OpenTelemetry data that can be connected to your observability stack.
 If you already have OpenTelemetry instrumented, you can just add any of our instrumentations directly.
 
-## 🚀 Getting Started
+\## 🚀 Getting Started
 
 The easiest way to get started is to use our SDK.
 For a complete guide, go to our [docs](https://traceloop.com/docs/openllmetry/getting-started-python).
