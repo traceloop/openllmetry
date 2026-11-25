@@ -123,6 +123,16 @@ updates:
     labels:
       - "dependencies"
   - package-ecosystem: "uv"
+    directory: "/packages/opentelemetry-instrumentation-oci-genai"
+    schedule:
+      interval: "weekly"
+    groups:
+      gha:
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+  - package-ecosystem: "uv"
     directory: "/packages/opentelemetry-instrumentation-ollama"
     schedule:
       interval: "weekly"

@@ -21,6 +21,7 @@ class Instruments(Enum):
     MCP = "mcp"
     MILVUS = "milvus"
     MISTRAL = "mistral"
+    OCI_GENAI = "oci_genai"
     OLLAMA = "ollama"
     OPENAI = "openai"
     OPENAI_AGENTS = "openai_agents"
