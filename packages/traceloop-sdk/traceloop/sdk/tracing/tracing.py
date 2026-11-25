@@ -519,7 +519,11 @@ def init_instrumentations(
 ):
     block_instruments = block_instruments or set()
     # explictly test for None since empty set is a False value
-    instruments = instruments if instruments is not None else set(Instruments)
+    # HTTPX is opt-in: most LLM SDKs use httpx, so enabling it by default would
+    # add an HTTP client span under every LLM span for existing users.
+    instruments = (
+        instruments if instruments is not None else set(Instruments) - {Instruments.HTTPX}
+    )
 
     # Remove any instruments that were explicitly blocked
     instruments = instruments - block_instruments
@@ -559,6 +563,9 @@ def init_instrumentations(
                 instrument_set = True
         elif instrument == Instruments.HAYSTACK:
             if init_haystack_instrumentor():
+                instrument_set = True
+        elif instrument == Instruments.HTTPX:
+            if init_httpx_instrumentor():
                 instrument_set = True
         elif instrument == Instruments.LANCEDB:
             if init_lancedb_instrumentor():
@@ -798,6 +805,29 @@ def init_haystack_instrumentor():
             return True
     except Exception as e:
         logging.error(f"Error initializing Haystack instrumentor: {e}")
+    return False
+
+
+def init_httpx_instrumentor():
+    try:
+        if is_package_installed("httpx"):
+            from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+
+            # HTTPXClientInstrumentor ignores an excluded_urls argument and reads
+            # exclusions from the environment. Respect values the user already set.
+            if not (
+                os.environ.get("OTEL_PYTHON_HTTPX_EXCLUDED_URLS")
+                or os.environ.get("OTEL_PYTHON_EXCLUDED_URLS")
+            ):
+                os.environ["OTEL_PYTHON_HTTPX_EXCLUDED_URLS"] = ",".join(
+                    url.strip() for url in EXCLUDED_URLS.split(",")
+                )
+            instrumentor = HTTPXClientInstrumentor()
+            if not instrumentor.is_instrumented_by_opentelemetry:
+                instrumentor.instrument()
+            return True
+    except Exception as e:
+        logging.error(f"Error initializing HTTPX instrumentor: {e}")
     return False
 
 
