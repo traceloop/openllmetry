@@ -1689,6 +1689,135 @@ async def test_closing_the_returned_async_iterator_ends_the_span(
     assert len(span_exporter.get_finished_spans()) == 1
 
 
+class _FakeSyncChunkStreamThatRaises:
+    """Raises instead of completing normally, simulating a custom raw.parse(to=...)
+    stream's own iteration failing mid-stream."""
+
+    def __init__(self, chunks, exception: Exception):
+        self._iter = iter(chunks)
+        self._exception = exception
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        try:
+            return next(self._iter)
+        except StopIteration:
+            raise self._exception from None
+
+
+class _FakeAsyncChunkStreamThatRaises:
+    """Async counterpart of _FakeSyncChunkStreamThatRaises."""
+
+    def __init__(self, chunks, exception: Exception):
+        self._iter = iter(chunks)
+        self._exception = exception
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        try:
+            return next(self._iter)
+        except StopIteration:
+            raise self._exception from None
+
+
+def test_shared_lifecycle_reports_error_from_a_sibling_that_closes_later(
+    clean_responses_registry,
+    span_exporter: InMemorySpanExporter, tracer_provider: TracerProvider
+):
+    """Regression test: if the custom stream raises while the default stream (sharing
+    the same span, see _SharedResponseStreamLifecycle) is still open, the erroring
+    sibling can't end the span by itself; nothing latched that error, so the default
+    stream closing cleanly afterward ended the shared span with OK instead of
+    reporting it. The span must end with ERROR once every sibling is done, no matter
+    which one happens to trigger that."""
+    tracer = tracer_provider.get_tracer(__name__)
+    span = tracer.start_span("openai.response")
+    lifecycle = responses_wrappers._SharedResponseStreamLifecycle()
+    request_kwargs = {"model": "gpt-4.1-nano", "input": "hi"}
+
+    default_stream = ResponseStream(
+        span=span,
+        response=_FakeSyncChunkStream([]),
+        start_time=0,
+        request_kwargs=request_kwargs,
+        tracer=tracer,
+        shared_lifecycle=lifecycle,
+    )
+    boom = RuntimeError("custom stream blew up")
+    custom_stream = ResponseStream(
+        span=span,
+        response=_FakeSyncChunkStreamThatRaises(
+            [types.SimpleNamespace(type="response.output_text.delta", delta="partial")], boom
+        ),
+        start_time=0,
+        request_kwargs=request_kwargs,
+        tracer=tracer,
+        traced_data=default_stream._traced_data,
+        shared_lifecycle=lifecycle,
+    )
+
+    with pytest.raises(RuntimeError, match="custom stream blew up"):
+        list(custom_stream)
+
+    # The default stream is still open, so the erroring custom stream can't end the
+    # shared span by itself yet.
+    assert span_exporter.get_finished_spans() == ()
+
+    default_stream.close()
+
+    (finished_span,) = span_exporter.get_finished_spans()
+    assert finished_span.status.status_code == StatusCode.ERROR
+    assert finished_span.attributes["error.type"] == "RuntimeError"
+
+
+@pytest.mark.asyncio
+async def test_async_shared_lifecycle_reports_error_from_a_sibling_that_closes_later(
+    clean_responses_registry,
+    span_exporter: InMemorySpanExporter, tracer_provider: TracerProvider
+):
+    """Async counterpart of test_shared_lifecycle_reports_error_from_a_sibling_that_closes_later."""
+    tracer = tracer_provider.get_tracer(__name__)
+    span = tracer.start_span("openai.response")
+    lifecycle = responses_wrappers._SharedResponseStreamLifecycle()
+    request_kwargs = {"model": "gpt-4.1-nano", "input": "hi"}
+
+    default_stream = ResponseStream(
+        span=span,
+        response=_FakeAsyncChunkStream([]),
+        start_time=0,
+        request_kwargs=request_kwargs,
+        tracer=tracer,
+        shared_lifecycle=lifecycle,
+    )
+    boom = RuntimeError("custom stream blew up")
+    custom_stream = ResponseStream(
+        span=span,
+        response=_FakeAsyncChunkStreamThatRaises(
+            [types.SimpleNamespace(type="response.output_text.delta", delta="partial")], boom
+        ),
+        start_time=0,
+        request_kwargs=request_kwargs,
+        tracer=tracer,
+        traced_data=default_stream._traced_data,
+        shared_lifecycle=lifecycle,
+    )
+
+    with pytest.raises(RuntimeError, match="custom stream blew up"):
+        [event async for event in custom_stream]
+
+    assert span_exporter.get_finished_spans() == ()
+
+    await default_stream.aclose()
+
+    (finished_span,) = span_exporter.get_finished_spans()
+    assert finished_span.status.status_code == StatusCode.ERROR
+    assert finished_span.attributes["error.type"] == "RuntimeError"
+
+
 def test_duplicate_retrieve_after_completion_does_not_emit_second_span(
     clean_responses_registry,
     span_exporter: InMemorySpanExporter, tracer_provider: TracerProvider

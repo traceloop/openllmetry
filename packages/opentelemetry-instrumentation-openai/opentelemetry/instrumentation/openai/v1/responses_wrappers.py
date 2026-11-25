@@ -1151,27 +1151,36 @@ class _SharedResponseStreamLifecycle:
     ResponseStream created from one of those shares one lifecycle, so the span ends
     exactly once, only after every sibling has reached a terminal state (consumed,
     errored, or closed) -- not as soon as whichever one finishes first, which could be
-    an unused, never-iterated sibling with none of the caller's actual data.
+    an unused, never-iterated sibling with none of the caller's actual data. The first
+    error any sibling hits is latched here too: a sibling that errors while another is
+    still pending can't end the span itself, so without this, whichever sibling later
+    closes cleanly and actually triggers the end would report OK, losing the error.
     """
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
         self._pending = 0
         self._finalized = False
+        self._error: Optional[Exception] = None
 
     def register(self) -> None:
         with self._lock:
             self._pending += 1
 
-    def release(self) -> bool:
-        """Call once a sibling reaches a terminal state. Returns True at most once
-        overall: for whichever call brings every registered sibling to zero."""
+    def release(self, error: Optional[Exception] = None) -> tuple[bool, Optional[Exception]]:
+        """Call once a sibling reaches a terminal state, passing the error it hit, if
+        any. The first element is True at most once overall: for whichever call brings
+        every registered sibling to zero. The second element is the first error any
+        sibling has reported so far (via this or an earlier call), not necessarily the
+        one this call passed in."""
         with self._lock:
+            if error is not None and self._error is None:
+                self._error = error
             self._pending -= 1
             if self._pending > 0 or self._finalized:
-                return False
+                return False, self._error
             self._finalized = True
-            return True
+            return True, self._error
 
 
 class ResponseStream(ObjectProxy):
@@ -1372,15 +1381,22 @@ class ResponseStream(ObjectProxy):
         if hasattr(chunk, "response") and chunk.response:
             self._complete_response_data = chunk.response
 
-    def _should_finalize_span(self) -> bool:
-        """Whether this terminal-state call should actually set attributes on and end
-        the span: always true for a stream with no shared lifecycle (the common case),
-        and true for a shared one only once every sibling parsed from the same raw HTTP
-        response has also reached a terminal state. Call at most once per terminal
-        event; _shared_lifecycle.release() is not idempotent."""
+    def _release_shared_lifecycle(
+        self, error: Optional[Exception] = None
+    ) -> tuple[bool, Optional[Exception]]:
+        """Release this stream's slot in the span's lifecycle, reporting an error if
+        this terminal event was one. Returns (should_finalize, error):
+        should_finalize is always True for a stream with no shared lifecycle (the
+        common case), and true for a shared one only once every sibling parsed from
+        the same raw HTTP response has also reached a terminal state. error is the
+        first error any sibling has reported so far, including this call's, which can
+        differ from the error this specific call passed in -- an earlier sibling can
+        error while this one later closes cleanly, and that earlier error must still
+        decide the span's status. Call at most once per terminal event;
+        _shared_lifecycle.release() is not idempotent."""
         if self._shared_lifecycle is None:
-            return True
-        return self._shared_lifecycle.release()
+            return True, error
+        return self._shared_lifecycle.release(error)
 
     @dont_throw
     def _process_complete_response(self) -> None:
@@ -1389,7 +1405,6 @@ class ResponseStream(ObjectProxy):
             if self._cleanup_completed:
                 return
             self._cleanup_completed = True
-            should_finalize = self._should_finalize_span()
 
             try:
                 if self._complete_response_data:
@@ -1425,15 +1440,28 @@ class ResponseStream(ObjectProxy):
                 # actually observed instead of silently leaving it at its initial "".
                 self._traced_data.output_text = self._output_text
 
+                should_finalize, shared_error = self._release_shared_lifecycle()
                 if should_finalize:
-                    set_data_attributes(self._traced_data, self._span)
-                    self._span.set_status(StatusCode.OK)
+                    if shared_error is not None:
+                        # This stream finished cleanly, but a sibling parsed from the
+                        # same raw response errored earlier while another sibling was
+                        # still pending, so it couldn't end the span itself (see
+                        # _SharedResponseStreamLifecycle). Report that error now
+                        # instead of ending the shared span with OK.
+                        self._span.set_attribute(ERROR_TYPE, shared_error.__class__.__name__)
+                        self._span.record_exception(shared_error)
+                        self._span.set_status(StatusCode.ERROR, str(shared_error))
+                    else:
+                        set_data_attributes(self._traced_data, self._span)
+                        self._span.set_status(StatusCode.OK)
                     self._span.end()
 
             except Exception as e:
+                should_finalize, shared_error = self._release_shared_lifecycle(e)
                 if should_finalize and self._span and self._span.is_recording():
-                    self._span.set_attribute(ERROR_TYPE, e.__class__.__name__)
-                    self._span.set_status(StatusCode.ERROR, str(e))
+                    error = shared_error if shared_error is not None else e
+                    self._span.set_attribute(ERROR_TYPE, error.__class__.__name__)
+                    self._span.set_status(StatusCode.ERROR, str(error))
                     self._span.end()
 
     @dont_throw
@@ -1444,10 +1472,12 @@ class ResponseStream(ObjectProxy):
                 return
             self._cleanup_completed = True
 
-            if self._should_finalize_span() and self._span and self._span.is_recording():
-                self._span.set_attribute(ERROR_TYPE, exception.__class__.__name__)
-                self._span.record_exception(exception)
-                self._span.set_status(StatusCode.ERROR, str(exception))
+            should_finalize, shared_error = self._release_shared_lifecycle(exception)
+            if should_finalize and self._span and self._span.is_recording():
+                error = shared_error if shared_error is not None else exception
+                self._span.set_attribute(ERROR_TYPE, error.__class__.__name__)
+                self._span.record_exception(error)
+                self._span.set_status(StatusCode.ERROR, str(error))
                 self._span.end()
 
     @dont_throw
@@ -1459,9 +1489,19 @@ class ResponseStream(ObjectProxy):
             self._cleanup_completed = True
 
             try:
-                if self._should_finalize_span() and self._span and self._span.is_recording():
-                    set_data_attributes(self._traced_data, self._span)
-                    self._span.set_status(StatusCode.OK)
+                should_finalize, shared_error = self._release_shared_lifecycle()
+                if should_finalize and self._span and self._span.is_recording():
+                    if shared_error is not None:
+                        # This stream closed cleanly, but a sibling parsed from the
+                        # same raw response errored earlier while another sibling was
+                        # still pending (see _process_complete_response). Report that
+                        # error instead of ending the shared span with OK.
+                        self._span.set_attribute(ERROR_TYPE, shared_error.__class__.__name__)
+                        self._span.record_exception(shared_error)
+                        self._span.set_status(StatusCode.ERROR, str(shared_error))
+                    else:
+                        set_data_attributes(self._traced_data, self._span)
+                        self._span.set_status(StatusCode.OK)
                     self._span.end()
             except Exception:
                 pass
