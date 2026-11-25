@@ -76,6 +76,44 @@ def test_qdrant_upload_collection(exporter, qdrant):
     assert span.attributes.get(SpanAttributes.QDRANT_UPLOAD_POINTS_COUNT) == 3
 
 
+def _points():
+    return (
+        models.PointStruct(id=i, vector=[0.1 * i] * EMBEDDING_DIM) for i in range(1, 4)
+    )
+
+
+def _vectors():
+    return ([0.1 * i] * EMBEDDING_DIM for i in range(1, 4))
+
+
+@pytest.mark.parametrize(
+    "method, upload",
+    [
+        ("upload_points", lambda q: q.upload_points(COLLECTION_NAME, points=_points())),
+        ("upload_points", lambda q: q.upload_points(COLLECTION_NAME, _points())),
+        (
+            "upload_collection",
+            lambda q: q.upload_collection(COLLECTION_NAME, vectors=_vectors(), ids=[1, 2, 3]),
+        ),
+    ],
+)
+def test_qdrant_upload_from_generator_keeps_all_points(exporter, qdrant, method, upload):
+    qdrant.create_collection(
+        COLLECTION_NAME,
+        vectors_config=models.VectorParams(
+            size=EMBEDDING_DIM, distance=models.Distance.COSINE
+        ),
+    )
+
+    upload(qdrant)
+
+    assert qdrant.count(COLLECTION_NAME).count == 3
+    span = next(
+        span for span in exporter.get_finished_spans() if span.name == f"qdrant.{method}"
+    )
+    assert f"qdrant.{method}.points_count" not in span.attributes
+
+
 def search(qdrant: QdrantClient):
     qdrant.query_points(
         collection_name=COLLECTION_NAME,
