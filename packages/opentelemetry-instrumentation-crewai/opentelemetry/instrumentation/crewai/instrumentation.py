@@ -1,5 +1,6 @@
 import os
 import time
+from contextvars import ContextVar
 from typing import Collection
 
 from wrapt import wrap_function_wrapper
@@ -21,6 +22,10 @@ from .crewai_span_attributes import CrewAISpanAttributes, set_span_attribute
 from .utils import _messages_to_otel_input, _response_to_otel_output
 
 _instruments = ("crewai >= 1.0.0",)
+# "plan" is defined by the GenAI semantic conventions, but the generated
+# GenAiOperationNameValues enum may lag the convention release.
+_GEN_AI_OPERATION_PLAN = "plan"
+_crew_planning_span = ContextVar("crew_planning_span", default=None)
 
 # Maps LiteLLM vendor prefixes (e.g. "openai" in "openai/gpt-4") to OTel provider name values.
 # Uses GenAISystem (semconv-ai) and GenAiSystemValues (OTel upstream) — no raw strings.
@@ -92,12 +97,38 @@ class CrewAIInstrumentor(BaseInstrumentor):
                               wrap_task_execute(tracer, duration_histogram, token_histogram))
         wrap_function_wrapper("crewai.llm", "LLM.call",
                               wrap_llm_call(tracer, duration_histogram, token_histogram))
+        _wrap_optional_function_wrapper(
+            "crewai.utilities.planning_handler",
+            "CrewPlanner._handle_crew_planning",
+            wrap_crew_planning(tracer, duration_histogram, token_histogram),
+        )
+        _wrap_optional_function_wrapper(
+            "crewai.utilities.planning_handler",
+            "CrewPlanner._create_planning_agent",
+            wrap_create_planning_agent,
+        )
 
     def _uninstrument(self, **kwargs):
         unwrap("crewai.crew.Crew", "kickoff")
         unwrap("crewai.agent.Agent", "execute_task")
         unwrap("crewai.task.Task", "execute_sync")
         unwrap("crewai.llm.LLM", "call")
+        _unwrap_optional("crewai.utilities.planning_handler.CrewPlanner", "_handle_crew_planning")
+        _unwrap_optional("crewai.utilities.planning_handler.CrewPlanner", "_create_planning_agent")
+
+
+def _wrap_optional_function_wrapper(module, name, wrapper):
+    try:
+        wrap_function_wrapper(module, name, wrapper)
+    except (AttributeError, ImportError, ModuleNotFoundError):
+        pass
+
+
+def _unwrap_optional(module, name):
+    try:
+        unwrap(module, name)
+    except (AttributeError, ImportError, ModuleNotFoundError):
+        pass
 
 
 def with_tracer_wrapper(func):
@@ -211,6 +242,42 @@ def wrap_task_execute(tracer, duration_histogram, token_histogram, wrapped, inst
         except Exception as ex:
             span.set_status(Status(StatusCode.ERROR, str(ex)))
             raise
+
+
+@with_tracer_wrapper
+def wrap_crew_planning(tracer, duration_histogram, token_histogram, wrapped, instance, args, kwargs):
+    with tracer.start_as_current_span(
+        _GEN_AI_OPERATION_PLAN,
+        kind=SpanKind.INTERNAL,
+        attributes={
+            GenAIAttributes.GEN_AI_PROVIDER_NAME: GenAISystem.CREWAI.value,
+            GenAIAttributes.GEN_AI_OPERATION_NAME: _GEN_AI_OPERATION_PLAN,
+        },
+    ) as span:
+        token = _crew_planning_span.set(span)
+        try:
+            result = wrapped(*args, **kwargs)
+            span.set_status(Status(StatusCode.OK))
+            return result
+        except Exception as ex:
+            span.set_status(Status(StatusCode.ERROR, str(ex)))
+            raise
+        finally:
+            _crew_planning_span.reset(token)
+
+
+def wrap_create_planning_agent(wrapped, instance, args, kwargs):
+    planner_agent = wrapped(*args, **kwargs)
+    span = _crew_planning_span.get()
+    if span is not None:
+        agent_name = getattr(planner_agent, "role", None)
+        agent_id = getattr(planner_agent, "id", None)
+        if agent_name:
+            set_span_attribute(span, GenAIAttributes.GEN_AI_AGENT_NAME, agent_name)
+            span.update_name(f"plan {agent_name}")
+        if agent_id:
+            set_span_attribute(span, GenAIAttributes.GEN_AI_AGENT_ID, str(agent_id))
+    return planner_agent
 
 
 @with_tracer_wrapper
