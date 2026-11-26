@@ -24,7 +24,7 @@ def extract_definitions_and_mappings(swagger_path: str) -> tuple[dict, dict]:
         tuple: (filtered_definitions, slug_mappings)
         slug_mappings: {slug: {"request": "ModelName", "response": "ModelName"}}
     """
-    with open(swagger_path) as f:
+    with open(swagger_path,encoding="utf-8") as f:
         data = json.load(f)
 
     all_definitions = data["definitions"]
