@@ -148,6 +148,68 @@ def _content_as_str(content):
     )
 
 
+def _tool_call_arguments_as_str(arguments):
+    if arguments is None or isinstance(arguments, str):
+        return arguments
+    return json.dumps(arguments)
+
+
+def _tool_calls_as_dicts(tool_calls):
+    result = []
+    for tool_call in tool_calls or []:
+        function = getattr(tool_call, "function", None)
+        result.append(
+            {
+                "id": getattr(tool_call, "id", None),
+                "type": getattr(tool_call, "type", None) or "function",
+                "name": getattr(function, "name", None),
+                "arguments": _tool_call_arguments_as_str(
+                    getattr(function, "arguments", None)
+                ),
+            }
+        )
+    return result
+
+
+def _merge_delta_tool_calls(current, delta):
+    # Tool calls streamed for the same index are merged, so arguments sent in
+    # fragments end up as one call, as in the non-streamed response.
+    if not delta:
+        return current
+    try:
+        return _merged_tool_calls(current, delta)
+    except Exception:  # telemetry must never break the caller's stream
+        logger.debug("Failed to merge streamed Mistral tool calls", exc_info=True)
+        return current
+
+
+def _merged_tool_calls(current, delta):
+    merged = list(current or [])
+    for tool_call in delta:
+        index = getattr(tool_call, "index", None)
+        existing = next(
+            (
+                call
+                for call in merged
+                if index is not None and getattr(call, "index", None) == index
+            ),
+            None,
+        )
+        if existing is None:
+            merged.append(tool_call.model_copy(deep=True))
+            continue
+        if tool_call.id and tool_call.id != "null":
+            existing.id = tool_call.id
+        if tool_call.function.name:
+            existing.function.name = tool_call.function.name
+        arguments = tool_call.function.arguments
+        if isinstance(arguments, str) and isinstance(existing.function.arguments, str):
+            existing.function.arguments += arguments
+        elif arguments:
+            existing.function.arguments = arguments
+    return merged
+
+
 @dont_throw
 def _set_response_attributes(span, llm_request_type, response):
     if llm_request_type == LLMRequestTypeValues.EMBEDDING or not span.is_recording():
@@ -171,6 +233,15 @@ def _set_response_attributes(span, llm_request_type, response):
                 f"{prefix}.role",
                 choice.message.role,
             )
+            for tool_index, tool_call in enumerate(
+                _tool_calls_as_dicts(choice.message.tool_calls)
+            ):
+                tool_prefix = f"{prefix}.tool_calls.{tool_index}"
+                _set_span_attribute(span, f"{tool_prefix}.id", tool_call["id"])
+                _set_span_attribute(span, f"{tool_prefix}.name", tool_call["name"])
+                _set_span_attribute(
+                    span, f"{tool_prefix}.arguments", tool_call["arguments"]
+                )
 
 
 @dont_throw
@@ -313,7 +384,14 @@ def _accumulate_streaming_response(span, event_logger, llm_request_type, respons
             accumulated_response.choices[idx].message.content = _merge_delta_content(
                 accumulated_response.choices[idx].message.content, choice.delta.content
             )
-            accumulated_response.choices[idx].message.role = choice.delta.role
+            accumulated_response.choices[idx].message.tool_calls = (
+                _merge_delta_tool_calls(
+                    accumulated_response.choices[idx].message.tool_calls,
+                    choice.delta.tool_calls,
+                )
+            )
+            if choice.delta.role:
+                accumulated_response.choices[idx].message.role = choice.delta.role
 
     _handle_response(span, event_logger, llm_request_type, accumulated_response)
 
@@ -359,7 +437,14 @@ async def _aaccumulate_streaming_response(
             accumulated_response.choices[idx].message.content = _merge_delta_content(
                 accumulated_response.choices[idx].message.content, choice.delta.content
             )
-            accumulated_response.choices[idx].message.role = choice.delta.role
+            accumulated_response.choices[idx].message.tool_calls = (
+                _merge_delta_tool_calls(
+                    accumulated_response.choices[idx].message.tool_calls,
+                    choice.delta.tool_calls,
+                )
+            )
+            if choice.delta.role:
+                accumulated_response.choices[idx].message.role = choice.delta.role
 
     _handle_response(span, event_logger, llm_request_type, accumulated_response)
 
@@ -427,6 +512,20 @@ def _emit_choice_events(
                         "role": choice.message.role or "assistant",
                     },
                     finish_reason=choice.finish_reason or "unknown",
+                    tool_calls=[
+                        {
+                            "id": tool_call["id"],
+                            "function": {
+                                "function_name": tool_call["name"],
+                                "arguments": tool_call["arguments"],
+                            },
+                            "type": tool_call["type"],
+                        }
+                        for tool_call in _tool_calls_as_dicts(
+                            choice.message.tool_calls
+                        )
+                    ]
+                    or None,
                 ),
                 event_logger,
             )
