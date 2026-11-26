@@ -5,7 +5,7 @@ import time
 import importlib.util
 import pinecone
 from typing import Collection
-from wrapt import wrap_function_wrapper
+from wrapt import FunctionWrapper, wrap_function_wrapper
 
 from opentelemetry import context as context_api
 from opentelemetry.metrics import get_meter
@@ -34,7 +34,7 @@ from opentelemetry.semconv_ai import Meters, SpanAttributes as AISpanAttributes
 
 logger = logging.getLogger(__name__)
 
-_instruments = ("pinecone >= 5.1.0, <9",)
+_instruments = ("pinecone >= 5.1.0, <11",)
 
 WRAPPED_METHODS = [
     {
@@ -134,6 +134,33 @@ def _wrap(
     kwargs,
 ):
     """Instruments and calls every function defined in TO_WRAP."""
+    return _execute_wrapped(
+        tracer,
+        query_duration_metric,
+        read_units_metric,
+        write_units_metric,
+        scores_metric,
+        to_wrap,
+        wrapped,
+        instance,
+        args,
+        kwargs,
+    )
+
+
+def _execute_wrapped(
+    tracer,
+    query_duration_metric,
+    read_units_metric,
+    write_units_metric,
+    scores_metric,
+    to_wrap,
+    wrapped,
+    instance,
+    args,
+    kwargs,
+):
+    """Shared span logic for the class-level wrapper and the per-instance wrapper."""
     if context_api.get_value(_SUPPRESS_INSTRUMENTATION_KEY):
         return wrapped(*args, **kwargs)
 
@@ -186,6 +213,147 @@ def _wrap(
                 span.set_status(Status(StatusCode.OK))
 
         return response
+
+
+def _wrap_instance_methods(
+    instance,
+    tracer,
+    query_duration_metric,
+    read_units_metric,
+    write_units_metric,
+    scores_metric,
+):
+    """Wrap per-instance methods with the same span logic as the class wrapper.
+
+    Since pinecone 10, ``Index.__init__`` rebinds ``query``/``upsert`` (and
+    potentially other methods) on the instance via
+    ``install_async_req_support``, so the class-level wrapping applied by
+    ``_instrument`` is shadowed and never runs for those methods. Wrapping
+    the instance attributes after construction restores the spans.
+
+    Skipped when the class attribute is already wrapped: in that case the
+    instance delegates to the traced canonical method pinecone stashes as
+    ``_canonical_<name>``, so wrapping the instance attribute as well would
+    emit every span twice.
+    """
+    for wrapped_method in WRAPPED_METHODS:
+        method = wrapped_method.get("method")
+        if method not in instance.__dict__:
+            continue
+        original = instance.__dict__[method]
+        if getattr(original, "_otel_pinecone_traced", False):
+            continue
+        cls_attr = None
+        for base in type(instance).__mro__:
+            if method in base.__dict__:
+                cls_attr = base.__dict__[method]
+                break
+        # NB: getattr() would return a BoundFunctionWrapper here, so the
+        # raw class-dict entry is inspected instead.
+        if isinstance(cls_attr, FunctionWrapper):
+            continue
+
+        def traced(
+            *args,
+            _original=original,
+            _instance=instance,
+            _wrapped_method=wrapped_method,
+            **kwargs,
+        ):
+            return _execute_wrapped(
+                tracer,
+                query_duration_metric,
+                read_units_metric,
+                write_units_metric,
+                scores_metric,
+                _wrapped_method,
+                _original,
+                _instance,
+                args,
+                kwargs,
+            )
+
+        traced._otel_pinecone_traced = True
+        setattr(instance, method, traced)
+
+
+def _wrap_init(
+    tracer,
+    query_duration_metric,
+    read_units_metric,
+    write_units_metric,
+    scores_metric,
+):
+    """Return a wrapper for ``Index.__init__`` that traces instance-bound methods."""
+
+    def wrapper(wrapped, instance, args, kwargs):
+        result = wrapped(*args, **kwargs)
+        try:
+            _wrap_instance_methods(
+                instance,
+                tracer,
+                query_duration_metric,
+                read_units_metric,
+                write_units_metric,
+                scores_metric,
+            )
+        except Exception:  # noqa: BLE001 - never break client construction
+            logger.debug("Failed to wrap pinecone instance methods", exc_info=True)
+        return result
+
+    return wrapper
+
+
+def _resolve_index_class(class_name):
+    """Return the Index-like class, trying the known module paths in order."""
+    for module_name in ("pinecone.db_data.index", "pinecone.index", "pinecone"):
+        try:
+            module = importlib.import_module(module_name)
+        except ImportError:
+            continue
+        cls = getattr(module, class_name, None)
+        if cls is not None:
+            return cls
+    return None
+
+
+def _wrap_class_init(
+    class_name,
+    tracer,
+    query_duration_metric,
+    read_units_metric,
+    write_units_metric,
+    scores_metric,
+):
+    """Best-effort ``__init__`` wrapping for one Index-like class."""
+    cls = _resolve_index_class(class_name)
+    if cls is None or "__init__" not in cls.__dict__:
+        return
+    try:
+        wrap_function_wrapper(
+            cls,
+            "__init__",
+            _wrap_init(
+                tracer,
+                query_duration_metric,
+                read_units_metric,
+                write_units_metric,
+                scores_metric,
+            ),
+        )
+    except (ImportError, AttributeError):
+        pass
+
+
+def _unwrap_class_init(class_name):
+    """Best-effort ``__init__`` unwrapping for one Index-like class."""
+    cls = _resolve_index_class(class_name)
+    if cls is None:
+        return
+    try:
+        unwrap(cls, "__init__")
+    except Exception as e:  # noqa: BLE001
+        logger.debug(f"Failed to unwrap {class_name}.__init__: {e}")
 
 
 class PineconeInstrumentor(BaseInstrumentor):
@@ -301,7 +469,24 @@ class PineconeInstrumentor(BaseInstrumentor):
                         ),
                     )
 
+        # Since pinecone 10, Index.__init__ rebinds query/upsert on the
+        # instance, shadowing the class-level wrapping above. Wrap __init__
+        # so instances created after instrumentation get their instance-bound
+        # methods traced as well (see _wrap_instance_methods).
+        for class_name in ("Index", "GRPCIndex"):
+            _wrap_class_init(
+                class_name,
+                tracer,
+                query_duration_metric,
+                read_units_metric,
+                write_units_metric,
+                scores_metric,
+            )
+
     def _uninstrument(self, **kwargs):
+        for class_name in ("Index", "GRPCIndex"):
+            _unwrap_class_init(class_name)
+
         for wrapped_method in WRAPPED_METHODS:
             wrap_object = wrapped_method.get("object")
             wrap_method_name = wrapped_method.get("method")
