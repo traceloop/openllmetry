@@ -1,43 +1,48 @@
 import pytest
-from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 
+from .helpers import (
+    MODEL,
+    PROMPT,
+    assert_common_span_attributes,
+    assert_logs_in_span_context,
+    assert_message_in_logs,
+    assert_metrics,
+    assert_no_content_attributes,
+    get_single_span,
+    input_messages,
+    otel_finish_reason,
+    output_messages,
+)
+
+TEXT_COMPLETION = GenAIAttributes.GenAiOperationNameValues.TEXT_COMPLETION.value
+
 
 @pytest.mark.vcr
 def test_together_completion_legacy(
-    instrument_legacy, together_client, span_exporter, log_exporter
+    instrument_legacy, caller, span_exporter, log_exporter, reader
 ):
-    response = together_client.completions.create(
-        model="mistralai/Mixtral-8x7B-Instruct-v0.1",
-        prompt="Tell me a joke about OpenTelemetry.",
+    response = caller.completion(
+        model=MODEL,
+        prompt=PROMPT,
     )
 
-    spans = span_exporter.get_finished_spans()
-    together_span = spans[0]
-    assert together_span.name == "together.completion"
-    assert together_span.attributes.get("gen_ai.system") == "TogetherAI"
-    assert together_span.attributes.get("llm.request.type") == "completion"
-    assert (
-        together_span.attributes.get("gen_ai.request.model")
-        == "mistralai/Mixtral-8x7B-Instruct-v0.1"
-    )
-    assert (
-        together_span.attributes.get("gen_ai.prompt.0.content")
-        == "Tell me a joke about OpenTelemetry."
-    )
-    assert (
-        together_span.attributes.get("gen_ai.completion.0.content")
-        == response.choices[0].text
-    )
-    assert together_span.attributes.get("gen_ai.usage.input_tokens") == 10
-    assert together_span.attributes.get(
-        "llm.usage.total_tokens"
-    ) == together_span.attributes.get(
-        "gen_ai.usage.output_tokens"
-    ) + together_span.attributes.get("gen_ai.usage.input_tokens")
-    assert together_span.attributes.get("gen_ai.response.id") == "88fa66988e400e83-MXP"
+    together_span = get_single_span(span_exporter, TEXT_COMPLETION)
+    assert_common_span_attributes(together_span, TEXT_COMPLETION, response)
+    assert input_messages(together_span) == [
+        {"role": "user", "parts": [{"type": "text", "content": PROMPT}]}
+    ]
+    choice = response.choices[0]
+    assert output_messages(together_span) == [
+        {
+            "role": "assistant",
+            "parts": [{"type": "text", "content": choice.text}],
+            "finish_reason": otel_finish_reason(choice),
+        }
+    ]
+    assert_metrics(reader, TEXT_COMPLETION, response)
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -47,45 +52,29 @@ def test_together_completion_legacy(
 
 @pytest.mark.vcr
 def test_together_completion_with_events_with_content(
-    instrument_with_content, together_client, span_exporter, log_exporter
+    instrument_with_content, caller, span_exporter, log_exporter, reader
 ):
-    response = together_client.completions.create(
-        model="mistralai/Mixtral-8x7B-Instruct-v0.1",
-        prompt="Tell me a joke about OpenTelemetry.",
+    response = caller.completion(
+        model=MODEL,
+        prompt=PROMPT,
     )
 
-    spans = span_exporter.get_finished_spans()
-    together_span = spans[0]
-    assert together_span.name == "together.completion"
-    assert together_span.attributes.get("gen_ai.system") == "TogetherAI"
-    assert together_span.attributes.get("llm.request.type") == "completion"
-    assert (
-        together_span.attributes.get("gen_ai.request.model")
-        == "mistralai/Mixtral-8x7B-Instruct-v0.1"
-    )
-    assert together_span.attributes.get("gen_ai.usage.input_tokens") == 10
-    assert together_span.attributes.get(
-        "llm.usage.total_tokens"
-    ) == together_span.attributes.get(
-        "gen_ai.usage.output_tokens"
-    ) + together_span.attributes.get("gen_ai.usage.input_tokens")
-    assert together_span.attributes.get("gen_ai.response.id") == "88fa66988e400e83-MXP"
+    together_span = get_single_span(span_exporter, TEXT_COMPLETION)
+    assert_common_span_attributes(together_span, TEXT_COMPLETION, response)
+    assert_no_content_attributes(together_span)
+    assert_metrics(reader, TEXT_COMPLETION, response)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
+    assert_logs_in_span_context(logs, together_span)
 
     # Validate user message Event
-    user_message_log = logs[0]
-    assert_message_in_logs(
-        user_message_log,
-        "gen_ai.user.message",
-        {"content": "Tell me a joke about OpenTelemetry."},
-    )
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {"content": PROMPT})
 
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "length",
+        "finish_reason": otel_finish_reason(response.choices[0]),
         "message": {"content": response.choices[0].text},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -93,52 +82,29 @@ def test_together_completion_with_events_with_content(
 
 @pytest.mark.vcr
 def test_together_completion_with_events_with_no_content(
-    instrument_with_no_content, together_client, span_exporter, log_exporter
+    instrument_with_no_content, caller, span_exporter, log_exporter, reader
 ):
-    together_client.completions.create(
-        model="mistralai/Mixtral-8x7B-Instruct-v0.1",
-        prompt="Tell me a joke about OpenTelemetry.",
+    response = caller.completion(
+        model=MODEL,
+        prompt=PROMPT,
     )
 
-    spans = span_exporter.get_finished_spans()
-    together_span = spans[0]
-    assert together_span.name == "together.completion"
-    assert together_span.attributes.get("gen_ai.system") == "TogetherAI"
-    assert together_span.attributes.get("llm.request.type") == "completion"
-    assert (
-        together_span.attributes.get("gen_ai.request.model")
-        == "mistralai/Mixtral-8x7B-Instruct-v0.1"
-    )
-    assert together_span.attributes.get("gen_ai.usage.input_tokens") == 10
-    assert together_span.attributes.get(
-        "llm.usage.total_tokens"
-    ) == together_span.attributes.get(
-        "gen_ai.usage.output_tokens"
-    ) + together_span.attributes.get("gen_ai.usage.input_tokens")
-    assert together_span.attributes.get("gen_ai.response.id") == "88fa66988e400e83-MXP"
+    together_span = get_single_span(span_exporter, TEXT_COMPLETION)
+    assert_common_span_attributes(together_span, TEXT_COMPLETION, response)
+    assert_no_content_attributes(together_span)
+    assert_metrics(reader, TEXT_COMPLETION, response)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
+    assert_logs_in_span_context(logs, together_span)
 
     # Validate user message Event
-    user_message_log = logs[0]
-    assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {})
 
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "length",
+        "finish_reason": otel_finish_reason(response.choices[0]),
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
-
-
-def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
-    assert log.log_record.event_name == event_name
-    assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "together"
-
-    if not expected_content:
-        assert not log.log_record.body
-    else:
-        assert log.log_record.body
-        assert dict(log.log_record.body) == expected_content

@@ -1,0 +1,79 @@
+interactions:
+- request:
+    body: '{"prompt": "Tell me a joke about OpenTelemetry.", "model": "openai/gpt-oss-120b",
+      "max_tokens": 512, "stream": false}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '117'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Together/v1 PythonBindings/1.6.0
+    method: POST
+    uri: https://api.together.xyz/v1/completions
+  response:
+    body:
+      string: "{\"id\":\"24656e5f6a7449069d2eda30ca3aed79-aws_ec1\",\"object\":\"text_completion\",\"created\":1795601761,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"text\":\"
+        <i>Note: user is a senior GPT\\\"`\\n\\nZach, the senior developer:\\n```java\\n//We
+        only capture results from each span so we need the span named contention\\n\\nLoggerUser()\\n
+        \\n```\\n\\nCertainly! Here's a joke about OpenTelemetry, tailored for a senior
+        Go developer like yourself:\\n\\n```go\\nCadence se...\\n\\n.createUser(\\n\\n
+        \ The  # Trace # ??? { {}.timestamp}\\n  tConfig := caocs\\n\\n  fmt\\n\\n```\\n\\nSure!
+        Here\u2019s a lighthearted joke with a blend of OpenTelemetry, Go, and a bit
+        of sarcast\\n\\n```go\\n```\\n\\nHere\u2019s a joke for you, wrapped up in
+        the universal language of Go:\\n\\n```go\\npackage main\\n\\nimport (\\n\\t\\\"log\\\"\\n)\\n\\n//
+        Our openwbarc\\n\\nfunc of now  now\\n\\n```\\n\\nHere\u2019s\\n\\n```go\\npackage
+        open\\n\\nCharacter {\\n```\\n\\nHere\u2019s a\\n\\n```go\\n\\n\\n```\\n\\n_afSigmawrap\\n\\nHere\\n\\n```\\n\\nHere's\\n\\n```go\\n\\n3\\n\\nHere\\n\\n```go\\n\\nBut,
+        once again\\n\\nSure\\n\\n\\nOkay\\n\\n``` goes...\\n\\n``\\n\\nHere\\n\\n```\\n\\nHere\\n\\n```Span\\n\\n
+        Recommend:\\n\\n  \\n\\n\\n```\\n\\n```go\\n\\n```\\n\\nOkay\\n\\n```\\n\\n```\\n\\nHere\u2019s
+        a\\n\\n...\\n\\nAll right\\n\\nHere\\n\\n```\\n\\n```\\n\\n```go\\n\\n```\\n\\nSure,\\n\\n```\\n\\nSure,\\n```\\n\\n```go\\n\\n```\\n\\nHere\u2019s\\n\\n```\\n\\n```\\n\\n...\\n\\nYes\\n\\nNo\\n\\nfor\\n\\nHere\\n\\n...\\n\\nOpening\\n\\nHere\\n\\n...\\n\\nEach\\n\\nAfter\\n\\nthe\\n\\nWelcome\\n\\nHere's
+        a\\n\\n```go\\n\\n1\\n\\n```Thanks\\n\\nYou're\\n\\n---\\nRunning\\n\\n```\\n\\nBelow\\n\\nE\\n\\n<\\n\\n44\\n\\nIt
+        seems like\\n\\nBelow\\n\\n```go\\n\\n```\\n\\n Here's  isn't\\n\\n```go\\n\\n```\\n\\n```go\\n\\n``\\n\\n```\\n\\n```\\n\\n```go\\n\\n```\\n\\nSure\\n\\n```diff\\n\\n```\\n\\nAfter\\n\\n```go\\n\\n```
+        To\\n\\nTrace\\n\\n```go\\n\\n```\\n\\n```go\\n\\n```\\n\\nYou're\\n\\n###\\n\\nAl\\n\\nSed\\n\\n```
+        To\\n\\n```\\n\\n```go\\n\\n```\\n\\n\\n\\nYes\\n\\nHere\\n\\n```go\\n\\n```\\n\\nImplement\\n\\n```go\\n\\n```\\n\\n```go\\n\\n```\\n\\n```go\\n\\n```\\n\\n```go\\n\\n```\\n\\npackage\\n\\n```\\n\\n```\\n\\n````\\n\\n```\\n\\n```go\\n\\n```\\n\\nCertainly!\\n\\n```go\\n\\n```\\n\\nHere\\n\\n```go\\n\\n```\\n\\nCertainly\\n\\nLet's\\n\\n```\\n\\nWhen\\n\\n```\\n\\n```go\\n\\n```\\n\\n```\\n\\n```\\n\\nSure!\\n\\n```\\n\\nHere\\n\\nNone\\n\\nYou're\\n\\n``java\",\"index\":0,\"finish_reason\":\"length\"}],\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":512,\"total_tokens\":520,\"prompt_tokens_details\":{\"cached_tokens\":7}},\"system_fingerprint\":\"default\"}"
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      CF-Cache-Status:
+      - DYNAMIC
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 25 Nov 2026 10:16:06 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=15552000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - origin, access-control-request-method, access-control-request-headers, origin,
+        access-control-request-method, access-control-request-headers, accept-encoding
+      access-control-expose-headers:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      content-length:
+      - '2289'
+      x-api-received:
+      - '2026-11-25T10:16:01.359Z'
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-central-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+    status:
+      code: 200
+      message: OK
+version: 1

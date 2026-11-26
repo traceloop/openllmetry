@@ -1,0 +1,69 @@
+interactions:
+- request:
+    body: '{"messages":[{"role":"user","content":"Tell me a joke about OpenTelemetry."}],"model":"openai/gpt-oss-120b"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '108'
+      content-type:
+      - application/json
+      host:
+      - api-inference.together.ai
+      user-agent:
+      - Together/Python 3.4.0
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-package-version:
+      - 3.4.0
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api-inference.together.ai/v1/chat/completions
+  response:
+    body:
+      string: "{\"id\":\"38e0eb57c4e441d0b7bbee9a5547b48f-aws_ew1\",\"object\":\"chat.completion\",\"created\":1795601664,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Why
+        did the OpenTelemetry span get a therapist?\\n\\nBecause it couldn't stop
+        **tracing** its own issues, kept **spanning** the same problems, and every
+        time it tried to **log** its feelings, the metrics just said \u201Cstill\u202F0\u202Ferrors.\u201D
+        \U0001F604\",\"reasoning_content\":\"We need to respond with a joke. The policies:
+        The content is allowed; not disallowed. Provide a joke. Could be humorous
+        about tracing/metrics. Ensure not to reveal policy. Just produce.\"},\"finish_reason\":\"stop\",\"matched_stop\":200002}],\"usage\":{\"prompt_tokens\":77,\"completion_tokens\":107,\"total_tokens\":184,\"prompt_tokens_details\":{\"cached_tokens\":76},\"completion_tokens_details\":{\"reasoning_tokens\":42}},\"system_fingerprint\":\"default\"}"
+    headers:
+      access-control-allow-origin:
+      - '*'
+      access-control-expose-headers:
+      - '*'
+      connection:
+      - keep-alive
+      content-length:
+      - '890'
+      content-type:
+      - application/json
+      date:
+      - Wed, 25 Nov 2026 10:14:24 GMT
+      vary:
+      - origin, access-control-request-method, access-control-request-headers
+      - origin, access-control-request-method, access-control-request-headers
+      x-api-received:
+      - '2026-11-25T10:14:24.085Z'
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-west-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+    status:
+      code: 200
+      message: OK
+version: 1

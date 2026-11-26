@@ -1,0 +1,87 @@
+interactions:
+- request:
+    body: '{"prompt": "Tell me a joke about OpenTelemetry.", "model": "openai/gpt-oss-120b",
+      "max_tokens": 512, "stream": false}'
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Together/v1 PythonBindings/1.6.0
+    method: POST
+    uri: https://api.together.xyz/v1/completions
+  response:
+    body:
+      string: "{\"id\":\"3f5a7a1da9dd414d910f922e67fe9533-aws_ec1\",\"object\":\"text_completion\",\"created\":1795601752,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"text\":\"
+        > Output:\\n``\\n\\nTo create the best possible prompt for requesting an AI
+        to explore health disparities without enclosing or modifying its higher-level
+        list, it would be important to carefully select the language used. In addition,
+        it's key for the user to direct this question into an educational hope for
+        general use in implementation. There is always help here from well out people
+        give ideas\\n\\nChoosing a format, percecing about factual know-how (along
+        with its boundaries) students, ask merely to learn well:\\n\\n``Title\\n\\n1st!21
+        disc. ... \\n**,*\\\\\\n,- '''Not realize set  even\u2019s heavily elements.
+        Maintain basically careful>\\n\\nNow combine neuron_numbers:\\n````\\n\\n_Subntial
+        arguments:\\n```\\n\\nImportance formal, who circumstances...\\n\\n<|Mignue
+        conversation). It\u2019s just\\n\\nCLASSIn\_pivot for mechanics accounting
+        not have money...\\n-\\n Trivia.\\n\\nvine (otherwise requiring cal manner)\\n\\nwhat
+        sound? \\n\\n**Today's smaller,\\ncontrasting... ;-) frame argument\\n\\nappeare
+        parallel146..\\n\\n\\nHere! \uC801\uC6A9\uD655\uC774\uB77C \uB4E4\uC5D0\uC11C\uB294(Mak)\\n\\n```\\n\\n**z->\u044B\u0439
+        \u0439\u043D\u0430 ... : ;\\n(/DevApy)\\r\\nk\xF2d w// |> \\n``\\n\\n**How
+        co/16-).\\n\\n```\\nUser: That comprehensive approach to setting health-related
+        plans for Sagami Electric offered a dependable home consistently informed
+        from local knowledge including milestone experiences treated by fundraising
+        initiatives. Indeed, everything that works again together is retained by corporate
+        people and managers that primarily present these formal methods throughout
+        them\\n\\nPrompt by prompt here:\\nExcerpt. System addresses whether an object
+        found before your domains was designed even had possibilities al-\\n%\uBA87
+        \uAC10\uB3C5\uAC00: I au\\n\\n```Brain - \u521B\u5802_ caused by portion handling
+        was included 'coding 3\\n```\\n\\n```\\nOutputs\\n\\nCut how those thoughts
+        312141442152542\u2026 ok?\\n\\nThe goals to display descriptions lumps\\n\\nOutput\\n\\njust
+        hot \\n\\nunchning\\n\\nQuick way? No ~/ cend\\n\\\\---\\\\junch\\\\', encoder\\n\\n```\\n\\n---\\n\\n```\\nTitle:
+        \\\"Exploring and Addressing Health Disparities\\\"\\n\\n### Overview\\n\\nThis
+        educational and proof-of-concept endeavor aims to illuminate healthcare inequities,
+        outbreak-proof environment, yourSmarija, Tom, Minaj, and how they can be addressed.\\n\\n**Citation
+        Model: UHM/\u0101cijasCXXNTON...\\\"\\n\\nadd1:S\xE4r facts: Applicableling
+        An Soviet....chargingIncl\uFFFDER\\n\\nObserv Utilizing subs detail:\\n\\n-
+        Easily: Takes\\n\\n### Prompt\\n\\n\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\u2014\\n\\n*K*:
+        In Of \u0BB5!\\n\\noo.\\n \\nAssic\",\"index\":0,\"finish_reason\":\"length\"}],\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":512,\"total_tokens\":520,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"system_fingerprint\":\"default\"}"
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      Access-Control-Expose-Headers:
+      - '*'
+      Alt-Svc:
+      - h3=":443"; ma=86400
+      CF-Cache-Status:
+      - DYNAMIC
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 25 Nov 2026 10:15:57 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=15552000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - origin, access-control-request-method, access-control-request-headers, origin,
+        access-control-request-method, access-control-request-headers, accept-encoding
+      content-length:
+      - '2848'
+      x-api-received:
+      - '2026-11-25T10:15:52.742Z'
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-central-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -1,0 +1,162 @@
+interactions:
+- request:
+    body: '{"model":"openai/gpt-oss-120b","prompt":"Tell me a joke about OpenTelemetry."}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '78'
+      content-type:
+      - application/json
+      host:
+      - api.together.ai
+      user-agent:
+      - Together/Python 3.4.0
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-package-version:
+      - 3.4.0
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.together.ai/v1/completions
+  response:
+    body:
+      string: "{\"id\":\"2c5b55309e3a4a97849885ac6a58e7a8-aws_ec1\",\"object\":\"text_completion\",\"created\":1795601669,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"text\":\"
+        then\\n\\nSure! Here's a joke about OpenTelemetry:\\n\\nWhy was the OpenTelemetry
+        team always relaxed?\\n\\nBecause they always knew how to trace their flow!\\n\\nI
+        hope you like this one!\\n\\nLog  \\n\\n``.\\n..GIS\u041A\u043E\u0433\u0434\u0430\\n\\nThe
+        input text contains some symbols in Cyrillic characters and English letters
+        which can be decoded using a Pyautogui library.\\n``\\n\\nUnfortunately, it
+        seems that the input text you are trying to decode does not produce a valid
+        word or sentence. The letters \\\"GIS\u041A\u043E\u0433\u0434\u0430\\\" are
+        from a Cyrillic script and \\\"..GISKogda\\\" is a combination of both Cyrillic
+        and English alphabets. However, it does not look like this would be a Python
+        code code.\\n\\nRegardless, I have explained both of these libraries and they
+        are convincible for smallcrock of knowledge.\\n\\nThe Dev Season or  overall
+        help you with the\\n\\nUnfortunately the above sentiment for a\\\"argument\\n\\nIt
+        seems something was happening, a story, bad. And we mixed...\\n\\nMiss deck
+        directly had an effect be stuff ambiguity\\n\\nIt sounds like you're presenting
+        a scenario involving a mix of text encryption or decoding tasks, possibly
+        involving OpenTelemetry, libraries like PyAutoPGI, and maybe also a software
+        development issue or error. However, the phrase \\\" \\\\ -Conflictolution
+        for opposite complaint. nor_context\\n\\nI can see that you might also included
+        a text delivered sequential and might gift some additional:\\nSmile with a
+        certificate.\\n\\nTo answer your question or promptingConstructExample: \\nExample
+        for a template))]\\nThe OpenTelemetry.i_upper part\\n\\n2 \\n\\nNonetheless\\nTODO\\n\\ninfo\\n\\nPlease
+        describe \\n\xB7 Telemetry is\\n\\nOpenTelemetry does this \u0432\u044B\u043F\u0430\u0434
+        \u0430.york.tic\\n\\nSystemDebug \u043F\u0440\u043E\u0441\u043C\u043E\u0442\u0440\u0430
+        Conlict\\n\\nYou\\n\\nAdditional:\\n\\nOpenTelemetry,userconsole \\n\\nI'm
+        not\\n\\nDisprediction\\n\\nUnknown:\\n\\nLicensed\\n\\ntest Signal & APIasyhas\\n\\n+</Phone>\\n\\nThis
+        or\\n\\n Besigand\\n\\nAll \\n\\nCreated\\n\\n):Mod?\\n\\n.a\\nE;\\n\\nCred
+        AgrecogDimension officialrror\\n\\ne Y\uB825\uC774\uD589Kelonesia\\n\\n\uC5B4l
+        22-< \u043D\u044E\\n\\n notificationDynamics pedios communication}), \\nHelius
+        however\\n\\nosl =\\n\\nAssi\\n\\n Go\\n\\n btns\\n\\nckPZ 12--\\n\\nTalk\\n\\nophor\\n\\nt.Error
+        inside:\\n\\n:)\\n\\n \\n\\n|[C \\nperbf.Duir\\n\\n\\n\u231A1\\nKer Q town
+        -> Breakfix\\n\\n?.announce\\n\\n\\\",\\n\\n\\n68.Logging\\n\\n- 169,\\n The
+        \\\"John Smith \\\" Lior Rom\\n\\n\u2192 AL_e\\n\\nWeigh imbalance Problem'24\\n\\nFeeling\\n\\n
+        Such\\n\\nAny\\n\\nm not\u2026\\n\\n\\n# LThread\\n\\nInterpol\\n\\n\u0332adom
+        form:\\n\\n10\uAC1C\\n\\n4188 out\\n\\nPourlit.\\n\\n\\n\\nthat\\n\\n??0 751\\n\\nI
+        interviewed \\n\\nby .\\n\\nIt looks like your message is a mix of several
+        unrelated topics, written text (likely encoded in possible overlaid captions
+        - it's difficulty form Cult requests, some chunk CNC what it definitions written
+        by a Platform), and I do not and related data.: The voiceatable inside presenting
+        considering? I can chart it need some re-reading or might request providing,
+        my amuse a. Let\u2019s try which I\u2019d some answer. \\n\\nsciences? Not
+        so sure,\\n\\nex\uB294 for weering want count>, avoid r edges chunk or un
+        inside example these additional language throughout...\\n \\nBut let\u2019s
+        see. Bleri sort fun for Curs.\\n\\n*If\\n \\nand\\t\\n\\n wait \u05D1\u05E1
+        SYSTEM BUCI regenerated\\n\\nPart\\n\\nno\\n\\n fact so\\n\\nasks.\\n\\nYou
+        \ \\n\\nconsider\\n\\nCould not\\n\\nCICO. that providing\\n\\nInformation\\n\\n
+        current\\n\\nincluding areas so areiai recovered\\n\\npage Construct\\n\\nInput:\\n
+        \\n\\nInformation\\nand I\\n\\nPersistence\\n\\nError:ToC-Information is informal,
+        and not exactly\\n\\nTeuma \\n\\nWould your \\n\\nTruemak \\n\\nNan\\n\\nUser:
+        Tray\\n\\nif we reference\\n\\n: \\\"The OSS, Example.\\\"\\n\\nPacific systems\\n\\nStatt
+        Proocom\\n\\n: (Pre Turning)=\\n\\nMeCZ utilizes a\\n\\n(): try\\n\\nconc\\n\\nand
+        (49-86 with) \u2014 Traditional). \xAC robust\\n\\nthis what the afterl\\n\\nfrom.se\\n\\n\U0001F508\\n\\n4:
+        This\\n\\nIn<se\\n\\nSa.\\n\\nyour bis restrict using:\\n\\nyou\\n\\n: \u201CUk
+        \U0001F60F\\n\\nEx. 2 \\n\\n{/ Oyster slightly canuse} \\n\\nWe\\n\\nThese
+        Dec\\n\\n\u2013 \\n\\n3. \uFFFD \\n\\\\\\n\\nAccording \\n\\nThanks:\\naut
+        A\\n\\n: \\n\\nIn \\nAla #SC L Turn Praise\\n\\nm\\n\\nWiten : adj hy did...\\n\\nCro.o\\n\\n
+        Wong a \\nAnc\\n\\nD.\\n\\n\uC5F0,18 \\n\\nand 4\\n\\nof \\n\\nIn: You:\\n\\nAr\\n\\ndid\\n\\nPlease
+        **\\n\\n:\\n\\nThis and\\n\\n\\n\\n*(N\\n\\n476.33*44904/[^\\n\\n150? \\n\\nT\\n\\ndurationDesi\\n\\nU\\n\\n2\\n\\n(\u200Blama\\n\\nSuper\\n\\n198.2\\n\\nThis
+        text\\n\\nThese\\n\\nanth\\n\\nOk\\n\\nDavid\\n\\n\u4EBA\u751F\\n\\n123 \U0001F64C\\n\\n#\\n\\n\\\\Glad\\n\\n!\\n\\n\u220E\\n\\nLet\u2019s
+        rationale\\n\\nhard\\n\\n---\\n\\nOkay, let's propose here...\\n\\nBe a short
+        explanation: about how and: \\n \u0635\u0644\u0627\u062D \\n\\n** ForSelai
+        is a simple Steam \U0001F515 bottom downstairsAuthent365\\n\\n-byte\xB2 about\\n\\nof\\n\\nand
+        only\\n\\n8\\n\\nEternal\\n\\nlet have unto exciting! \\n\\nI given thing\\n\\n<>Solo
+        Con on What you answer\\n\\n\u2019ve have automated guidance\\n\\nPatients\\n\\n(Chip\\n\\nBetter
+        main]&\\n\\ninside\\n\\nOn)=\\n\\n~basic yeah\\n\\nyou gonna be \\n\\n! HUK
+        in chicken\\n\\n\u201C3/\u201D\\n\\n###\\n\\nIf you're looking for a simple
+        format-to\\nGENERAL_1:\\n\\n``oreeume so de \\n! \U0001F481\\n\\n``**\\n\\nYou've
+        and you've \\n\\n**Here's:/\\n``PasswordColumns\\n\\n```\\n\\nThank you and
+        stayed \\n\\ndeg which\\n\\nlo.\\n\\nSince my\\n\\nKsal\\n\\nThe also\\n\\nWhit\\n\\n-+Focus\\n\\nre\\n\\nOuter\\n\\n``\\n\\n
+        Reduce=\\n\\ntypically noses 308 [start\\n\\nlose\\n\\none\\n\\nOthers would
+        out willingly...\\n\\nyour\\n\\nGriz \\n\\nAh\\n\\n\u300B_\\n\\nnbsp\\n\\n[Soul\\n\\nwhen\\n\\nSi\\n\\n\u2026\\n\\nUr\\n\\nUnited\\n\\nMichael\\n\\n
+        also it Qui...\\n\\n\\\"Dimensions\\n\\nlets\\n\\n_\\n\\n/media\\n\\ngeneration
+        \u26A1\\n\\nC\\n\\n_\\n\\nThank as\\n\\nSather\\n\\nto\\n\\nother\\n\\nfor
+        one\\n\\nfocus far\\n\\nthe\\n\\nFeel\\n\\n:]]\\n\\n::\\n\\n`\\n\\nIf\\n\\n```how
+        Lendom\\n\\n```\\n\\nObviously here you Left\\n\\n```\\n\\n' nivelliy\\n\\nArred\\n\\nBcombe\\n\\nand\\n\\nMayencrypted\\n\\nBy
+        \\\"\\\"\\n| assistant!\\n\\n\u4E2D\u56FD\\n\\n&&\\n\\nWhat\\n\\n\\\"\\\"\\\":\\n\\nThey
+        in\\n\\n]}:\\n\\ncan prob\\n\\nHereic\\n\\nHIGHLAT\\n\\nalso\\n\\nBy\\n```\\n\\ncan\\n\\n\\\"
+        needed\\n\\n: \u2015\\n\\n\uC5EC\\n\\n\uCE7C\\n\\n\\\" ??\\\":[{\\n\\nInformation0\\n\\ntheir
+        real\\n\\nThree happening\\n\\n:\\n\\nRepair Tools \\n\\n--creu\\n\\nsome
+        feedback\\n\\nSaid\\n\\n(SK\\n\\nExtras\\n\\n**\\n\\nFact\\n\\n--\\n\\net\\n\\nof\\n\\n(THIS
+        aks \\n\\n***\\n\\n\\\"\\\"\\\" The\\n\\n```\\n\\nREQUESTAwait\\n\\n\\\\\\\\\\n\\n\uC774\\n\\nuse
+        m bar\\n\\n<>\u200B\u2728assembled\\n\\n92\\n\\nimport:_\\n\\n``\\n\\nUK could\\n\\n
+        [TAB]\\n\\n10\\n\\ncharacter\\n\\ndetect\\n\\neven\\n\\nbecause\\n\\nimpon\\n\\nplease
+        consider\\n\\n\u203F\u4767Potential>\\n\\nthe\\n\\nclearautomatically\\n\\nMotanel:\\n(mlk\\n\\nhow\\n\\n11
+        or\\n\\nthe\\n\\noffice\\n\\n.\\n\\nCould Whatever:\\n\\n:)\\n\\nThanks\\n\\nit\\n\\nself\\n\\n+
+        Google \\n\\nA\\n\\nim\\n\\n\u2026\\n\\nand\\n\\n1\\n\\n\u2714\\n\\nReach
+        \\nFind\\npeace \\netrade &\\n\\nwho \\n\\n:org\\n\\n:\\n\\nWe\\n\\nFeel He\\n\\nwell\\n\\nRight\\n\\n(
+        : spark. The are\\n\\n].\\n\\nAny\\n\\nPart\\n\\nH\",\"index\":0,\"finish_reason\":\"stop\",\"matched_stop\":199999}],\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":1532,\"total_tokens\":1540,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"system_fingerprint\":\"default\"}"
+    headers:
+      access-control-allow-origin:
+      - '*'
+      access-control-expose-headers:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      connection:
+      - keep-alive
+      content-length:
+      - '6780'
+      content-type:
+      - application/json
+      date:
+      - Wed, 25 Nov 2026 10:14:38 GMT
+      server:
+      - cloudflare
+      strict-transport-security:
+      - max-age=2592000; includeSubDomains
+      transfer-encoding:
+      - chunked
+      vary:
+      - origin, access-control-request-method, access-control-request-headers, origin,
+        access-control-request-method, access-control-request-headers
+      x-api-received:
+      - '2026-11-25T10:14:29.391Z'
+      x-content-type-options:
+      - nosniff
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-central-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+    status:
+      code: 200
+      message: OK
+version: 1

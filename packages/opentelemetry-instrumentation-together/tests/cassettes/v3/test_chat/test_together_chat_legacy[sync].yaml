@@ -1,0 +1,69 @@
+interactions:
+- request:
+    body: '{"messages":[{"role":"user","content":"Tell me a joke about OpenTelemetry."}],"model":"openai/gpt-oss-120b"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '108'
+      content-type:
+      - application/json
+      host:
+      - api-inference.together.ai
+      user-agent:
+      - Together/Python 3.4.0
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-package-version:
+      - 3.4.0
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api-inference.together.ai/v1/chat/completions
+  response:
+    body:
+      string: "{\"id\":\"d4321189975447b19560c42d1b4f2597-aws_ew1\",\"object\":\"chat.completion\",\"created\":1795601660,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Why
+        did the developer give OpenTelemetry a standing\u2011ovation?\\n\\nBecause
+        every time they tried to instrument the code, it *traced* their every move,
+        *metered* the applause, and still managed to *export* the laughs\u2014all
+        without dropping a single span! \U0001F604\",\"reasoning_content\":\"User
+        wants a joke about OpenTelemetry. It's permissible. Provide a humorous joke.
+        Ensure it's appropriate.\"},\"finish_reason\":\"stop\",\"matched_stop\":200002}],\"usage\":{\"prompt_tokens\":77,\"completion_tokens\":87,\"total_tokens\":164,\"prompt_tokens_details\":{\"cached_tokens\":66},\"completion_tokens_details\":{\"reasoning_tokens\":21}},\"system_fingerprint\":\"default\"}"
+    headers:
+      access-control-allow-origin:
+      - '*'
+      access-control-expose-headers:
+      - '*'
+      connection:
+      - keep-alive
+      content-length:
+      - '825'
+      content-type:
+      - application/json
+      date:
+      - Wed, 25 Nov 2026 10:14:20 GMT
+      vary:
+      - origin, access-control-request-method, access-control-request-headers
+      - origin, access-control-request-method, access-control-request-headers
+      x-api-received:
+      - '2026-11-25T10:14:20.403Z'
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-west-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+    status:
+      code: 200
+      message: OK
+version: 1

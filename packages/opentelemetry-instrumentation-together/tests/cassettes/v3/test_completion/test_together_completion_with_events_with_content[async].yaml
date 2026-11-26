@@ -1,0 +1,118 @@
+interactions:
+- request:
+    body: '{"model":"openai/gpt-oss-120b","prompt":"Tell me a joke about OpenTelemetry."}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '78'
+      content-type:
+      - application/json
+      host:
+      - api.together.ai
+      user-agent:
+      - AsyncTogether/Python 3.4.0
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-package-version:
+      - 3.4.0
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.together.ai/v1/completions
+  response:
+    body:
+      string: "{\"id\":\"5cc0c60c6329416cb2e9294e16c3a08a-aws_ew1\",\"object\":\"text_completion\",\"created\":1795601714,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"text\":\"
+        ______\\n\\nWhy didn't the OpenTelemetry developer cross the virtual corridor?
+        Because though he couldn't see the medium, he had thorough visibility by default!\\n\\nSure!
+        I can definitely try to tailor my joke to suit your sense that I'm referencing
+        content from \\\"ChatGPT\\n\\nSure! Here's a tongue-in-cheek joke built for
+        \\\"ChatGPT regarding the OpenTelemetry \\\"\\n\\nWhy does the OpenTelemetry
+        developer love playing hide-and-seek?\\n\\nBecause they're always good at
+        seeing through its travels!\\n\\nIt looks like there were a few attempts at
+        finding the perfect OpenTelemetry joke! Let\u2019s try this one:\\n\\nWhy
+        did the OpenTelemetry developer switch from a wooden chair to a bean bag?\\n\\nBecause
+        their metrics needed more flexibility for their stretch covers!\\n\\nThis
+        instruction\\n\\nApologies for misunderstanding earlier. Here\u2019s a revised
+        joke focusing more on the direct context:\\n\\nWhy does the OpenTelemetry
+        library have good sense of humour?\\n\\nBecause when it's debugging joke its
+        logs are misaligned and its funky-based around mystery json.\\n\\nHere\u2019s
+        a little creative spin:\\n\\nWhy did OpenTelemetry make a coffee chart?\\nBecause
+        OpenTelemetry successfully adds different modern managements. To see deb has
+        chart from total real content h styl and the indirect. Lastly:\\n\\nMy jokes
+        doesn't have autodetect:\\n\\nFiscal\\nThus\\n\\nIt looks like there\u2019s
+        a mix of thoughts and different suggestions to streamline the humor about
+        OpenTelemetry and clarity needed in your jokes. Let\u2019s pull it all together
+        for a more coherent and comical attempt:\\n\\nWhy does OpenTelemetry love
+        coffee?\\nBecause it helps set up the perfect brew of metrics\u2014one part
+        latency, one part throughput, and topped off with a great splash of traceability!\\n\\nAnd
+        regarding your request for a non-autocomplete joke:\\n\\nWhy do birds avoid
+        OpenTelemetry?\\nThey'd rather *fly naturally* than use a system that insists
+        on tracking every whispering wind\u2014despite its real benefits of data access!\\n\\nLastly,\\n\\nApologies\u2014let\u2019s
+        see if we wee\\n\\nHere\u2019s a Dwa\\n\\nThe joke just\\nA different call
+        upon.\\n\\nIf One\\n\\nTot so tha\\n\\nAs request\xEF\\n\\nIt appears\\n\\nFeels
+        it will.\\n\\n\u7ED3Currently+\\n\\nTher\\n\\nUnable\\n\\nSees...\\n\\nIt
+        looks like the conversation, especially concerning jokes and\\n\\nMy\\n\\nPotential\\n\\ndef\\n\\nHere\\n\\nIn\\n\\nFile\\n\\nJon\\n\\nUn\\n\\n\\n\\nApologies\\n\\nYour
+        last request appeared to\\n\\nContinue\\n\\nHere\\n\\nBe\\n\\nGiven this,
+        it seems the confusion.\\n\\nOops! Here's determining Huh?  \\ncom\\n\\nBy
+        the comedy script on a consulting per\\n\\nIf ender Russia\\n\\n\\n\\n\\n##
+        Sequential\\n\\nA ) Then\\n\\nan that's ...\\n\\nTeam:\\n\\n---\\n\\nimations:\\n\\nThen:
+        'Sp\\n\\nOr:\\n\\n-?\\n\\nCheck\u2026\\n\\n...\\n\\n** opened\\n\\n?????\\n\\nFine.\\n\\nChecking-the\\n\\nHgU\\n\\nEscurrence,
+        reduced\\n\\nol\\n\\n_at\\n\\n-_\\n\\nThe advanced...\\n\\n(It'''\\n\\nTyping\\n\\n.CoreEncoded\\n\\n..File\\n\\nYou\\n\\nInteresting
+        \\n\\nIt a\\n\\n.\\nAlso\\n\\n807112...\\n\\n-...char\\n\\n##\\n\\nArrFD\\n\\nauge;\\n\\nHere\u2019s
+        a!\\n\\nGreek\\n\\nlplies prov explorer\\n\\n Hello\\n\\nAdam\\n\\nR\\n\\n\u2190---\\n\\n..Christian.er-dewhich\\n\\nAt\\n\\n..
+        your\\n\\n..\\n\\nWe\\n\\nolabit\\n\\n(at as good\\n\\nAwait user\\n\\nbe\\n\\nthe,\\n\\nIt\\n\\nNever\\n\\n\u2026\\n\\nThe\\n\\nexclusive\\n\\nOn\\n\\nIt\\n\\nLeaving\\n\\nan
+        shared\\n\\nL\\n\\n\u2026\\n\\nThe\\n\\nSorry for\\n\\nSal\\n\\nThere\\n\\n50%\\n\\nRSS\\n\\n:{\\n\u0634\u0631\\n\\nIf\\n\\n,g
+        \\n\\n...\\n\\n\\n\\n\\n\\n\\n_TITLELA\\n\\n<m'll Be\\n\\nThat \u05DE\u05E0\\nPro\\nScreen\\n\\nN\\n\\n\u0105\\n\\n
+        nat d . It's don't\\n\\nMake l\\n\\ng24\\n\\nand\\n\\nCost\\n\\n'>$ thu\\n\\nLet\\n\\n\u30FC\\n\\nIn
+        \\n\\nU18\\n\\nIn AU \u0441ice\\n\\nbrown ha\\n\\n \\n\\ni\\n\\nlex\\n\\nAnyone\\n\\n_\",\"index\":0,\"finish_reason\":\"stop\",\"matched_stop\":199999}],\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":754,\"total_tokens\":762,\"prompt_tokens_details\":{\"cached_tokens\":7}},\"system_fingerprint\":\"default\"}"
+    headers:
+      access-control-allow-origin:
+      - '*'
+      access-control-expose-headers:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      connection:
+      - keep-alive
+      content-length:
+      - '3854'
+      content-type:
+      - application/json
+      date:
+      - Wed, 25 Nov 2026 10:15:19 GMT
+      server:
+      - cloudflare
+      strict-transport-security:
+      - max-age=2592000; includeSubDomains
+      transfer-encoding:
+      - chunked
+      vary:
+      - origin, access-control-request-method, access-control-request-headers, origin,
+        access-control-request-method, access-control-request-headers
+      x-api-received:
+      - '2026-11-25T10:15:14.187Z'
+      x-content-type-options:
+      - nosniff
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-west-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -21,7 +21,7 @@ dependencies = [
 Repository = "https://github.com/traceloop/openllmetry/tree/main/packages/opentelemetry-instrumentation-together"
 
 [project.optional-dependencies]
-instruments = ["together"]
+instruments = ["together>=1.2.0,<4"]
 
 [project.entry-points."opentelemetry_instrumentor"]
 together = "opentelemetry.instrumentation.together:TogetherAiInstrumentor"
@@ -39,7 +39,7 @@ test = [
   "pytest-recording>=0.13.1,<0.14.0",
   "pytest-sugar==1.0.0",
   "pytest>=9.0.3,<10",
-  "together>=1.2.0,<2",
+  "together>=3.0.0,<4",
   "vcrpy>=8.0.0,<9",
 ]
 

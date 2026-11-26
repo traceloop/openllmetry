@@ -1,0 +1,58 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": "Tell me a joke about OpenTelemetry."}],
+      "model": "openai/gpt-oss-120b", "stream": false}'
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Together/v1 PythonBindings/1.6.0
+    method: POST
+    uri: https://api.together.xyz/v1/chat/completions
+  response:
+    body:
+      string: "{\"id\":\"77a9e9001d3e44c187c86f1619d9fb0a-aws_ec1\",\"object\":\"chat.completion\",\"created\":1795601746,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Sure!
+        Here\u2019s one for the observability crowd:\\n\\n> Why did the OpenTelemetry
+        span go to therapy?  \\n> \\n> Because it couldn\u2019t stop *tracing* its
+        own feelings!\",\"reasoning_content\":\"The user asks for a joke about OpenTelemetry.
+        We can comply, it's a harmless request. Provide a joke.\"},\"finish_reason\":\"stop\",\"matched_stop\":200002}],\"usage\":{\"prompt_tokens\":77,\"completion_tokens\":72,\"total_tokens\":149,\"prompt_tokens_details\":{\"cached_tokens\":66},\"completion_tokens_details\":{\"reasoning_tokens\":24}},\"system_fingerprint\":\"default\"}"
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      Access-Control-Expose-Headers:
+      - '*'
+      Alt-Svc:
+      - h3=":443"; ma=86400
+      CF-Cache-Status:
+      - DYNAMIC
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 25 Nov 2026 10:15:47 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=15552000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - origin, access-control-request-method, access-control-request-headers, origin,
+        access-control-request-method, access-control-request-headers, accept-encoding
+      content-length:
+      - '725'
+      x-api-received:
+      - '2026-11-25T10:15:46.514Z'
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-central-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+    status:
+      code: 200
+      message: OK
+version: 1

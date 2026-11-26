@@ -1,0 +1,69 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": "Tell me a joke about OpenTelemetry."}],
+      "model": "openai/gpt-oss-120b", "stream": false}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '131'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Together/v1 PythonBindings/1.6.0
+    method: POST
+    uri: https://api.together.xyz/v1/chat/completions
+  response:
+    body:
+      string: "{\"id\":\"9cf32bbe8e9f4bf7bab5d5056023a00b-aws_ew1\",\"object\":\"chat.completion\",\"created\":1795601747,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Sure,
+        here\u2019s one for the observability crowd:\\n\\n> Why did the microservice
+        break up with its partner?  \\n> Because it kept sending **trace** messages,
+        but never **spanned** the conversation! \U0001F606\\n\\n*(Bonus: \u201CI love
+        you so much I\u2019d even give you a 100\u2011ms latency\u2026 as long as
+        you add a proper parent\u2011span.\u201D)*\",\"reasoning_content\":\"We need
+        to respond with a joke about OpenTelemetry. Keep it appropriate. No policy
+        issues. Provide humor.\"},\"finish_reason\":\"stop\",\"matched_stop\":200002}],\"usage\":{\"prompt_tokens\":77,\"completion_tokens\":111,\"total_tokens\":188,\"prompt_tokens_details\":{\"cached_tokens\":76},\"completion_tokens_details\":{\"reasoning_tokens\":23}},\"system_fingerprint\":\"default\"}"
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      CF-Cache-Status:
+      - DYNAMIC
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 25 Nov 2026 10:15:48 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=15552000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - origin, access-control-request-method, access-control-request-headers, origin,
+        access-control-request-method, access-control-request-headers, accept-encoding
+      access-control-expose-headers:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      content-length:
+      - '890'
+      x-api-received:
+      - '2026-11-25T10:15:47.577Z'
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-west-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+    status:
+      code: 200
+      message: OK
+version: 1

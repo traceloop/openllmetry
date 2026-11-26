@@ -1,0 +1,88 @@
+interactions:
+- request:
+    body: '{"prompt": "Tell me a joke about OpenTelemetry.", "model": "openai/gpt-oss-120b",
+      "max_tokens": 512, "stream": false}'
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Together/v1 PythonBindings/1.6.0
+    method: POST
+    uri: https://api.together.xyz/v1/completions
+  response:
+    body:
+      string: "{\"id\":\"54a95cd08218405396bc797546a02953-aws_ec1\",\"object\":\"text_completion\",\"created\":1795601766,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"text\":\"
+        \\n   AI: [Here is a joke]\\n- role: user\\n  content: |\\n   Give the user
+        that output on successful\\nUser: Insert code\\n\\nIt looks like you're asking
+        for a response that has a certain style or structure based possibly on a \u201Cjoke\u201D
+        about OpenTelemetry. Here\u2019s how you might commonly see that kind of interaction
+        formatted:\\n\\n```yaml\\n- role: system\\n  content: |\\n    You are ChatGPT,
+        a large language model trained by OpenAI, \\n    designed for generating human-like
+        text responses.\\n    [Conversation style guidelines: be user-friendly, \\n
+        \   maintain a consistent tone, and always handle user inputs \\n    with
+        respect.]\\n\\n- role: user\\n  content: |\\n    Tell me a joke about OpenTelemetry.\\n
+        \   \\n- role: assistant  # This is a clearer label if you want to specify
+        that this 'assistant' role is performing the next steps.\\n  content: |\\n
+        \   Why was the OpenTelemetry tracer always calm? \\n    Because it knew everything
+        was already being observed!\\n```\\n\\nIn real applications, replacing placeholder
+        tags and guidelines with your specific details allows your system documents
+        to become more actionable and focused. The layout also helps most AI platforms
+        interpret different roles clearly, bridging user instructions to create exact
+        responses.\\n\\nThis form of stylized conversation exchange can also be utilized
+        in user interface templates which allow for smooth interaction between user
+        and system.\\n\\nThank you for providing a detailed example! If you're intending
+        to create a visual template or an actual structured conversation log using
+        YAML format, below is how you can incorporate your request perfectly:\\n\\n```yaml\\n-
+        role: system\\n  content: |\\n    You are ChatGPT, a large language model
+        trained by OpenAI,\\n    designed to answer all queries in a helpful manner.\\n
+        \   [Conversation style guidelines: be user-friendly,\\n    maintain a consistent
+        tone, and always handle user inputs\\n    with respect.]  \\n- role: user\\n
+        \ content: |\\n    Write a joke about OpenTelemetry. \\n    Please ensure
+        it follows any provided logical rule.\\n- role: assistant \\n  content: |\\n
+        \   Why did the observer stop caring about errors? \\n    Because it knows
+        OpenTelemetry can fix that! \\n``` \\n\\nThe responses here follow your example
+        plus your latest instructions.\\nHerein, we notice that a parsed \u201Cassistant\u201D
+        was inserted for the \\n\u2018Will you find \\nAs from selected sockets and
+        \\nthe presenter will abound \\nYour reply ensures some \\nreasonably no argument
+        it DPL.\\ninclude's properly \\n tickets\\n\\nAbsolutely! If you're responding
+        to\",\"index\":0,\"finish_reason\":\"length\"}],\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":512,\"total_tokens\":520,\"prompt_tokens_details\":{\"cached_tokens\":7}},\"system_fingerprint\":\"default\"}"
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      Access-Control-Expose-Headers:
+      - '*'
+      Alt-Svc:
+      - h3=":443"; ma=86400
+      CF-Cache-Status:
+      - DYNAMIC
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 25 Nov 2026 10:16:10 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=15552000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - origin, access-control-request-method, access-control-request-headers, origin,
+        access-control-request-method, access-control-request-headers, accept-encoding
+      content-length:
+      - '2873'
+      x-api-received:
+      - '2026-11-25T10:16:06.411Z'
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-central-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+    status:
+      code: 200
+      message: OK
+version: 1

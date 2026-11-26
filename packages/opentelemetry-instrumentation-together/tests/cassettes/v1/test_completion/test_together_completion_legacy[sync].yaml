@@ -1,0 +1,90 @@
+interactions:
+- request:
+    body: '{"prompt": "Tell me a joke about OpenTelemetry.", "model": "openai/gpt-oss-120b",
+      "max_tokens": 512, "stream": false}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '117'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Together/v1 PythonBindings/1.6.0
+    method: POST
+    uri: https://api.together.xyz/v1/completions
+  response:
+    body:
+      string: "{\"id\":\"d219c31b2bdf4cdf8a6d14bd63b78071-aws_ec1\",\"object\":\"text_completion\",\"created\":1795601749,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"text\":\"\\\"\\n\\nWe
+        need to produce a joke, comedic content about OpenTelemetry. The style guidelines
+        require a joke length between 50 and 150 tokens.\\n\\nWe want to incorporate
+        some context about OpenTelemetry - typed in a comedic angle.\\n\\nConstraints:
+        The text we output must be between 50 and 150 tokens. I need to check tokens
+        count, but approximate. They want about 80-100 words? Actually tokens are
+        around 1 per word or less. Roughly token count approximates words. Provide
+        about 80-100 words. Let's target that.\\n\\nWe must not include anything else
+        (like internal analysis). So the final answer is only the joke. Ensure length
+        in tokens.\\n\\nWe need to count tokens: Let's draft.\\n\\nPotential joke:\\n\\n\\\"I'm
+        trying to keep track of my own performance at home with OpenTelemetry. I set
+        up a trace for every chore: brushing teeth, making coffee, and watching Netflix.
+        The span for 'making coffee' never ends because I keep hitting the back\u2011off
+        retry on the espresso machine, and the metric for 'fluffiness of the couch'
+        spikes whenever the cat sits on it. My dad asks why I\u2019m logging so much,
+        and I say, 'Just trying to find the root cause of my procrastination before
+        the service mesh decides to dump it on the logs.'\\\"\\n\\nCount tokens: Let's
+        roughly count.\\n\\n\\\"I'm(1) trying2 to3 keep4 track5 of6 my7 own8 performance9
+        at10 home11 with12 OpenTelemetry.13 I14 set15 up16 a17 trace18 for19 every20
+        chore:21 brushing22 teeth,23 making24 coffee,25 and26 watching27 Netflix.28
+        The29 span30 for31 'making32 coffee'33 never34 ends35 because36 I37 keep38
+        hitting39 the40 back\u2011off41 retry42 on43 the44 espresso45 machine,46 and47
+        the48 metric49 for50 'fluffiness51 of52 the53 couch'54 spikes55 whenever56
+        the57 cat58 sits59 on60 it.61 My62 dad63 asks64 why65 I\u2019m66 logging67
+        so68 much,69 and70 I71 say,72 'Just73 trying74 to75 find76 the77 root78 cause79
+        of80 my81 procrastination82 before83 the84 service85 mesh86 decides87 to88
+        dump89 it90 on91 the92 logs.'93\\n\\nThat's 93 tokens approx. That's within
+        50-150 tokens. Good.\\n\\nBut guidelines require that we output only the joke.
+        No additional commentary.\\n\\n\",\"index\":0,\"finish_reason\":\"length\"}],\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":512,\"total_tokens\":520,\"prompt_tokens_details\":{\"cached_tokens\":7}},\"system_fingerprint\":\"default\"}"
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      CF-Cache-Status:
+      - DYNAMIC
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 25 Nov 2026 10:15:52 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=15552000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - origin, access-control-request-method, access-control-request-headers, origin,
+        access-control-request-method, access-control-request-headers, accept-encoding
+      access-control-expose-headers:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      content-length:
+      - '2437'
+      x-api-received:
+      - '2026-11-25T10:15:49.580Z'
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-central-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -1,0 +1,69 @@
+interactions:
+- request:
+    body: '{"prompt": "Tell me a joke about OpenTelemetry.", "model": "openai/gpt-oss-120b",
+      "max_tokens": 512, "stream": false}'
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Together/v1 PythonBindings/1.6.0
+    method: POST
+    uri: https://api.together.xyz/v1/completions
+  response:
+    body:
+      string: "{\"id\":\"1e7e7d14fb0e4c3f9e1f0c55a14e573c-aws_ew1\",\"object\":\"text_completion\",\"created\":1795601759,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"text\":\"
+        at if mum\\n\\nWhy did the developer go of\\n\\nHere a per donation\\nSure\\n\\n**Title:
+        Car Price Stools and Footwear Consent**  \\n\\nBugs bug.func: \\n\\nCouldn't
+        you?\\n\\nCarol a step?\\n\\nA quick! This new moving \\n\\n **/. \\nFilgobrick
+        support! */\\n/ Memory Intention \\n.\\n\\n\\n\\n\\n\\n\u26A1 Team\\n\\n```\\n\\n\\n\\n```\\n\\nHere's
+        a modular example that includes code snippets for web UI implementation of
+        a video sponsorship loader. This collaborative team effort aims to seamlessly
+        integrate an.\\n\\n```html\\n<!DOCTYPE \\n\\n```\\n\\nIt appears that HTML\\n\\nHere's
+        a detailed instruction set, an elegant piece or informative details and \\n\\n
+        \ \\n\\n---\\n\\n**  bundle\\n\\n titi\\n\\nDon\\n\\nFrank \\n\\n```html\\n\\nIt
+        seems like there were multiple elements and processes combined in your request,
+        but focusing on your request regarding a module (most likely something like
+        a Google Cloud Function) let's break\\n\\nHere\\n\\nBased broad]\\n\\n\\n\\n```\\n\\n
+        \u0905\u0930 \u0928\u093F\u092F\u0902\u0924\u094D\u0930\u0923\u093F\u092F\u093E
+        \u0935\u0948\u0915\u094D\u0924\u093F\u0902\u0917\u0941\u092E\u094D\\n\\nHow
+        can you ensure that individual\\n```json\\n\\nIt seems you're setting up variables\",\"index\":0,\"finish_reason\":\"stop\",\"matched_stop\":199999}],\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":212,\"total_tokens\":220,\"prompt_tokens_details\":{\"cached_tokens\":7}},\"system_fingerprint\":\"default\"}"
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      Access-Control-Expose-Headers:
+      - '*'
+      Alt-Svc:
+      - h3=":443"; ma=86400
+      CF-Cache-Status:
+      - DYNAMIC
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 25 Nov 2026 10:16:00 GMT
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=15552000; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - origin, access-control-request-method, access-control-request-headers, origin,
+        access-control-request-method, access-control-request-headers, accept-encoding
+      content-length:
+      - '1432'
+      x-api-received:
+      - '2026-11-25T10:15:59.016Z'
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-west-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+    status:
+      code: 200
+      message: OK
+version: 1

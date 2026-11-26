@@ -881,7 +881,10 @@ def init_together_instrumentor(use_attributes: bool = True):
         if is_package_installed("together"):
             from opentelemetry.instrumentation.together import TogetherAiInstrumentor
 
-            instrumentor = TogetherAiInstrumentor(use_attributes=use_attributes)
+            instrumentor = TogetherAiInstrumentor(
+                get_common_metrics_attributes=metrics_common_attributes,
+                use_attributes=use_attributes,
+            )
             if not instrumentor.is_instrumented_by_opentelemetry:
                 instrumentor.instrument()
             return True

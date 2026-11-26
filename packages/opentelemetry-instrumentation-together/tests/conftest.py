@@ -1,6 +1,8 @@
 """Unit tests configuration module."""
 
+import asyncio
 import os
+from importlib.metadata import version
 
 import pytest
 from opentelemetry.instrumentation.together import TogetherAiInstrumentor
@@ -12,10 +14,18 @@ from opentelemetry.sdk._logs.export import (
     InMemoryLogExporter,
     SimpleLogRecordProcessor,
 )
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import InMemoryMetricReader
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
-from together import Together
+from together import AsyncTogether, Together
+
+# The suite runs once per together major line (see the `test` target in
+# project.json). 1.x replays the v1 cassettes, recorded with the 1.x SDK. 2.x and
+# 3.x share the rewritten SDK, so both replay the v3 cassettes, recorded with 3.x.
+TOGETHER_MAJOR = int(version("together").split(".")[0])
+SDK_LINE = "v1" if TOGETHER_MAJOR < 2 else "v3"
 
 pytest_plugins = []
 
@@ -46,16 +56,80 @@ def fixture_logger_provider(log_exporter):
     return provider
 
 
-@pytest.fixture
-def together_client():
-    return Together(api_key=os.environ.get("TOGETHER_API_KEY"))
+@pytest.fixture(scope="function", name="reader")
+def fixture_reader():
+    return InMemoryMetricReader()
+
+
+@pytest.fixture(scope="function", name="meter_provider")
+def fixture_meter_provider(reader):
+    return MeterProvider(metric_readers=[reader])
+
+
+class _Caller:
+    """Calls `<resource>.create` on a sync or async together client."""
+
+    def __init__(self, is_async):
+        self.is_async = is_async
+        client_cls = AsyncTogether if is_async else Together
+        self.client = client_cls(api_key=os.environ.get("TOGETHER_API_KEY"))
+
+    def chat(self, **kwargs):
+        return self._run(self.client.chat.completions.create(**kwargs))
+
+    def completion(self, **kwargs):
+        return self._run(self.client.completions.create(**kwargs))
+
+    def chat_with_raw_response(self, **kwargs):
+        """`chat.completions.with_raw_response.create` (together 2.x+). Returns the
+        response model the app gets from `parse()`."""
+        resource = self.client.chat.completions.with_raw_response
+        if not self.is_async:
+            return resource.create(**kwargs).parse()
+
+        async def call():
+            raw = await resource.create(**kwargs)
+            return await raw.parse()
+
+        return asyncio.run(call())
+
+    def chat_with_streaming_response(self, **kwargs):
+        """`chat.completions.with_streaming_response.create` (together 2.x+). Reads
+        the body inside the context manager and returns the parsed response model."""
+        resource = self.client.chat.completions.with_streaming_response
+        if not self.is_async:
+            with resource.create(**kwargs) as raw:
+                return raw.parse()
+
+        async def call():
+            async with resource.create(**kwargs) as raw:
+                return await raw.parse()
+
+        return asyncio.run(call())
+
+    def _run(self, result):
+        return asyncio.run(result) if self.is_async else result
+
+    def request_patch_target(self):
+        """The SDK's internal request method, to inject transport errors."""
+        if TOGETHER_MAJOR < 2:
+            method = "arequest" if self.is_async else "request"
+            return f"together.abstract.api_requestor.APIRequestor.{method}"
+        client = "AsyncAPIClient" if self.is_async else "SyncAPIClient"
+        return f"together._base_client.{client}.request"
+
+
+@pytest.fixture(params=["sync", "async"])
+def caller(request):
+    return _Caller(is_async=request.param == "async")
 
 
 @pytest.fixture(scope="function")
-def instrument_legacy(tracer_provider):
+def instrument_legacy(tracer_provider, meter_provider):
     instrumentor = TogetherAiInstrumentor()
     instrumentor.instrument(
         tracer_provider=tracer_provider,
+        meter_provider=meter_provider,
     )
 
     yield instrumentor
@@ -64,13 +138,14 @@ def instrument_legacy(tracer_provider):
 
 
 @pytest.fixture(scope="function")
-def instrument_with_content(tracer_provider, logger_provider):
+def instrument_with_content(tracer_provider, logger_provider, meter_provider):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "True"})
 
-    instrumentor = TogetherAiInstrumentor(use_legacy_attributes=False)
+    instrumentor = TogetherAiInstrumentor(use_attributes=False)
     instrumentor.instrument(
         tracer_provider=tracer_provider,
         logger_provider=logger_provider,
+        meter_provider=meter_provider,
     )
 
     yield instrumentor
@@ -80,13 +155,14 @@ def instrument_with_content(tracer_provider, logger_provider):
 
 
 @pytest.fixture(scope="function")
-def instrument_with_no_content(tracer_provider, logger_provider):
+def instrument_with_no_content(tracer_provider, logger_provider, meter_provider):
     os.environ.update({TRACELOOP_TRACE_CONTENT: "False"})
 
-    instrumentor = TogetherAiInstrumentor(use_legacy_attributes=False)
+    instrumentor = TogetherAiInstrumentor(use_attributes=False)
     instrumentor.instrument(
         tracer_provider=tracer_provider,
         logger_provider=logger_provider,
+        meter_provider=meter_provider,
     )
 
     yield instrumentor
@@ -102,5 +178,51 @@ def environment():
 
 
 @pytest.fixture(scope="module")
+def vcr_cassette_dir(request):
+    test_dir = os.path.dirname(request.module.__file__)
+    module_name = request.module.__name__.rsplit(".", 1)[-1]
+    return os.path.join(test_dir, "cassettes", SDK_LINE, module_name)
+
+
+# Request headers that carry the key or describe the recording machine/tooling.
+_FILTERED_REQUEST_HEADERS = [
+    "authorization",
+    "x-together-client-user-agent",  # together 1.x: platform and uname
+    "x-stainless-agent",
+    "x-stainless-arch",
+    "x-stainless-os",
+    "x-stainless-runtime",
+    "x-stainless-runtime-version",
+]
+
+# Response headers with request, trace and deployment identifiers.
+_FILTERED_RESPONSE_HEADERS = {
+    "set-cookie",
+    "x-request-id",
+    "x-together-trace-info",
+    "x-cluster",
+    "cf-ray",
+    "traceparent",
+}
+
+
+def _scrub_response_headers(response):
+    # vcrpy's filter_headers only applies to requests.
+    headers = response.get("headers") or {}
+    for name in list(headers):
+        if name.lower() in _FILTERED_RESPONSE_HEADERS:
+            del headers[name]
+    return response
+
+
+@pytest.fixture(scope="module")
 def vcr_config():
-    return {"filter_headers": ["authorization"], "decode_compressed_response": True}
+    # Every SDK release line defaults to its own API host (api.together.xyz,
+    # api.together.ai, api-inference.together.ai), so the host is not matched.
+    # That lets one recording replay on every release in a line.
+    return {
+        "filter_headers": _FILTERED_REQUEST_HEADERS,
+        "before_record_response": _scrub_response_headers,
+        "decode_compressed_response": True,
+        "match_on": ["method", "scheme", "port", "path", "query"],
+    }

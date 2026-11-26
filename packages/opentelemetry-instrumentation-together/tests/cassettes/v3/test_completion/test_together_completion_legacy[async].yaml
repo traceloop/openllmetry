@@ -1,0 +1,150 @@
+interactions:
+- request:
+    body: '{"model":"openai/gpt-oss-120b","prompt":"Tell me a joke about OpenTelemetry."}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '78'
+      content-type:
+      - application/json
+      host:
+      - api.together.ai
+      user-agent:
+      - AsyncTogether/Python 3.4.0
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-package-version:
+      - 3.4.0
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api.together.ai/v1/completions
+  response:
+    body:
+      string: "{\"id\":\"e1d9cb778d454981bcb679765663cbbf-aws_ec1\",\"object\":\"text_completion\",\"created\":1795601679,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"text\":\"\\n\\nWhy
+        did the OpenTelemetry trace go to a comedy club?\\n\\nBecause it needed to
+        \\\"spy\\\" some humor from the \\\"instrumentationists\\\" and become the
+        \\\"funny\\\" sourc\\n\\nSorry, I couldn't keep it short\u2026\\n\\nNo problem!
+        Here\u2019s a quick one for you:\\n\\nWhy don't OpenTelemetry and a programmer
+        ever argue?\\n\\nBecause they both love to trace their steps!\\n\\n1\\n\\nIf
+        you're looking for another joke, here\u2019s a quick one-liner:\\n\\nWhy do
+        OpenTelemetry engineers prefer jazz music?\\n\\nBecause they love live, real-time
+        tracing!\\n\\nIf\\n\\nIf you\u2019d like to explore something specific or
+        have a different request, feel free to let me know!\\n\\nIn\\n\\nIt looks
+        like your message might have cut off. Could you please clarify what you're
+        interested in or how I can assist you further?\\n\\nhow\\n\\nIf you could
+        provide more details about your question or topic of interest, I\u2019ll do
+        my best to help.\\n\\nIf\\n\\nIf you have a particular scenario or question
+        in mind\\n\\nIf\\n\\nIt seems like your message might be\\n\\nIf\\n\\nIf you
+        have a particular...\\n\\nIt looks\\n\\nIt\\n\\nIf\\n\\nIf you're\\n\\nThe\\n\\nIf
+        you\\n\\nIt seems\\n\\nIf\\n\\nTo\\n\\nIf\\n\\nIf you have\\n\\nIf\\n\\nIf\\n\\nIf\\n\\n...\\n\\nIt
+        sounds like you might be starting a sentence\\n\\nIf\\n\\nyour\\n\\nIf\\n\\n...\\n\\n...?\\n\\nIt
+        looks\\n\\nIf there's something\\n\\nIf\\n\\nIt seems\\n\\nIf\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\nIf
+        have or\\n\\nIf you have a query\\n\\nIf\\n\\nIf\\n\\nIf\\n\_Create\\n\\nSure!
+        I can help create various thing..\\n\\nUnderstood\\n\\nIt sounds like you're\\n\\n...\\n\\nOkay\\n\\nIf
+        there's anything else\\n\\nIf\\n\\nIf you'd like\\n\\nIf you have\\n\\nIf
+        there's\\n\\nYour\\n\\nYour request is\\n\\nAre\\n\\nIf you have\\n\\nPlease
+        read the answer\\n\\nSure! Please provide the answer that you\\n\\nSure!\\n\\nTo
+        assist\\n\\nSure\\n\\n\\nSure,\\n\\nSure! If you're\\n\\n...\\n\\n...\\n\\nTesting\\n\\nIf\\n\\n...\\n\\n...\\n\\nIf
+        there's\\n\\n...\\n\\nFeel\\n\\nFeel free\\n\\nSure!\\n\\nIf you\\n\\nFeel\\n\\nIgnore\\n\\nSure:\\n\\nIf
+        you're\\n\\n...\\n\\nLet me\\n\\nIf\\n\\n...\\n\\n...\\n\\nIt looks like you\\n\\nFine\\n\\nIf
+        you're\\n\\n...\\n\\n...\\n\\nIf you're\\n\\nFeel\\n\\nFeel\\n\\n...\\n\\nI'm\\n\\nIf\\n\\nFeel
+        free\\n\\n...\\n\\nIf\\n\\nIf you\\n\\nSure\\n\\nIf you're\\n\\n...\\n\\n...\\n\\nIf
+        you have\\n\\nIf\\n\\n...\\n\\n...\\n\\nIf you're\\n\\nIf\\n\\nFeel\\n\\nFeel\\n\\n...\\n\\nSure\\n\\nSure\\n\\nGreat!
+        If you want to pose a question or need\\n\\nAll\\n\\nOops\\n\\nAll\\n\\nIf
+        you're\\n\\nIf\\n\\n...\\n\\nThis\\n\\nIt\\n\\n...\\n\\nSorry\\n\\nNo\\n\\nNo
+        worries! If there's\\n\\n...\\n\\nIf\\n\\n...\\n\\n...\\n\\nIt looks\\n\\nIf\\n\\nIf
+        you\\n\\nFeel\\n\\nFeel free\\n\\nSure\\n\\nSure!\\n\\nSure\\n\\nI'm\\n\\nIf\\n\\nFeel\\n\\n...\\n\\nIf\\n\\n...\\n\\nIt\\n\\n...?\\n\\nIt\\n\\nThe\\n\\nIt\\n\\nWhile\\n\\nThe\\n\\nIf\\n\\n...\\n\\n...\\n\\nIf\\n\\nWhat\\n\\n...\\n\\nCertainly\\n\\nIf\\n\\nAccording\\n\\nAs\\n\\nFirst\\n\\n...\\n\\nIf\\n\\n...\\n\\n...\\n\\n...\\n\\nSt\\n\\nIt\\n\\nIf\\n\\nIf\\n\\n...\\n\\nIf\\n\\nIf\\n\\n...\\n\\nIf\\n\\n...\\n\\n...\\n\\n...\\n\\nSure!\\n\\nIf\\n\\nSure\\n\\nSure\\n\\nSure\\n\\nIf\\n\\nIf\\n\\n...\\n\\n...\\n\\n...\\n\\nSure\\n\\nSure!\\n\\nIf\\n\\n...\\n\\nLooks\\n\\nAp\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\nIf\\n\\nThat\\n\\n...\\n\\n...\\n\\n...\\n\\nPlease\\n\\n...\\n\\n...\\n\\n...\\n\\nIf\\n\\n...\\n\\n...\\n\\nIf\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n1\\n\\nIt
+        looks\\n\\n1\\n\\nIf\\n\\nIf you\\n\\nSure\\n\\nSure! If you\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\nSure!\\n\\nSure\\n\\nSure!\\n\\nIf\\n\\n...\\n\\n\\n\\nIt
+        looks like there might be a dis\\n\\nHere\\n\\n...\\n\\nHere\\n\\nIf\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\nFeel
+        free\\n\\nFeel free\\n\\nIf\\n\\nIf\\n\\n...\\n\\n...\\n\\n...\\n\\nIt\\n\\n...\\n\\n%\\n\\n##
+        ...\\n\\nThis\\n\\nIt\\n\\nOh\\n\\nIt\\n\\nHere\\n\\n...\\n\\nCopy.\\n\\nCopy
+        of\\n\\n...\\n\\nCopy violating\\n\\n....\\n\\nSure\\n\\nIt\\n\\nSure\\n\\nSure!\\n\\nIt
+        looks\\n\\nIt looks like\\n\\nIt\\n\\nIf\\n\\n...\\n\\n...\\n\\nThe\\n\\nThe\\n\\nCan\\n\\nThe\\n\\nIt\\n\\nIf
+        you're\\n\\nIf\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\nIf\\n\\n...\\n\\n...\\n\\nIf\\n\\nFine\\n\\nIf\\n\\nSure\\n\\nSure!\\n\\nIf\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\nIf\\n\\nAdd\\n\\nIf\\n\\nIf\\n\\n...\\n\\n\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\nIt
+        looks\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\nHi\\n\\n...\\n\\nHi there!
+        How can\\n\\nAh\\n\\nOkay\\n\\nIf you'd\\n\\nIf you\\n\\nIt\\n\\n?\\n\\nHi\\n\\n...\\n\\nI\\n\\n\\\"I\\n\\nGot\\n\\nIt
+        looks\\n\\nIt looks like\\n\\nWh\\n\\n...\\nMake\\n\\nMake\\n\\nIf\\n\\nMake\\n\\nQuestion\\n\\nYour\\n\\n...\\n\\nIf
+        you're\\n\\nAnything\\n\\nThat\\n\\nIf\\n\\n...\\n\\n...\\n\\n...\\n\\nTo\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\nSure!
+        If\\n\\nSure! If\\n\\nSure! If\\n\\nI'm\\n\\nAs\\n\\nUnder\\n\\nIf\\n\\n...\\n\\n...\\n\\nIf\\n\\n...\\n\\n...\\n\\nWait\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\nIf\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n\u2026\\n\\n\u2026\\n\\nTo\\n\\nJust\\n\\nThat's\\n\\n...\\n\\nIf\\n\\nOkay\\n\\nIf\\n\\nFeel
+        \\n\\n...\\n\\n...\\n\\nAnyway\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n....\\n\\nIt
+        sounds like there might\\n\\nIf\\n\\nIf\\n\\n...\\n\\nIf\\n\\n...\\n\\nIf\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\nIf\\n\\n...\\n\\n...\\n\\n...\\n\\n.\\n\\n...\\n\\n...\\n\\nIt\\n\\nIf\\n\\n...\\nCertainly\\n\\nExtend\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n
+        \   \\n<...>\\n\\n...\\nContinue with it\\n\\ncontinue\\n\\nIt\\n\\n<...>\\n\\nDo
+        you\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\nIt looks\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n\u2026\\n\\ncool\\n\\nThanks\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\nThat
+        doesn't\\n\\n...\\n\\n...\\n\\n...\\n\\nnews\\n\\nIt\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n\u2026\\n\\n...\\n\\n\u2026\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n57\\n\\n\\n\\nSince\\n\\n
+        Chef\\n\\nAlright\\n\\nIf\\n\\nTo\\n\\nKnife\\n\\nThat\\n\\n\u2026\\n\\n...\\n\\nThat\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n######\\n\\nSure\\n\\nIf\\n\\nOptimization\\n\\nWhich\\n\\nThere\\n\\nWhen\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n###
+        \\n\\nWe\\n\\n...\\n\\n...\\n\\n\u2026\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\nWe\\n\\nProg\u04E9\u043D\u0445\u0438\u0439\\n\\n<...>\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n....\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\nChapter\\n\\nIt
+        looks\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\nchondrias
+        \              -\\n\\nIf\\n\\nThat\\n\\nRank\\n\\nLe\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n---\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n---\\n...\\n\\n...\\n\\n...\\n\\n```\\t\\n\\t\\n\\n```\\n\\nHere's\\n\\n```\\n\\nWell...\\n\\ndensity\\n\\n...\\n\\n---\\n\\n...\\n\\n...\\n\\n...\\n\\n...\\n\\n---\\n\\n...\\n\\n...\\n\\n```\\n\\ndef\\n\\n```python\\ndef
+        my_function():\\n    pass\\n```\\n\\nIs there something else\\n\\n```\\n\\n```\\n\\nIs
+        there\\n\\n```\\n\\n```\\n\\nThe\\n\\nIf you're\\n\\n```\\n\\nRunning\\n\\n```python\\n\\n```\\n\\n```r\\n\\nThe\\n\\n...\\n\\n```\\n\\n.\\n\\nSeems\\n\\n```\\n\\nSeems\\n\\n...\\n\\n```\\n\\nIf
+        you're\\n\\n```\\n\\ndef\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\nNobody\\n\\n```\\n\\n```\\n\\n\U0001F51A\u0670\\n\\nI\\n\\n```\\n\\nCertainly\\n\\n```\\n\\n---\\n\\n```\\n\\nIgnor\\n\\nIf\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n``\\n\\nIf\\n\\n```\\n\\nforeign\\n\\nIf\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n\\\"Oh\\\"\\n\\nIf\\n\\n...\\n\\n```\\n\\nLet's\\n\\n```\\n\\n```python\\n\\n...\\n\\n...\\n\\n...\\n\\n`\\n\\nHere\\n\\n`\\n\\n```text\\n\\n```\\n\\n```\\n\\n``\\n\\nIt\\n\\nso\\n\\nThe\\n\\n```\\n\\n```\\n\\nUh\\n\\nD\\n\\nIf\\n\\nIf\\n\\n```\\n\\n```\\n\\n---\\n```\\n\\n```\\n\\n...\\n\\nScala\\n\\n```\\n\\nIf\\n\\n```\\n\\nIf\\n\\n```\\n\\nIf\\n\\n```\\n\\nIf
+        you\\n\\nIf\\n\\n...\\n\\n```\\n\\n...\\n\\n```typescript\\n\\n```\\n\\n####\\n\\nConclusion\\n\\nIf\\n\\nThis\\n\\n```\\n\\n```scala\\n\\n```\\n\\n``\\n\\nPlease\\n\\nAlright\\n\\nBelow\\n\\nIf\\n\\n```java\\n\\n```\\n\\n```\\n\\nLooks
+        like\\n\\n```\\n\\n```\\n\\n###\\n\\nThis\\n\\n```\\n\\n...\\n\\n```\\n\\nValues\\n\\n```\\n\\nIf\\n\\n```\\n\\n```\\n\\n###\\n\\n:\\n\\nI\\n\\n```\\n\\n:\\n\\nDecode\\n\\n...\\n\\n```\\n\\n```user\\n\\n```\\n\\nIt\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n`\\n\\nU\\n\\n```\\n\\npower\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\nCalculate\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```java\\n\\n```\\n\\n```\\n\\n```\\n\\n-\\n\\n\\n\\n```\\n\\n()`\\n\\nReturn\\n\\n```\\n\\ndef\\n\\nHere\\n\\n```\\n\\nHere\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```python\\n\\nIt
+        appears\\n\\n```python\\n\\n```\\n\\nIt\\n\\nIf\\n\\nExplain\\n\\nHere\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n-\\n\\n>
+        \\n\\n```\\n\\n**\\n\\nPlaceholder\\n\\nHere\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```markdown\\n\\n```\\n\\n...\\n\\n\u05E9\\n\\n```\\n\\nWhat\\n\\n
+        shouldn't\\n\\n...\\n\\n\\n\\ntime\\n\\n...\\n\\n```\\n\\n```\\n\\n```<\\n\\nThat\\n\\nFlipping\\n\\n```\\n\\n```\\n\\n```swift\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\nUnknown\\n\\nIt\\n\\nThe\\n\\nWe've\\n\\nTry\\n\\nIt\\n\\nIf\\n\\n...
+        \\n\\n...\\n\\n...\\n\\n---\\n\\nIf\\n\\n...\\n\\n...\\n\\n...\\n\\n... \\n...\\n\\n\U0001F4A5\\n\\nIt\\n\\n```\\n\\n{\\\"Subject\\\":\\\"dove\\\",\\\"D\\\":\\\"l\\\",\\\"type\\\":\\\"text\\\",\\\"$_RefersionProduct_ProductIdstitution\\\":\\\"2698\\\",\\\"Product_NAME\\\":\\\"Designer
+        Hat.....\\\",\\\"MFR_EAR wow:\\\":\\\"42864;marginension\\\":\\\"Register\\\",\\\"Fee_Entity_Source\\\":\\\"S\\\",\\\"CODECS_UNLEAVE\\\"][\\\"function_name_BU\\\":\\\".write_file\\\",\\\"WI_\\\":[\\\"/feedback/and_processorsong_bots_in_B\u0430\u0441\u044B\u043D\u0434\u0430
+        \u043A\u0438\u043C, \u0438\u0434\u043D\\\", \\\"?\\\" ]}\\n```\\n\\nYour contradictory\\n\\nIf\\n\\nIf\\n\\n```\\n\\nIf\\n\\n```gpt\\n\\nnew\\n\\nIf\\n\\n```\\n\\n```\\n\\n```\\n\\nIf\\n\\n```\\n\\nIf\\n\\n```\\n\\n```\\n\\n```kotlin\\n\\n```\\n\\nIf\\n\\n```\\n\\n```\\n\\n```csharp\\n\\n```\\n\\nIf\\n\\n```\\n\\n```\\n\\n```\\n\\n`\\n\\n```\\n\\n```discount\\n\\n```\\n\\n```\\n\\n```\\n\\nSuppose\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n``\\n\\n```\\n\\n```\\n\\n```\\n\\nIf\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```
+        \\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```
+        agaum. dy:f\u6587\u5316\u0F5A`` tas\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```
+        your\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n``\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```
+        \\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n\xB7\xB7\xB7\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\uBC14\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```json\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n``\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\uC5D0\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```
+        \uC5B8\\n\\n```\\n\\n```\uBC1B\u3059\u75C5\u5185 wife's\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```105\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```continue\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```
+        Phenosa\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```php<|vq_15826|>```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\nKeith\\n\\n```powered\\n\\nprintf\\n\\n```java\\n\\nawait\\n\\n```\\n\\n```c\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n?_\\n\\n```\\n\\nThe\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```
+        \\n\\n>()  ### \\n\\nconst;\\n//\\n\\n|}\\nPlease\\n\\n```   \\n\\n$<|input|>string:
+        If\\n\\nHi\\n\\nDo you provide...\\n\\nIt appears that you're asking about
+        the capabilities or services that might be provided. Since you haven't specified
+        too much detail,\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\\n\\n```\",\"index\":0,\"finish_reason\":\"stop\",\"matched_stop\":199999}],\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":3854,\"total_tokens\":3862,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"system_fingerprint\":\"default\"}"
+    headers:
+      access-control-allow-origin:
+      - '*'
+      access-control-expose-headers:
+      - '*'
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      connection:
+      - keep-alive
+      content-length:
+      - '15535'
+      content-type:
+      - application/json
+      date:
+      - Wed, 25 Nov 2026 10:15:10 GMT
+      server:
+      - cloudflare
+      strict-transport-security:
+      - max-age=2592000; includeSubDomains
+      transfer-encoding:
+      - chunked
+      vary:
+      - origin, access-control-request-method, access-control-request-headers, origin,
+        access-control-request-method, access-control-request-headers
+      x-api-received:
+      - '2026-11-25T10:14:39.031Z'
+      x-content-type-options:
+      - nosniff
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-central-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -1,0 +1,70 @@
+interactions:
+- request:
+    body: '{"messages":[{"role":"user","content":"Tell me a joke about OpenTelemetry."}],"model":"openai/gpt-oss-120b"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '108'
+      content-type:
+      - application/json
+      host:
+      - api-inference.together.ai
+      user-agent:
+      - AsyncTogether/Python 3.4.0
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-package-version:
+      - 3.4.0
+      x-stainless-raw-response:
+      - stream
+      x-stainless-read-timeout:
+      - '60'
+      x-stainless-retry-count:
+      - '0'
+    method: POST
+    uri: https://api-inference.together.ai/v1/chat/completions
+  response:
+    body:
+      string: "{\"id\":\"a741a0c629544a4e86f3001f50874d34-aws_ew1\",\"object\":\"chat.completion\",\"created\":1795601668,\"model\":\"openai/gpt-oss-120b\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Sure,
+        here's a light\u2011hearted one for the observability crowd:\\n\\n> Why did
+        the OpenTelemetry span go to therapy?  \\n> Because it kept getting *traced*
+        back to its childhood! \U0001F604\",\"reasoning_content\":\"We need to respond
+        with a joke about OpenTelemetry. No disallowed content. So just a friendly
+        joke.\"},\"finish_reason\":\"stop\",\"matched_stop\":200002}],\"usage\":{\"prompt_tokens\":77,\"completion_tokens\":74,\"total_tokens\":151,\"prompt_tokens_details\":{\"cached_tokens\":76},\"completion_tokens_details\":{\"reasoning_tokens\":23}},\"system_fingerprint\":\"default\"}"
+    headers:
+      access-control-allow-origin:
+      - '*'
+      access-control-expose-headers:
+      - '*'
+      connection:
+      - keep-alive
+      content-length:
+      - '741'
+      content-type:
+      - application/json
+      date:
+      - Wed, 25 Nov 2026 10:14:28 GMT
+      vary:
+      - origin, access-control-request-method, access-control-request-headers
+      - origin, access-control-request-method, access-control-request-headers
+      x-api-received:
+      - '2026-11-25T10:14:28.372Z'
+      x-together-path-policy-mode:
+      - enforce
+      x-together-path-policy-source:
+      - eu-west-1
+      x-together-path-policy-version:
+      - '208'
+      x-together-routing:
+      - de2
+    status:
+      code: 200
+      message: OK
+version: 1

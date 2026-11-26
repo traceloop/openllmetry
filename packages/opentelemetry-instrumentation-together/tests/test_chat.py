@@ -1,43 +1,65 @@
 import pytest
-from opentelemetry.sdk._logs import ReadableLogRecord
 from opentelemetry.semconv._incubating.attributes import (
     gen_ai_attributes as GenAIAttributes,
 )
 
+from .conftest import TOGETHER_MAJOR
+from .helpers import (
+    MODEL,
+    PROMPT,
+    assert_common_span_attributes,
+    assert_logs_in_span_context,
+    assert_duration_metric_without_response,
+    assert_message_in_logs,
+    assert_metrics,
+    assert_no_content_attributes,
+    get_single_span,
+    input_messages,
+    otel_finish_reason,
+    output_messages,
+)
+
+CHAT = GenAIAttributes.GenAiOperationNameValues.CHAT.value
+
+requires_raw_response = pytest.mark.skipif(
+    TOGETHER_MAJOR < 2, reason="with_raw_response/with_streaming_response exist from together 2.x"
+)
+
+
+def _expected_output_parts(message):
+    # gpt-oss returns its chain of thought in `reasoning_content`; together 1.x's
+    # response model drops that field, 2.x/3.x keeps it.
+    parts = []
+    reasoning = getattr(message, "reasoning_content", None)
+    if reasoning:
+        parts.append({"type": "reasoning", "content": reasoning})
+    parts.append({"type": "text", "content": message.content})
+    return parts
+
 
 @pytest.mark.vcr
 def test_together_chat_legacy(
-    instrument_legacy, together_client, span_exporter, log_exporter
+    instrument_legacy, caller, span_exporter, log_exporter, reader
 ):
-    response = together_client.chat.completions.create(
-        model="mistralai/Mixtral-8x7B-Instruct-v0.1",
-        messages=[{"role": "user", "content": "Tell me a joke about OpenTelemetry."}],
+    response = caller.chat(
+        model=MODEL,
+        messages=[{"role": "user", "content": PROMPT}],
     )
 
-    spans = span_exporter.get_finished_spans()
-    together_span = spans[0]
-    assert together_span.name == "together.chat"
-    assert together_span.attributes.get("gen_ai.system") == "TogetherAI"
-    assert together_span.attributes.get("llm.request.type") == "chat"
-    assert (
-        together_span.attributes.get("gen_ai.request.model")
-        == "mistralai/Mixtral-8x7B-Instruct-v0.1"
-    )
-    assert (
-        together_span.attributes.get("gen_ai.prompt.0.content")
-        == "Tell me a joke about OpenTelemetry."
-    )
-    assert (
-        together_span.attributes.get("gen_ai.completion.0.content")
-        == response.choices[0].message.content
-    )
-    assert together_span.attributes.get("gen_ai.usage.input_tokens") == 18
-    assert together_span.attributes.get(
-        "llm.usage.total_tokens"
-    ) == together_span.attributes.get(
-        "gen_ai.usage.output_tokens"
-    ) + together_span.attributes.get("gen_ai.usage.input_tokens")
-    assert together_span.attributes.get("gen_ai.response.id") == "88fa668fac30bb19-MXP"
+    together_span = get_single_span(span_exporter, CHAT)
+    assert_common_span_attributes(together_span, CHAT, response)
+    assert input_messages(together_span) == [
+        {"role": "user", "parts": [{"type": "text", "content": PROMPT}]}
+    ]
+    choice = response.choices[0]
+    assert output_messages(together_span) == [
+        {
+            "role": "assistant",
+            "parts": _expected_output_parts(choice.message),
+            "finish_reason": otel_finish_reason(choice),
+        }
+    ]
+    assert_metrics(reader, CHAT, response)
 
     logs = log_exporter.get_finished_logs()
     assert (
@@ -47,45 +69,29 @@ def test_together_chat_legacy(
 
 @pytest.mark.vcr
 def test_together_chat_with_events_with_content(
-    instrument_with_content, together_client, span_exporter, log_exporter
+    instrument_with_content, caller, span_exporter, log_exporter, reader
 ):
-    response = together_client.chat.completions.create(
-        model="mistralai/Mixtral-8x7B-Instruct-v0.1",
-        messages=[{"role": "user", "content": "Tell me a joke about OpenTelemetry."}],
+    response = caller.chat(
+        model=MODEL,
+        messages=[{"role": "user", "content": PROMPT}],
     )
 
-    spans = span_exporter.get_finished_spans()
-    together_span = spans[0]
-    assert together_span.name == "together.chat"
-    assert together_span.attributes.get("gen_ai.system") == "TogetherAI"
-    assert together_span.attributes.get("llm.request.type") == "chat"
-    assert (
-        together_span.attributes.get("gen_ai.request.model")
-        == "mistralai/Mixtral-8x7B-Instruct-v0.1"
-    )
-    assert together_span.attributes.get("gen_ai.usage.input_tokens") == 18
-    assert together_span.attributes.get(
-        "llm.usage.total_tokens"
-    ) == together_span.attributes.get(
-        "gen_ai.usage.output_tokens"
-    ) + together_span.attributes.get("gen_ai.usage.input_tokens")
-    assert together_span.attributes.get("gen_ai.response.id") == "88fa668fac30bb19-MXP"
+    together_span = get_single_span(span_exporter, CHAT)
+    assert_common_span_attributes(together_span, CHAT, response)
+    assert_no_content_attributes(together_span)
+    assert_metrics(reader, CHAT, response)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
+    assert_logs_in_span_context(logs, together_span)
 
     # Validate user message Event
-    user_message_log = logs[0]
-    assert_message_in_logs(
-        user_message_log,
-        "gen_ai.user.message",
-        {"content": "Tell me a joke about OpenTelemetry."},
-    )
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {"content": PROMPT})
 
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "eos",
+        "finish_reason": otel_finish_reason(response.choices[0]),
         "message": {"content": response.choices[0].message.content},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
@@ -93,52 +99,74 @@ def test_together_chat_with_events_with_content(
 
 @pytest.mark.vcr
 def test_together_chat_with_events_with_no_content(
-    instrument_with_no_content, together_client, span_exporter, log_exporter
+    instrument_with_no_content, caller, span_exporter, log_exporter, reader
 ):
-    together_client.chat.completions.create(
-        model="mistralai/Mixtral-8x7B-Instruct-v0.1",
-        messages=[{"role": "user", "content": "Tell me a joke about OpenTelemetry."}],
+    response = caller.chat(
+        model=MODEL,
+        messages=[{"role": "user", "content": PROMPT}],
     )
 
-    spans = span_exporter.get_finished_spans()
-    together_span = spans[0]
-    assert together_span.name == "together.chat"
-    assert together_span.attributes.get("gen_ai.system") == "TogetherAI"
-    assert together_span.attributes.get("llm.request.type") == "chat"
-    assert (
-        together_span.attributes.get("gen_ai.request.model")
-        == "mistralai/Mixtral-8x7B-Instruct-v0.1"
-    )
-    assert together_span.attributes.get("gen_ai.usage.input_tokens") == 18
-    assert together_span.attributes.get(
-        "llm.usage.total_tokens"
-    ) == together_span.attributes.get(
-        "gen_ai.usage.output_tokens"
-    ) + together_span.attributes.get("gen_ai.usage.input_tokens")
-    assert together_span.attributes.get("gen_ai.response.id") == "88fa668fac30bb19-MXP"
+    together_span = get_single_span(span_exporter, CHAT)
+    assert_common_span_attributes(together_span, CHAT, response)
+    assert_no_content_attributes(together_span)
+    assert_metrics(reader, CHAT, response)
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
+    assert_logs_in_span_context(logs, together_span)
 
     # Validate user message Event
-    user_message_log = logs[0]
-    assert_message_in_logs(user_message_log, "gen_ai.user.message", {})
+    assert_message_in_logs(logs[0], "gen_ai.user.message", {})
 
     # Validate the ai response
     choice_event = {
         "index": 0,
-        "finish_reason": "eos",
+        "finish_reason": otel_finish_reason(response.choices[0]),
         "message": {},
     }
     assert_message_in_logs(logs[1], "gen_ai.choice", choice_event)
 
 
-def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_content: dict):
-    assert log.log_record.event_name == event_name
-    assert log.log_record.attributes.get(GenAIAttributes.GEN_AI_SYSTEM) == "together"
+@requires_raw_response
+@pytest.mark.vcr
+def test_together_chat_with_raw_response(
+    instrument_legacy, caller, span_exporter, log_exporter, reader
+):
+    # `with_raw_response.create` returns an APIResponse wrapper, not the model.
+    response = caller.chat_with_raw_response(
+        model=MODEL,
+        messages=[{"role": "user", "content": PROMPT}],
+    )
 
-    if not expected_content:
-        assert not log.log_record.body
-    else:
-        assert log.log_record.body
-        assert dict(log.log_record.body) == expected_content
+    together_span = get_single_span(span_exporter, CHAT)
+    assert_common_span_attributes(together_span, CHAT, response)
+    choice = response.choices[0]
+    assert output_messages(together_span) == [
+        {
+            "role": "assistant",
+            "parts": _expected_output_parts(choice.message),
+            "finish_reason": otel_finish_reason(choice),
+        }
+    ]
+    assert_metrics(reader, CHAT, response)
+
+
+@requires_raw_response
+@pytest.mark.vcr
+def test_together_chat_with_streaming_response(
+    instrument_legacy, caller, span_exporter, log_exporter, reader
+):
+    # The body is still unread when `create` returns, so the instrumentation must
+    # leave it for the app: the app still gets the full response, the span gets no
+    # response attributes, and the duration is still recorded.
+    response = caller.chat_with_streaming_response(
+        model=MODEL,
+        messages=[{"role": "user", "content": PROMPT}],
+    )
+
+    assert response.choices[0].message.content
+    together_span = get_single_span(span_exporter, CHAT)
+    assert together_span.attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] == MODEL
+    assert GenAIAttributes.GEN_AI_RESPONSE_ID not in together_span.attributes
+    assert GenAIAttributes.GEN_AI_OUTPUT_MESSAGES not in together_span.attributes
+    assert_duration_metric_without_response(reader, CHAT)
