@@ -1714,6 +1714,9 @@ def test_async_streaming_skips_token_usage_without_api_data_and_enrich_disabled(
         "Token attributes should not be set when no API usage and enrich disabled"
     assert stream._instrumentation_completed is True
     span.end.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
 # _map_finish_reason must return "" for falsy input, mapped value for known
 # reasons, and the original string as-is for unknown reasons.
 # ---------------------------------------------------------------------------
