@@ -1,6 +1,7 @@
 """Assertions shared by the chat and completion tests."""
 
 import json
+from collections import Counter
 from enum import Enum
 
 from opentelemetry.sdk._logs import ReadableLogRecord
@@ -9,7 +10,7 @@ from opentelemetry.semconv._incubating.attributes import (
 )
 from opentelemetry.semconv._incubating.metrics import gen_ai_metrics as GenAIMetrics
 from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
-from opentelemetry.semconv_ai import GenAISystem, SpanAttributes
+from opentelemetry.semconv_ai import GenAISystem, Meters, SpanAttributes
 
 PROVIDER = GenAISystem.TOGETHER_AI.value
 MODEL = "openai/gpt-oss-120b"
@@ -77,6 +78,14 @@ def assert_message_in_logs(log: ReadableLogRecord, event_name: str, expected_con
         assert dict(log.log_record.body) == expected_content
 
 
+def assert_logs_in_span_context(logs, span):
+    """Every event must carry the trace context of the span it belongs to."""
+    assert logs
+    for log in logs:
+        assert log.log_record.trace_id == span.context.trace_id
+        assert log.log_record.span_id == span.context.span_id
+
+
 def _data_points(reader, name):
     metrics_data = reader.get_metrics_data()
     if metrics_data is None:
@@ -115,6 +124,14 @@ def assert_metrics(reader, operation, response):
     assert duration_points[0].count == 1
     assert duration_points[0].sum > 0
 
+    # One count per choice, split by finish reason.
+    choices_by_reason = {}
+    for point in _data_points(reader, Meters.LLM_GENERATION_CHOICES):
+        reason = point.attributes[SpanAttributes.GEN_AI_RESPONSE_FINISH_REASON]
+        assert dict(point.attributes) == {**expected, SpanAttributes.GEN_AI_RESPONSE_FINISH_REASON: reason}
+        choices_by_reason[reason] = point.value
+    assert choices_by_reason == Counter(otel_finish_reason(choice) for choice in response.choices)
+
 
 def assert_error_duration_metric(reader, operation, error_type):
     duration_points = _data_points(reader, GenAIMetrics.GEN_AI_CLIENT_OPERATION_DURATION)
@@ -126,6 +143,7 @@ def assert_error_duration_metric(reader, operation, error_type):
         ERROR_TYPE: error_type,
     }
     assert not _data_points(reader, GenAIMetrics.GEN_AI_CLIENT_TOKEN_USAGE)
+    assert not _data_points(reader, Meters.LLM_GENERATION_CHOICES)
 
 
 def assert_duration_metric_without_response(reader, operation):
@@ -138,3 +156,4 @@ def assert_duration_metric_without_response(reader, operation):
         GenAIAttributes.GEN_AI_REQUEST_MODEL: MODEL,
     }
     assert not _data_points(reader, GenAIMetrics.GEN_AI_CLIENT_TOKEN_USAGE)
+    assert not _data_points(reader, Meters.LLM_GENERATION_CHOICES)

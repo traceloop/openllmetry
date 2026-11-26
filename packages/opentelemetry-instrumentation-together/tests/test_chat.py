@@ -8,6 +8,7 @@ from .helpers import (
     MODEL,
     PROMPT,
     assert_common_span_attributes,
+    assert_logs_in_span_context,
     assert_duration_metric_without_response,
     assert_message_in_logs,
     assert_metrics,
@@ -82,6 +83,7 @@ def test_together_chat_with_events_with_content(
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
+    assert_logs_in_span_context(logs, together_span)
 
     # Validate user message Event
     assert_message_in_logs(logs[0], "gen_ai.user.message", {"content": PROMPT})
@@ -111,6 +113,7 @@ def test_together_chat_with_events_with_no_content(
 
     logs = log_exporter.get_finished_logs()
     assert len(logs) == 2
+    assert_logs_in_span_context(logs, together_span)
 
     # Validate user message Event
     assert_message_in_logs(logs[0], "gen_ai.user.message", {})

@@ -15,6 +15,7 @@ from opentelemetry.instrumentation.together.event_emitter import (
     emit_prompt_events,
 )
 from opentelemetry.instrumentation.together.span_utils import (
+    map_finish_reason,
     set_input_attributes,
     set_model_input_attributes,
     set_model_response_attributes,
@@ -42,6 +43,8 @@ from opentelemetry.semconv.attributes.error_attributes import ERROR_TYPE
 from opentelemetry.semconv_ai import (
     SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY,
     LLMRequestTypeValues,
+    Meters,
+    SpanAttributes,
 )
 from opentelemetry.trace import SpanKind, get_tracer
 from opentelemetry.trace.status import Status, StatusCode
@@ -98,11 +101,12 @@ WRAPPED_METHODS = [
 class _Telemetry:
     """The signal producers shared by every wrapped method."""
 
-    def __init__(self, tracer, event_logger, token_histogram, duration_histogram):
+    def __init__(self, tracer, event_logger, token_histogram, duration_histogram, choice_counter):
         self.tracer = tracer
         self.event_logger = event_logger
         self.token_histogram = token_histogram
         self.duration_histogram = duration_histogram
+        self.choice_counter = choice_counter
 
 
 def _with_telemetry_wrapper(func):
@@ -217,6 +221,19 @@ def _record_token_usage(telemetry, to_wrap, kwargs, response):
             )
 
 
+@dont_throw
+def _record_choices(telemetry, to_wrap, kwargs, response):
+    if telemetry.choice_counter is None:
+        return
+    attributes = _metric_attributes(to_wrap, kwargs, response)
+    for choice in response.get("choices") or []:
+        choice_attributes = dict(attributes)
+        finish_reason = map_finish_reason(choice.get("finish_reason"))
+        if finish_reason:
+            choice_attributes[SpanAttributes.GEN_AI_RESPONSE_FINISH_REASON] = finish_reason
+        telemetry.choice_counter.add(1, attributes=choice_attributes)
+
+
 def _start_span(telemetry, to_wrap, kwargs):
     operation = to_wrap.get("operation")
     model = kwargs.get("model")
@@ -228,19 +245,18 @@ def _start_span(telemetry, to_wrap, kwargs):
     }
     if model:
         attributes[GenAIAttributes.GEN_AI_REQUEST_MODEL] = model
-    span = telemetry.tracer.start_span(
+    return telemetry.tracer.start_span(
         f"{operation} {model}" if model else operation,
         kind=SpanKind.CLIENT,
         attributes=attributes,
     )
-    _handle_input(span, telemetry.event_logger, to_wrap.get("request_type"), kwargs)
-    return span
 
 
 def _use_span(span):
-    """Makes `span` the current span while the provider call runs, so spans created
-    under it (e.g. HTTP client spans) nest under it. Ending the span and recording
-    errors on it are left to `_end_span_with_*`."""
+    """Makes `span` the current span while the request is handled, the provider call
+    runs and the response is handled, so spans created under it (e.g. HTTP client
+    spans) nest under it and emitted events carry its trace context. Ending the span
+    and recording errors on it are left to `_end_span_with_*`."""
     return trace.use_span(span, end_on_exit=False, record_exception=False, set_status_on_exception=False)
 
 
@@ -262,6 +278,7 @@ def _end_span_with_response(telemetry, to_wrap, kwargs, start_time, span, respon
         _record_duration(telemetry, to_wrap, kwargs, start_time, response=response_dict)
         if response_dict:
             _record_token_usage(telemetry, to_wrap, kwargs, response_dict)
+            _record_choices(telemetry, to_wrap, kwargs, response_dict)
             _handle_response(span, telemetry.event_logger, to_wrap.get("request_type"), response_dict)
     if response and span.is_recording():
         span.set_status(Status(StatusCode.OK))
@@ -275,16 +292,17 @@ def _wrap(telemetry, to_wrap, wrapped, instance, args, kwargs):
         return wrapped(*args, **kwargs)
 
     span = _start_span(telemetry, to_wrap, kwargs)
-    start_time = time.perf_counter()
-    try:
-        with _use_span(span):
+    with _use_span(span):
+        _handle_input(span, telemetry.event_logger, to_wrap.get("request_type"), kwargs)
+        start_time = time.perf_counter()
+        try:
             response = wrapped(*args, **kwargs)
-    except BaseException as e:
-        _end_span_with_error(telemetry, to_wrap, kwargs, start_time, span, e)
-        raise
+        except BaseException as e:
+            _end_span_with_error(telemetry, to_wrap, kwargs, start_time, span, e)
+            raise
 
-    parsed = _parse_raw_response(response) if _should_parse_raw_response(response, kwargs) else response
-    _end_span_with_response(telemetry, to_wrap, kwargs, start_time, span, response, parsed)
+        parsed = _parse_raw_response(response) if _should_parse_raw_response(response, kwargs) else response
+        _end_span_with_response(telemetry, to_wrap, kwargs, start_time, span, response, parsed)
     return response
 
 
@@ -295,17 +313,18 @@ async def _awrap(telemetry, to_wrap, wrapped, instance, args, kwargs):
         return await wrapped(*args, **kwargs)
 
     span = _start_span(telemetry, to_wrap, kwargs)
-    start_time = time.perf_counter()
-    try:
-        with _use_span(span):
+    with _use_span(span):
+        _handle_input(span, telemetry.event_logger, to_wrap.get("request_type"), kwargs)
+        start_time = time.perf_counter()
+        try:
             response = await wrapped(*args, **kwargs)
-    except BaseException as e:
-        # BaseException so the span also ends on asyncio cancellation.
-        _end_span_with_error(telemetry, to_wrap, kwargs, start_time, span, e)
-        raise
+        except BaseException as e:
+            # BaseException so the span also ends on asyncio cancellation.
+            _end_span_with_error(telemetry, to_wrap, kwargs, start_time, span, e)
+            raise
 
-    parsed = await _aparse_raw_response(response) if _should_parse_raw_response(response, kwargs) else response
-    _end_span_with_response(telemetry, to_wrap, kwargs, start_time, span, response, parsed)
+        parsed = await _aparse_raw_response(response) if _should_parse_raw_response(response, kwargs) else response
+        _end_span_with_response(telemetry, to_wrap, kwargs, start_time, span, response, parsed)
     return response
 
 
@@ -352,10 +371,16 @@ class TogetherAiInstrumentor(BaseInstrumentor):
 
         token_histogram = None
         duration_histogram = None
+        choice_counter = None
         if is_metrics_enabled():
             meter = get_meter(__name__, __version__, kwargs.get("meter_provider"))
             token_histogram = GenAIMetrics.create_gen_ai_client_token_usage(meter)
             duration_histogram = GenAIMetrics.create_gen_ai_client_operation_duration(meter)
+            choice_counter = meter.create_counter(
+                name=Meters.LLM_GENERATION_CHOICES,
+                unit="choice",
+                description="Number of choices returned by chat and text completion calls",
+            )
 
         event_logger = None
         if not Config.use_legacy_attributes:
@@ -364,7 +389,7 @@ class TogetherAiInstrumentor(BaseInstrumentor):
                 __name__, __version__, logger_provider=logger_provider
             )
 
-        telemetry = _Telemetry(tracer, event_logger, token_histogram, duration_histogram)
+        telemetry = _Telemetry(tracer, event_logger, token_histogram, duration_histogram, choice_counter)
 
         for wrapped_method in WRAPPED_METHODS:
             module = wrapped_method.get("module")
