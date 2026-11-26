@@ -231,6 +231,8 @@ class AnthropicStream(ObjectProxy):
         """Override helper methods to ensure they go through our instrumented iteration"""
         if name == 'get_final_message':
             return self._instrumented_get_final_message
+        elif name == 'get_final_text':
+            return self._instrumented_get_final_text
         elif name == 'text_stream':
             return self._instrumented_text_stream
         elif name == 'until_done':
@@ -244,6 +246,13 @@ class AnthropicStream(ObjectProxy):
             pass
         original_get_final_message = getattr(self.__wrapped__, 'get_final_message')
         return original_get_final_message()
+
+    def _instrumented_get_final_text(self):
+        """Instrumented version of get_final_text that goes through our proxy"""
+        for _ in self:
+            pass
+        original_get_final_text = getattr(self.__wrapped__, 'get_final_text')
+        return original_get_final_text()
 
     @property
     def _instrumented_text_stream(self):
@@ -279,6 +288,31 @@ class AnthropicStream(ObjectProxy):
         _process_response_item(item, self._complete_response)
         return item
 
+    def close(self):
+        """Close the stream and finish the span, even if it was not read to the end."""
+        try:
+            return self.__wrapped__.close()
+        finally:
+            self._complete_instrumentation()
+
+    def __enter__(self):
+        # ObjectProxy forwards __enter__ and returns the wrapped stream, which
+        # would bypass this proxy for iteration and for __exit__.
+        self.__wrapped__.__enter__()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        try:
+            return self.__wrapped__.__exit__(exc_type, exc_val, exc_tb)
+        finally:
+            self._complete_instrumentation()
+
+    def __del__(self):
+        try:
+            self._complete_instrumentation()
+        except Exception:
+            pass
+
     def _handle_completion(self):
         """Handle completion logic"""
         metric_attributes = shared_metrics_attributes(self._complete_response)
@@ -308,7 +342,10 @@ class AnthropicStream(ObjectProxy):
         except Exception as e:
             logger.warning("Failed to set token usage, error: %s", str(e))
 
-        _handle_streaming_response(self._span, self._event_logger, self._complete_response)
+        try:
+            _handle_streaming_response(self._span, self._event_logger, self._complete_response)
+        except Exception as e:
+            logger.warning("Failed to emit streaming response events, error: %s", str(e))
 
         if self._span.is_recording():
             self._span.set_status(Status(StatusCode.OK))
@@ -358,6 +395,8 @@ class AnthropicAsyncStream(ObjectProxy):
         """Override helper methods to ensure they go through our instrumented iteration"""
         if name == 'get_final_message':
             return self._instrumented_get_final_message
+        elif name == 'get_final_text':
+            return self._instrumented_get_final_text
         elif name == 'text_stream':
             return self._instrumented_text_stream
         elif name == 'until_done':
@@ -374,6 +413,13 @@ class AnthropicAsyncStream(ObjectProxy):
         # We need to access the original method directly
         original_get_final_message = getattr(self.__wrapped__, 'get_final_message')
         return await original_get_final_message()
+
+    async def _instrumented_get_final_text(self):
+        """Instrumented version of get_final_text that goes through our proxy"""
+        async for _ in self:
+            pass
+        original_get_final_text = getattr(self.__wrapped__, 'get_final_text')
+        return await original_get_final_text()
 
     @property
     def _instrumented_text_stream(self):
@@ -411,6 +457,31 @@ class AnthropicAsyncStream(ObjectProxy):
             _process_response_item(item, self._complete_response)
             return item
 
+    async def close(self):
+        """Close the stream and finish the span, even if it was not read to the end."""
+        try:
+            return await self.__wrapped__.close()
+        finally:
+            self._complete_instrumentation()
+
+    async def __aenter__(self):
+        # ObjectProxy forwards __aenter__ and returns the wrapped stream, which
+        # would bypass this proxy for iteration and for __aexit__.
+        await self.__wrapped__.__aenter__()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        try:
+            return await self.__wrapped__.__aexit__(exc_type, exc_val, exc_tb)
+        finally:
+            self._complete_instrumentation()
+
+    def __del__(self):
+        try:
+            self._complete_instrumentation()
+        except Exception:
+            pass
+
     def _complete_instrumentation(self):
         """Complete the instrumentation when stream is fully consumed"""
         if self._instrumentation_completed:
@@ -444,7 +515,10 @@ class AnthropicAsyncStream(ObjectProxy):
         except Exception as e:
             logger.warning("Failed to set token usage, error: %s", str(e))
 
-        _handle_streaming_response(self._span, self._event_logger, self._complete_response)
+        try:
+            _handle_streaming_response(self._span, self._event_logger, self._complete_response)
+        except Exception as e:
+            logger.warning("Failed to emit streaming response events, error: %s", str(e))
 
         if self._span.is_recording():
             self._span.set_status(Status(StatusCode.OK))
@@ -479,12 +553,14 @@ class WrappedMessageStreamManager:
         self._exception_counter = exception_counter
         self._event_logger = event_logger
         self._kwargs = kwargs
+        # the proxy built in __enter__, kept so __exit__ can finish its span
+        self._stream = None
 
     def __enter__(self):
         # Call the original stream manager's __enter__ to get the actual stream
         stream = self._stream_manager.__enter__()
         # Return the proxy that preserves helper methods
-        return AnthropicStream(
+        self._stream = AnthropicStream(
             self._span,
             stream,
             self._instance,
@@ -496,18 +572,27 @@ class WrappedMessageStreamManager:
             self._event_logger,
             self._kwargs,
         )
+        return self._stream
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        return self._stream_manager.__exit__(exc_type, exc_val, exc_tb)
+        try:
+            return self._stream_manager.__exit__(exc_type, exc_val, exc_tb)
+        finally:
+            # the caller may leave the block without reading the stream to the end
+            self._finish_stream()
 
     def __getattr__(self, name):
         if name == '_complete_instrumentation':
             return self._complete_instrumentation
         return getattr(self._stream_manager, name)
 
+    def _finish_stream(self):
+        if self._stream is not None:
+            self._stream._complete_instrumentation()
+
     def _complete_instrumentation(self):
         """Complete the instrumentation when stream is fully consumed"""
-        pass
+        self._finish_stream()
 
 
 class WrappedAsyncMessageStreamManager:
@@ -536,12 +621,14 @@ class WrappedAsyncMessageStreamManager:
         self._exception_counter = exception_counter
         self._event_logger = event_logger
         self._kwargs = kwargs
+        # the proxy built in __aenter__, kept so __aexit__ can finish its span
+        self._stream = None
 
     async def __aenter__(self):
         # Call the original stream manager's __aenter__ to get the actual stream
         stream = await self._stream_manager.__aenter__()
         # Return the proxy that preserves helper methods
-        return AnthropicAsyncStream(
+        self._stream = AnthropicAsyncStream(
             self._span,
             stream,
             self._instance,
@@ -553,15 +640,24 @@ class WrappedAsyncMessageStreamManager:
             self._event_logger,
             self._kwargs,
         )
+        return self._stream
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        return await self._stream_manager.__aexit__(exc_type, exc_val, exc_tb)
+        try:
+            return await self._stream_manager.__aexit__(exc_type, exc_val, exc_tb)
+        finally:
+            # the caller may leave the block without reading the stream to the end
+            self._finish_stream()
 
     def __getattr__(self, name):
         if name == '_complete_instrumentation':
             return self._complete_instrumentation
         return getattr(self._stream_manager, name)
 
+    def _finish_stream(self):
+        if self._stream is not None:
+            self._stream._complete_instrumentation()
+
     def _complete_instrumentation(self):
         """Complete the instrumentation when stream is fully consumed"""
-        pass
+        self._finish_stream()
