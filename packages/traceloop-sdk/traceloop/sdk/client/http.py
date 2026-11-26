@@ -20,7 +20,7 @@ class HTTPClient:
             "X-Traceloop-SDK-Version": self.version,
         }
 
-    def post(self, path: str, data: Dict[str, Any]) -> Any:
+    def post(self, path: str, data: Dict[str, Any], *, raise_on_error: bool = False) -> Any:
         """
         Make a POST request to the API
         """
@@ -31,8 +31,17 @@ class HTTPClient:
                 headers=self._headers(),
             )
             response.raise_for_status()
-            return response.json()
+
+            if not response.content:
+                return None
+
+            try:
+                return response.json()
+            except ValueError:
+                return response.text
         except requests.exceptions.RequestException as e:
+            if raise_on_error:
+                raise
             error_msg = self._format_error_message(path, e)
             print(Fore.RED + error_msg + Fore.RESET)
             return None
