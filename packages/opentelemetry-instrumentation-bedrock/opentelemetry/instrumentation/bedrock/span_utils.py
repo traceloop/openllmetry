@@ -367,7 +367,7 @@ def _set_cohere_span_attributes(span, request_body, response_body, metric_params
 def _set_generations_span_attributes(span, response_body):
     output_messages = []
     finish_reasons = []
-    for generation in response_body.get("generations"):
+    for generation in response_body.get("generations", []):
         fr = _map_finish_reason(generation.get("finish_reason"))
         finish_reasons.append(fr)
         output_messages.append(_output_message("assistant", [_text_part(generation.get("text"))], fr))
@@ -547,7 +547,7 @@ def _set_ai21_span_attributes(span, request_body, response_body, metric_params):
 def _set_span_completions_attributes(span, response_body):
     output_messages = []
     finish_reasons = []
-    for completion in response_body.get("completions"):
+    for completion in response_body.get("completions", []):
         fr_data = completion.get("finishReason", {})
         raw_reason = fr_data.get("reason") if isinstance(fr_data, dict) else str(fr_data) or None
         fr = _map_finish_reason(raw_reason)
@@ -598,7 +598,7 @@ def _set_llama_response_span_attributes(span, response_body):
         )
     else:
         output_messages = []
-        for generation in response_body.get("generations"):
+        for generation in response_body.get("generations", []):
             output_messages.append(_output_message("assistant", [_text_part(generation)], fr))
         _set_span_attribute(
             span,
@@ -633,7 +633,7 @@ def _set_amazon_span_attributes(
     total_prompt_tokens = 0
     if "results" in response_body:
         total_prompt_tokens = int(response_body.get("inputTextTokenCount", 0))
-        for result in response_body.get("results"):
+        for result in response_body.get("results", []):
             if "tokenCount" in result:
                 total_completion_tokens += int(result.get("tokenCount", 0))
             elif "totalOutputTextTokenCount" in result:
@@ -704,7 +704,7 @@ def _set_amazon_input_span_attributes(span, request_body):
 def _set_amazon_response_span_attributes(span, response_body):
     if "results" in response_body:
         output_messages = []
-        for result in response_body.get("results"):
+        for result in response_body.get("results", []):
             fr = _map_finish_reason(result.get("completionReason"))
             output_messages.append(_output_message("assistant", [_text_part(result.get("outputText"))], fr))
         _set_span_attribute(
