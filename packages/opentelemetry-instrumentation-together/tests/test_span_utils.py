@@ -15,6 +15,7 @@ from opentelemetry.instrumentation.together.span_utils import (
     set_model_input_attributes,
     set_model_response_attributes,
     set_output_attributes,
+    set_tool_definitions_attributes,
 )
 from opentelemetry.instrumentation.together.utils import TRACELOOP_TRACE_CONTENT
 from opentelemetry.semconv._incubating.attributes import (
@@ -94,6 +95,7 @@ def test_chat_input_messages_cover_all_roles_and_parts(span, content_enabled):
     }
 
     set_input_attributes(span, CHAT, kwargs)
+    set_tool_definitions_attributes(span, kwargs)
 
     assert _json_attribute(span, GenAIAttributes.GEN_AI_INPUT_MESSAGES) == [
         {"role": "system", "parts": [{"type": "text", "content": "You are a weather bot."}]},
@@ -194,6 +196,7 @@ def test_content_is_not_recorded_when_tracing_content_is_disabled(span, content_
 
     set_model_input_attributes(span, kwargs)
     set_input_attributes(span, CHAT, kwargs)
+    set_tool_definitions_attributes(span, kwargs)
     set_output_attributes(span, CHAT, response)
     set_model_response_attributes(span, response)
 

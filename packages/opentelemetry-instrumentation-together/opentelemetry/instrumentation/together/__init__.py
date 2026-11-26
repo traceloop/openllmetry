@@ -20,6 +20,7 @@ from opentelemetry.instrumentation.together.span_utils import (
     set_model_input_attributes,
     set_model_response_attributes,
     set_output_attributes,
+    set_tool_definitions_attributes,
 )
 from opentelemetry.instrumentation.together.utils import (
     TOGETHER_PROVIDER,
@@ -130,6 +131,7 @@ def _is_suppressed():
 @dont_throw
 def _handle_input(span, event_logger, llm_request_type, kwargs):
     set_model_input_attributes(span, kwargs)
+    set_tool_definitions_attributes(span, kwargs)
 
     if should_emit_events() and event_logger:
         emit_prompt_events(event_logger, llm_request_type, kwargs)
@@ -234,7 +236,10 @@ def _record_choices(telemetry, to_wrap, kwargs, response):
         telemetry.choice_counter.add(1, attributes=choice_attributes)
 
 
+@dont_throw
 def _start_span(telemetry, to_wrap, kwargs):
+    """The span for the call, or None when the tracing pipeline (e.g. a sampler)
+    fails to start one; the call then runs uninstrumented."""
     operation = to_wrap.get("operation")
     model = kwargs.get("model")
     # The request model is set here, at span creation, so samplers can see it
@@ -260,29 +265,37 @@ def _use_span(span):
     return trace.use_span(span, end_on_exit=False, record_exception=False, set_status_on_exception=False)
 
 
+@dont_throw
 def _end_span_with_error(telemetry, to_wrap, kwargs, start_time, span, error):
-    _record_duration(telemetry, to_wrap, kwargs, start_time, error=error)
-    span.set_attribute(ERROR_TYPE, error.__class__.__name__)
-    span.record_exception(error)
-    span.set_status(Status(StatusCode.ERROR, str(error)))
-    span.end()
+    """Telemetry only: the caller re-raises `error` itself, so a failure here (e.g. a
+    span processor raising in `on_end`) never replaces the provider's exception."""
+    try:
+        _record_duration(telemetry, to_wrap, kwargs, start_time, error=error)
+        span.set_attribute(ERROR_TYPE, error.__class__.__name__)
+        span.record_exception(error)
+        span.set_status(Status(StatusCode.ERROR, str(error)))
+    finally:
+        span.end()
 
 
+@dont_throw
 def _end_span_with_response(telemetry, to_wrap, kwargs, start_time, span, response, parsed):
     """`parsed` is the response model to read telemetry from: `response` itself, or
     what a `with_raw_response` wrapper parsed to."""
-    # Streaming responses are not instrumented yet: the span only covers the
-    # request, and there is no complete response to read attributes or usage from.
-    if response is not None and not kwargs.get("stream"):
-        response_dict = _response_as_dict(parsed)
-        _record_duration(telemetry, to_wrap, kwargs, start_time, response=response_dict)
-        if response_dict:
-            _record_token_usage(telemetry, to_wrap, kwargs, response_dict)
-            _record_choices(telemetry, to_wrap, kwargs, response_dict)
-            _handle_response(span, telemetry.event_logger, to_wrap.get("request_type"), response_dict)
-    if response and span.is_recording():
-        span.set_status(Status(StatusCode.OK))
-    span.end()
+    try:
+        # Streaming responses are not instrumented yet: the span only covers the
+        # request, and there is no complete response to read attributes or usage from.
+        if response is not None and not kwargs.get("stream"):
+            response_dict = _response_as_dict(parsed)
+            _record_duration(telemetry, to_wrap, kwargs, start_time, response=response_dict)
+            if response_dict:
+                _record_token_usage(telemetry, to_wrap, kwargs, response_dict)
+                _record_choices(telemetry, to_wrap, kwargs, response_dict)
+                _handle_response(span, telemetry.event_logger, to_wrap.get("request_type"), response_dict)
+        if response and span.is_recording():
+            span.set_status(Status(StatusCode.OK))
+    finally:
+        span.end()
 
 
 @_with_telemetry_wrapper
@@ -292,6 +305,9 @@ def _wrap(telemetry, to_wrap, wrapped, instance, args, kwargs):
         return wrapped(*args, **kwargs)
 
     span = _start_span(telemetry, to_wrap, kwargs)
+    if span is None:
+        return wrapped(*args, **kwargs)
+
     with _use_span(span):
         _handle_input(span, telemetry.event_logger, to_wrap.get("request_type"), kwargs)
         start_time = time.perf_counter()
@@ -313,6 +329,9 @@ async def _awrap(telemetry, to_wrap, wrapped, instance, args, kwargs):
         return await wrapped(*args, **kwargs)
 
     span = _start_span(telemetry, to_wrap, kwargs)
+    if span is None:
+        return await wrapped(*args, **kwargs)
+
     with _use_span(span):
         _handle_input(span, telemetry.event_logger, to_wrap.get("request_type"), kwargs)
         start_time = time.perf_counter()

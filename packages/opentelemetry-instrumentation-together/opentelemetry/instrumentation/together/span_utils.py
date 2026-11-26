@@ -138,7 +138,7 @@ def _output_message(choice, llm_request_type):
 
 @dont_throw
 def set_input_attributes(span, llm_request_type, kwargs):
-    """Set gen_ai.input.messages and gen_ai.tool.definitions (content, so gated)."""
+    """Set gen_ai.input.messages (content, so gated)."""
     if not span.is_recording() or not should_send_prompts():
         return
 
@@ -152,6 +152,14 @@ def set_input_attributes(span, llm_request_type, kwargs):
 
     if messages:
         set_span_attribute(span, GenAIAttributes.GEN_AI_INPUT_MESSAGES, json.dumps(messages))
+
+
+@dont_throw
+def set_tool_definitions_attributes(span, kwargs):
+    """Set gen_ai.tool.definitions (content, so gated). Recorded in both attributes
+    and events mode: the prompt events carry messages, not tool definitions."""
+    if not span.is_recording() or not should_send_prompts():
+        return
 
     tools = kwargs.get("tools")
     if tools:
