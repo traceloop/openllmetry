@@ -77,6 +77,7 @@ def is_async_streaming_response(response):
     return isinstance(response, types.AsyncGeneratorType)
 
 
+@dont_throw
 def _build_from_streaming_response(
     span,
     response: GenerateContentResponse,
@@ -87,78 +88,85 @@ def _build_from_streaming_response(
     emit_events = should_emit_events() and event_logger
     text_parts = []
     last_chunk = None
-    for item in response:
-        item_to_yield = item
-        last_chunk = item
-        if not emit_events:
-            t = getattr(item, "text", None)
-            if isinstance(t, str):
-                text_parts.append(t)
+    try:
+        for item in response:
+            item_to_yield = item
+            last_chunk = item
+            if not emit_events:
+                t = getattr(item, "text", None)
+                if isinstance(t, str):
+                    text_parts.append(t)
 
-        yield item_to_yield
+            yield item_to_yield
 
-    complete_response = "".join(text_parts)
+        complete_response = "".join(text_parts)
 
-    if emit_events:
-        emit_choice_events(response, event_logger)
-    else:
-        if last_chunk is not None and getattr(last_chunk, "candidates", None):
-            set_response_attributes(span, last_chunk, llm_model)
+        if emit_events:
+            if last_chunk is not None and getattr(last_chunk, "candidates", None):
+                emit_choice_events(last_chunk, event_logger)
         else:
-            set_response_attributes(
-                span, complete_response, llm_model, stream_last_chunk=last_chunk
-            )
+            if last_chunk is not None and getattr(last_chunk, "candidates", None):
+                set_response_attributes(span, last_chunk, llm_model)
+            else:
+                set_response_attributes(
+                    span, complete_response, llm_model, stream_last_chunk=last_chunk
+                )
 
-    # Finish reasons from the final chunk — Gemini SDK aggregates candidates per chunk,
-    # so the last chunk reflects all candidates without deduplication artifacts.
-    stream_reasons = _collect_finish_reasons_from_response(last_chunk) if last_chunk else None
-    set_model_response_attributes(
-        span,
-        last_chunk or response,
-        llm_model,
-        token_histogram,
-        stream_finish_reasons=stream_reasons or None,
-    )
-    span.end()
+        # Finish reasons from the final chunk — Gemini SDK aggregates candidates per chunk,
+        # so the last chunk reflects all candidates without deduplication artifacts.
+        stream_reasons = _collect_finish_reasons_from_response(last_chunk) if last_chunk else None
+        set_model_response_attributes(
+            span,
+            last_chunk or response,
+            llm_model,
+            token_histogram,
+            stream_finish_reasons=stream_reasons or None,
+        )
+    finally:
+        span.end()
 
 
+@dont_throw
 async def _abuild_from_streaming_response(
     span, response: GenerateContentResponse, llm_model, event_logger, token_histogram
 ):
     emit_events = should_emit_events() and event_logger
     text_parts = []
     last_chunk = None
-    async for item in response:
-        item_to_yield = item
-        last_chunk = item
-        if not emit_events:
-            t = getattr(item, "text", None)
-            if isinstance(t, str):
-                text_parts.append(t)
+    try:
+        async for item in response:
+            item_to_yield = item
+            last_chunk = item
+            if not emit_events:
+                t = getattr(item, "text", None)
+                if isinstance(t, str):
+                    text_parts.append(t)
 
-        yield item_to_yield
+            yield item_to_yield
 
-    complete_response = "".join(text_parts)
+        complete_response = "".join(text_parts)
 
-    if emit_events:
-        emit_choice_events(response, event_logger)
-    else:
-        if last_chunk is not None and getattr(last_chunk, "candidates", None):
-            set_response_attributes(span, last_chunk, llm_model)
+        if emit_events:
+            if last_chunk is not None and getattr(last_chunk, "candidates", None):
+                emit_choice_events(last_chunk, event_logger)
         else:
-            set_response_attributes(
-                span, complete_response, llm_model, stream_last_chunk=last_chunk
-            )
+            if last_chunk is not None and getattr(last_chunk, "candidates", None):
+                set_response_attributes(span, last_chunk, llm_model)
+            else:
+                set_response_attributes(
+                    span, complete_response, llm_model, stream_last_chunk=last_chunk
+                )
 
-    stream_reasons = _collect_finish_reasons_from_response(last_chunk) if last_chunk else None
-    set_model_response_attributes(
-        span,
-        last_chunk if last_chunk else response,
-        llm_model,
-        token_histogram,
-        stream_finish_reasons=stream_reasons or None,
-    )
-    span.end()
+        stream_reasons = _collect_finish_reasons_from_response(last_chunk) if last_chunk else None
+        set_model_response_attributes(
+            span,
+            last_chunk if last_chunk else response,
+            llm_model,
+            token_histogram,
+            stream_finish_reasons=stream_reasons or None,
+        )
+    finally:
+        span.end()
 
 
 @dont_throw
