@@ -41,6 +41,10 @@ class PromptRegistryClient:
         if not hasattr(cls, "instance"):
             obj = cls.instance = super(PromptRegistryClient, cls).__new__(cls)
             obj._registry = PromptRegistry()
+            # autoescape disabled intentionally: rendered output goes to an
+            # LLM as a prompt, not to HTML. Enabling autoescape here would
+            # escape characters like '<', '>', and '&' that callers may have
+            # meant to send to the model verbatim.
             obj._jinja_env = Environment()
 
         return cls.instance
