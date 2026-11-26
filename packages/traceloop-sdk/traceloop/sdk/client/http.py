@@ -1,7 +1,9 @@
+import logging
 from typing import Any, Dict, Optional
 
 import requests
-from colorama import Fore
+
+logger = logging.getLogger(__name__)
 
 
 class HTTPClient:
@@ -34,7 +36,7 @@ class HTTPClient:
             return response.json()
         except requests.exceptions.RequestException as e:
             error_msg = self._format_error_message(path, e)
-            print(Fore.RED + error_msg + Fore.RESET)
+            logger.warning(error_msg)
             return None
 
     def get(self, path: str, params: Optional[Dict[str, Any]] = None) -> Any:
@@ -56,7 +58,7 @@ class HTTPClient:
                 return response.json()
         except requests.exceptions.RequestException as e:
             error_msg = self._format_error_message(path, e)
-            print(Fore.RED + error_msg + Fore.RESET)
+            logger.warning(error_msg)
             return None
 
     def delete(self, path: str) -> bool:
@@ -71,7 +73,7 @@ class HTTPClient:
             return response.status_code == 204 or response.status_code == 200
         except requests.exceptions.RequestException as e:
             error_msg = self._format_error_message(path, e)
-            print(Fore.RED + error_msg + Fore.RESET)
+            logger.warning(error_msg)
             return False
 
     def put(self, path: str, data: Dict[str, Any]) -> Any:
@@ -91,7 +93,7 @@ class HTTPClient:
                 return {}
         except requests.exceptions.RequestException as e:
             error_msg = self._format_error_message(path, e)
-            print(Fore.RED + error_msg + Fore.RESET)
+            logger.warning(error_msg)
             return None
 
     def _format_error_message(self, path: str, exception: requests.exceptions.RequestException) -> str:
