@@ -36,6 +36,11 @@ logger = logging.getLogger(__name__)
 
 _instruments = ("pinecone >= 5.1.0, <11",)
 
+# Bumped on every instrument / uninstrument. pinecone 10 Index objects keep a
+# reference to the wrapped method they saw at construction time, so unwrapping
+# the class is not enough: wrappers from an older generation must pass through.
+_state = {"generation": 0}
+
 WRAPPED_METHODS = [
     {
         "object": "GRPCIndex",
@@ -93,10 +98,12 @@ def _set_response_attributes(
         read_units = _get_usage_field(usage, "read_units") or 0
         write_units = _get_usage_field(usage, "write_units") or 0
 
-        read_units_metric.add(read_units, shared_attributes)
+        if read_units_metric:
+            read_units_metric.add(read_units, shared_attributes)
         span.set_attribute(AISpanAttributes.PINECONE_USAGE_READ_UNITS, read_units)
 
-        write_units_metric.add(write_units, shared_attributes)
+        if write_units_metric:
+            write_units_metric.add(write_units, shared_attributes)
         span.set_attribute(AISpanAttributes.PINECONE_USAGE_WRITE_UNITS, write_units)
 
 
@@ -111,7 +118,11 @@ def _with_wrapper(func):
         scores_metric,
         to_wrap,
     ):
+        generation = _state["generation"]
+
         def wrapper(wrapped, instance, args, kwargs):
+            if _state["generation"] != generation:
+                return wrapped(*args, **kwargs)
             return func(
                 tracer,
                 query_duration_metric,
@@ -209,6 +220,11 @@ class PineconeInstrumentor(BaseInstrumentor):
         return _instruments
 
     def _instrument(self, **kwargs):
+        _state["generation"] += 1
+        query_duration_metric = None
+        read_units_metric = None
+        write_units_metric = None
+        scores_metric = None
         if is_metrics_enabled():
             meter_provider = kwargs.get("meter_provider")
             meter = get_meter(__name__, __version__, meter_provider)
@@ -312,6 +328,7 @@ class PineconeInstrumentor(BaseInstrumentor):
                     )
 
     def _uninstrument(self, **kwargs):
+        _state["generation"] += 1
         for wrapped_method in WRAPPED_METHODS:
             wrap_object = wrapped_method.get("object")
             wrap_method_name = wrapped_method.get("method")
