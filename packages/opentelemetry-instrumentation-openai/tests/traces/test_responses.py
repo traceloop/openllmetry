@@ -1515,3 +1515,73 @@ def test_non_background_stream_left_early_is_removed_from_responses_dict(
 
     assert len(span_exporter.get_finished_spans()) == 1
     assert len(responses_wrappers.responses) == 0
+
+
+_UNPARSEABLE_BODY = b"{not json"
+
+
+def test_responses_with_raw_response_unparseable_body_is_returned_untraced(
+    instrument_legacy, span_exporter: InMemorySpanExporter
+):
+    """Regression test for https://github.com/traceloop/openllmetry/issues/4717:
+    if the raw body can't be parsed, the instrumented `.with_raw_response.create()`
+    must return the raw response untraced, not raise. Without instrumentation the
+    same call returns a LegacyAPIResponse, so instrumentation must not change that."""
+    import httpx
+    from openai import OpenAI
+    from openai._legacy_response import LegacyAPIResponse
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            headers={"content-type": "application/json"},
+            content=_UNPARSEABLE_BODY,
+        )
+
+    client = OpenAI(
+        api_key="test-key",
+        max_retries=0,
+        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+
+    raw = client.responses.with_raw_response.create(
+        model="gpt-4.1-nano",
+        input="What is the capital of France?",
+    )
+
+    assert isinstance(raw, LegacyAPIResponse)
+    assert raw.status_code == 200
+    # Nothing was traced: no span for a call whose response we could not read.
+    assert span_exporter.get_finished_spans() == ()
+
+
+@pytest.mark.asyncio
+async def test_async_responses_with_raw_response_unparseable_body_is_returned_untraced(
+    instrument_legacy, span_exporter: InMemorySpanExporter
+):
+    """Async counterpart of test_responses_with_raw_response_unparseable_body_is_returned_untraced."""
+    import httpx
+    from openai import AsyncOpenAI
+    from openai._legacy_response import LegacyAPIResponse
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            headers={"content-type": "application/json"},
+            content=_UNPARSEABLE_BODY,
+        )
+
+    client = AsyncOpenAI(
+        api_key="test-key",
+        max_retries=0,
+        http_client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+    )
+
+    raw = await client.responses.with_raw_response.create(
+        model="gpt-4.1-nano",
+        input="What is the capital of France?",
+    )
+
+    assert isinstance(raw, LegacyAPIResponse)
+    assert raw.status_code == 200
+    assert span_exporter.get_finished_spans() == ()
