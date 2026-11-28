@@ -1,4 +1,4 @@
-import asyncio
+import inspect
 import functools
 import importlib
 import importlib.util
@@ -22,7 +22,7 @@ def dont_throw(func):
     """
     logger = logging.getLogger(func.__module__)
 
-    if asyncio.iscoroutinefunction(func):
+    if inspect.iscoroutinefunction(func):
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
             try:
