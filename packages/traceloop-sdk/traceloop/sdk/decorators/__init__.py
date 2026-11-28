@@ -320,7 +320,7 @@ def guardrail(
     guards_list = list(guards)
 
     def decorator(func: Callable[_P, _R]) -> Callable[_P, _R]:
-        is_async = asyncio.iscoroutinefunction(func)
+        is_async = inspect.iscoroutinefunction(func)
 
         if is_async:
             @wraps(func)

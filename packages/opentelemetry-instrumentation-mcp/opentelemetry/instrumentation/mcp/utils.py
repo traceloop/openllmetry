@@ -1,6 +1,6 @@
 """Shared utilities for MCP instrumentation."""
 
-import asyncio
+import inspect
 import logging
 import os
 import traceback
@@ -273,4 +273,4 @@ def dont_throw(func):
         except Exception as e:
             log_trace_failure(logger, func.__name__, e)
 
-    return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
+    return async_wrapper if inspect.iscoroutinefunction(func) else sync_wrapper

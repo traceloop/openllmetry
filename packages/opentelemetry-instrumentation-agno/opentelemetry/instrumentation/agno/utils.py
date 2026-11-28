@@ -1,7 +1,7 @@
 import logging
 from typing import Any
 from functools import wraps
-import asyncio
+import inspect
 from opentelemetry.trace import Span
 
 logger = logging.getLogger(__name__)
@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 def dont_throw(func):
     """Decorator to prevent exceptions from being thrown."""
-    if asyncio.iscoroutinefunction(func):
+    if inspect.iscoroutinefunction(func):
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
             try:
